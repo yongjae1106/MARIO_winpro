@@ -1,0 +1,81 @@
+#include <windows.h>
+#include "GameWorld.h"
+#include "GameRender.h"
+#include "resource1.h"
+
+// Global variables
+GameWorld gameWorld;
+GameRender gameRender;
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case WM_CREATE: {
+            SetTimer(hWnd, 1, 15, NULL);
+            SetTimer(hWnd, 2, 15, NULL);
+            break;
+        }
+        case WM_TIMER: {
+            switch(wParam) {
+                case(1):
+                    gameWorld.update();
+                    InvalidateRect(hWnd, NULL, FALSE);
+                    break;
+                case(2):
+                    gameWorld.updateAnimations();
+                    break;
+            }
+            break;
+        }
+        case WM_KEYDOWN: {
+            gameWorld.handleKeyDown(wParam);
+            break;
+        }
+        case WM_KEYUP: {
+            gameWorld.handleKeyUp(wParam);
+            break;
+        }
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+            gameRender.render(hdc, gameWorld);
+            EndPaint(hWnd, &ps);
+            break;
+        }
+        case WM_DESTROY: {
+            PostQuitMessage(0);
+            break;
+        }
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    WNDCLASS wc = { 0 };
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = L"MarioClass";
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
+
+    RegisterClass(&wc);
+
+    HWND hWnd = CreateWindow(L"MarioClass", L"SUPERMARIO BROS TINO", WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, 800, 640,
+        NULL, NULL, hInstance, NULL);
+
+    gameWorld.init();
+    gameRender.init();
+
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return (int)msg.wParam;
+}

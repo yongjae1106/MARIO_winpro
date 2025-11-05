@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GameRender.cpp" />
+    <ClCompile Include="GameWorld.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="monsters\Goomba.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Turtle.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="monsters\AngelTurtle.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Bowser.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="projectiles\Fireball.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="projectiles\PlayerFireball.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BlueGoomba.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BrownTurtle.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\GreenTurtle.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\NormalGoomba.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\RedGoomba.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Flower.cpp" />
+    <ClCompile Include="items\Mushroom.cpp" />
+    <ClCompile Include="items\Tino.cpp" />
+    <ClCompile Include="items\UpMushroom.cpp" />
+    <ClCompile Include="items\Star.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameRender.h" />
+    <ClInclude Include="GameWorld.h" />
+    <ClInclude Include="Monster.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="monsters\Goomba.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Turtle.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="monsters\AngelTurtle.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Bowser.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="projectiles\Fireball.h">
+      <Filter>projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="projectiles\PlayerFireball.h">
+      <Filter>projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BlueGoomba.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BrownTurtle.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\GreenTurtle.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\NormalGoomba.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\RedGoomba.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="items\Flower.h" />
+    <ClInclude Include="items\Mushroom.h" />
+    <ClInclude Include="items\Tino.h" />
+    <ClInclude Include="items\UpMushroom.h" />
+    <ClInclude Include="items\Star.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Monster">
+      <UniqueIdentifier>{734c746c-c557-4206-b00a-ecdd6415f06b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="projectiles">
+      <UniqueIdentifier>{1ee2e47b-80d5-44a1-b3ba-456f241cda68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Item">
+      <UniqueIdentifier>{622d8485-0572-4429-a4e8-527be9fb0dd0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="mario.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mario.rc" />
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="mario.aps" />
+  </ItemGroup>
+</Project>
