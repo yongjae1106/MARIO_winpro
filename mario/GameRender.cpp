@@ -34,51 +34,6 @@ GameRender::~GameRender() {
 
 void GameRender::init() {
     loadImages();
-    loadSounds();
-
-    // Load the font
-    m_fontCollection.AddFontFile(L"resource/SuperMarioBrosNES.ttf");
-    
-    // Get the font family
-    int numFound = 0;
-    Gdiplus::FontFamily fontFamily;
-    m_fontCollection.GetFamilies(1, &fontFamily, &numFound);
-
-    if (numFound > 0) {
-        m_font = std::make_unique<Gdiplus::Font>(&fontFamily, 25, Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
-    } else {
-        // Fallback to a default font if the custom font fails to load
-        m_font = std::make_unique<Gdiplus::Font>(L"Arial", 25, Gdiplus::FontStyleBold, Gdiplus::UnitPixel);
-    }
-}
-
-void GameRender::loadSounds() {
-    m_sounds[L"1-up"] = L"resource/sound/smb_1-up.wav";
-    m_sounds[L"bowserdead"] = L"resource/sound/smb_bowserdead.wav";
-    m_sounds[L"bowserfalls"] = L"resource/sound/smb_bowserfalls.wav";
-    m_sounds[L"bowserfire"] = L"resource/sound/smb_bowserfire.wav";
-    m_sounds[L"bump"] = L"resource/sound/smb_bump.wav";
-    m_sounds[L"coin"] = L"resource/sound/smb_coin.wav";
-    m_sounds[L"fireball"] = L"resource/sound/smb_fireball.wav";
-    m_sounds[L"gameover"] = L"resource/sound/smb_gameover.wav";
-    m_sounds[L"jump-small"] = L"resource/sound/smb_jump-small.wav";
-    m_sounds[L"jump-super"] = L"resource/sound/smb_jump-super.wav";
-    m_sounds[L"kick"] = L"resource/sound/smb_kick.wav";
-    m_sounds[L"mariodie"] = L"resource/sound/smb_mariodie.wav";
-    m_sounds[L"pipe"] = L"resource/sound/smb_pipe.wav";
-    m_sounds[L"powerup_appears"] = L"resource/sound/smb_powerup_appears.wav";
-    m_sounds[L"powerup"] = L"resource/sound/smb_powerup.wav";
-    m_sounds[L"stage_clear"] = L"resource/sound/smb_stage_clear.wav";
-    m_sounds[L"stomp"] = L"resource/sound/smb_stomp.wav";
-    m_sounds[L"tino_attack"] = L"resource/sound/smb_tino_attack.wav";
-    m_sounds[L"world_clear"] = L"resource/sound/smb_world_clear.wav";
-}
-
-void GameRender::playSound(const WCHAR* sound) {
-    auto it = m_sounds.find(sound);
-    if (it != m_sounds.end()) {
-        PlaySound(it->second.c_str(), NULL, SND_FILENAME | SND_ASYNC);
-    }
 }
 
 void GameRender::render(HDC hdc, const GameWorld& world) {
@@ -140,7 +95,7 @@ void GameRender::drawItems(Gdiplus::Graphics& graphics, const GameWorld& world) 
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
     for (const auto& item : world.getItems()) {
-        if (!item->isActive()) continue;
+        if (!(item->isActive() &&item->isMotion())) continue;
 
         int screenX = item->getX() - world.getCameraX();
         int screenY = item->getY();

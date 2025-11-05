@@ -65,6 +65,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 640,
         NULL, NULL, hInstance, NULL);
 
+    gameWorld.sound_init(hWnd);
+
     gameWorld.init();
     gameRender.init();
 

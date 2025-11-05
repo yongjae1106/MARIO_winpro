@@ -149,6 +149,7 @@
     <ClCompile Include="items\UpMushroom.cpp" />
     <ClCompile Include="projectiles\Fireball.cpp" />
     <ClCompile Include="projectiles\PlayerFireball.cpp" />
+    <ClCompile Include="Sound.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="projectiles\PlayerFireball.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />
+    <ClInclude Include="Sound.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>

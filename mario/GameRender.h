@@ -15,11 +15,9 @@ public:
     GameRender();
     ~GameRender();
 
-    void init(); // For loading images and other resources
+    void init();
     void render(HDC hdc, const GameWorld& world);
 
-    void loadSounds();
-    void playSound(const WCHAR* sound);
 
     Gdiplus::Image* getGoombaImage();
     Gdiplus::Image* getGoombaImage2();
@@ -49,7 +47,6 @@ public:
     Gdiplus::Image* getPlayerFireballImage();
 
 private:
-    std::map<std::wstring, std::wstring> m_sounds;
 
     void loadImages();
     Gdiplus::Image* loadImage(const WCHAR* path);

@@ -4,6 +4,7 @@
 #include "Monster.h"
 #include "Item.h"
 #include "GameRender.h"
+#include "Sound.h"
 #include <vector>
 #include <memory>
 
@@ -40,6 +41,8 @@ public:
     GameWorld();
 
     void init();
+    void sound_init(HWND hwnd);
+
     void update();
     void updateAnimations();
     void render(HDC hdc);
@@ -79,10 +82,13 @@ public:
     void spawnFireball(int x, int y, int vx);
     void spawnPlayerFireball(int x, int y, int vx);
 
+    void playSound(const std::string& name, bool loop = false);
+
     int title_select;
 
 private:
     GameRender m_gameRender;
+    Sound m_sound;
 
 private:
     void updatePlayer();

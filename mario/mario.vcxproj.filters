@@ -45,6 +45,7 @@
     <ClCompile Include="items\Tino.cpp" />
     <ClCompile Include="items\UpMushroom.cpp" />
     <ClCompile Include="items\Star.cpp" />
+    <ClCompile Include="Sound.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
@@ -93,6 +94,7 @@
     <ClInclude Include="items\Tino.h" />
     <ClInclude Include="items\UpMushroom.h" />
     <ClInclude Include="items\Star.h" />
+    <ClInclude Include="Sound.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Monster">

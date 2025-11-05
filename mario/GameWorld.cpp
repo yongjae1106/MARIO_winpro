@@ -37,9 +37,17 @@ GameWorld::GameWorld() {
     currentMap = map1;
 }
 
+void GameWorld::sound_init(HWND hwnd) {
+    m_sound.init(hwnd);
+}
+
 void GameWorld::init() {
     m_gameRender.init();
-    // loadStage(1); // Stage loading should happen when game starts from title
+    m_sound.loadAllSounds();
+}
+
+void GameWorld::playSound(const std::string& name, bool loop) {
+    m_sound.play(name, loop);
 }
 
 void GameWorld::update() {
@@ -161,7 +169,7 @@ void GameWorld::update() {
 
             if (player.getCoin() > 99)
             {
-                m_gameRender.playSound(L"1-up");
+                playSound("1-up");
                 player.setLife(player.getLife() + 1);
                 player.setCoin(0);
             }
@@ -367,11 +375,10 @@ void GameWorld::updateAnimations() {
 
 void GameWorld::updateMonsters() {
     // Remove dead monsters
-    monsters.erase(std::remove_if(monsters.begin(), monsters.end(),
-                                  [](const std::unique_ptr<Monster>& monster) {
-                                      return !monster->isAlive();
-                                  }),
-                   monsters.end());
+    monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](const std::unique_ptr<Monster>& monster) {
+        return !monster->isAlive();
+    }),
+    monsters.end());
 
     // Update remaining monsters
     for (auto& monster : monsters) {
@@ -566,33 +573,33 @@ void GameWorld::checkPlayerMapCollision() {
         int hitBlockY = topTile;
 
         if (currentMap[hitBlockY][hitBlockX] == 6) { // mushroom Box
-            m_gameRender.playSound(L"powerup_appears");
+            playSound("powerup_appears");
             spawnItem(Item::ItemType::Mushroom, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         // Add other item block types (60-65) here as needed
         else if (currentMap[hitBlockY][hitBlockX] == 60) { // Star Box
-            m_gameRender.playSound(L"powerup_appears");
+            playSound("powerup_appears");
             spawnItem(Item::ItemType::Star, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 61) { // Flower Box
-            m_gameRender.playSound(L"powerup_appears");
+            playSound("powerup_appears");
             spawnItem(Item::ItemType::Flower, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 62) { // Tino Box
-            m_gameRender.playSound(L"powerup_appears");
+            playSound("powerup_appears");
             spawnItem(Item::ItemType::Tino, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 63) { // Up Mushroom Box
-            m_gameRender.playSound(L"powerup_appears");
+            playSound("powerup_appears");
             spawnItem(Item::ItemType::UpMushroom, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 64) { // Coin Box
-            m_gameRender.playSound(L"coin");
+            playSound("coin");
             currentMap[hitBlockY][hitBlockX] = 16;
             player.addCoin(1);
         }
@@ -624,7 +631,7 @@ void GameWorld::checkPlayerMonsterCollision() {
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
                         monster->getX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
             if (player.hasStar()) { // Player is in Star mode
-                m_gameRender.playSound(L"kick");
+                playSound("kick");
                 monster->setVy(-15); // Make monster fly upwards
                 monster->takeDamage(*this, 1);
             }
@@ -632,14 +639,14 @@ void GameWorld::checkPlayerMonsterCollision() {
             else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) {
                 monster->takeDamage(*this, 1);
                 player.setVy(-10); // Player bounces up
-                m_gameRender.playSound(L"stomp");
+                playSound("stomp");
             } else { // Player collides with monster from side or bottom
                 DamageResult result = player.takeDamage(1);
                 if (result == DamageResult::Shrunk) {
                     gameState_trans = GameState_Trans::GAME_BIG_TRANS;
                     transformStartTime = GetTickCount();
                 } else if (result == DamageResult::Died) {
-                    m_gameRender.playSound(L"mariodie");
+                    playSound("mariodie");
                     dead();
                 }
             }
@@ -659,26 +666,26 @@ void GameWorld::checkPlayerItemCollision()
             switch (item->getType()) 
             {
                 case Item::ItemType::Mushroom:
-                    m_gameRender.playSound(L"powerup");
+                    playSound("powerup");
                     transformStartTime = GetTickCount();
                     setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
                     break;
                 case Item::ItemType::Star:
-                    m_gameRender.playSound(L"powerup");
+                    playSound("powerup");
                     player.gainStar(); // Assuming player has a gainStar method
                     break;
                 case Item::ItemType::Flower:
-                    m_gameRender.playSound(L"powerup");
+                    playSound("powerup");
                     transformStartTime = GetTickCount();
                     setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
                     break;
                 case Item::ItemType::Tino:
-                    m_gameRender.playSound(L"tino_attack");
+                    playSound("tino_attack");
                     transformStartTime = GetTickCount();
                     setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
                     break;
                 case Item::ItemType::UpMushroom:
-                    m_gameRender.playSound(L"1-up");
+                    playSound("1-up");
                     player.addLife(1); // Assuming player has an addLife method
                     break;
             }
@@ -706,7 +713,7 @@ void GameWorld::checkFlagCollision() {
             int screenY = i * 40;
             if ((currentMap[i][j] == 7 || currentMap[i][j] == 8) && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 10, 30))
             {
-                m_gameRender.playSound(L"stage_clear");
+                playSound("stage_clear");
                 gameState = GameState::GAME_VICTORY;
                 victoryStart = GetTickCount();
             }
@@ -725,7 +732,7 @@ void GameWorld::checkClearCollision() {
             int screenY = i * 40;
             if (j == 139 && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 40, 40))
             {
-                m_gameRender.playSound(L"world_clear");
+                playSound("world_clear");
                 gameState = GameState::GAME_CLEAR;
                 clearStart = GetTickCount();
             }
@@ -788,7 +795,7 @@ void GameWorld::checkPlayerCoinCollision()
             int screenY = i * TILE_SIZE;
             if (currentMap[i][j] == 2 && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 30, 30))
             {
-                m_gameRender.playSound(L"coin");
+                playSound("coin");
                 currentMap[i][j] = 0;
                 player.addCoin(1);
             }
