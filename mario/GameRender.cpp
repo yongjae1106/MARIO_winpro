@@ -34,6 +34,25 @@ GameRender::~GameRender() {
 
 void GameRender::init() {
     loadImages();
+
+    // Load the custom font
+    m_fontCollection.AddFontFile(L"resource/SuperMarioBrosNES.ttf");
+
+    // Get the font family
+    Gdiplus::FontFamily fontFamily;
+    int numFound = 0;
+    m_fontCollection.GetFamilies(1, &fontFamily, &numFound);
+
+    if (numFound > 0) 
+    {
+        // Create the font object
+        m_font = std::make_unique<Gdiplus::Font>(&fontFamily, 25, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+    } 
+    else 
+    {
+        // Fallback to a default font if the custom font fails to load
+        m_font = std::make_unique<Gdiplus::Font>(L"Arial", 25, Gdiplus::FontStyleRegular, Gdiplus::UnitPixel);
+    }
 }
 
 void GameRender::render(HDC hdc, const GameWorld& world) {

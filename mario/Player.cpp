@@ -93,7 +93,7 @@ void Player::update(GameWorld& world) {
 
     if (currentState == PlayerState::Star && (GetTickCount() - m_god_timer >= 10000)) { // 10 seconds of invincibility
         currentState = PlayerState::Big;
-        world.getGameRender().playSound(L"world_clear"); // Placeholder sound
+        world.playSound("world_clear"); // Placeholder sound
     }
 }
 
@@ -403,7 +403,7 @@ void Player::tinoAttack(GameWorld& world) {
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
                         monster->getX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
-            world.getGameRender().playSound(L"kick");
+            world.playSound("kick");
             monster->takeDamage(world, 1);
         }
     }

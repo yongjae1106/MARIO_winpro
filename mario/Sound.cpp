@@ -1,11 +1,13 @@
 #include "Sound.h"
 #include <iostream>
 
-Sound::Sound() : m_pDS(nullptr) {}
+Sound::Sound() : m_pDS(nullptr), m_currentBGM("") {}
 
 Sound::~Sound() {
-    for (auto& pair : m_soundBuffers) {
-        if (pair.second) {
+    for (auto& pair : m_soundBuffers) 
+    {
+        if (pair.second) 
+        {
             pair.second->Release();
         }
     }
@@ -32,6 +34,15 @@ void Sound::loadSound(const std::string& name, const std::wstring& filename) {
 }
 
 void Sound::play(const std::string& name, bool loop) {
+    // If the requested sound is a BGM
+    if (name.find("Theme") != std::string::npos) {
+        // If a different BGM is already playing, stop it
+        if (!m_currentBGM.empty() && m_currentBGM != name) {
+            stop(m_currentBGM);
+        }
+        m_currentBGM = name;
+    }
+
     auto it = m_soundBuffers.find(name);
     if (it != m_soundBuffers.end() && it->second) {
         it->second->SetCurrentPosition(0);
@@ -44,11 +55,25 @@ void Sound::stop(const std::string& name) {
     if (it != m_soundBuffers.end() && it->second) {
         it->second->Stop();
     }
+
+    if (name == m_currentBGM) {
+        m_currentBGM = "";
+    }
+}
+
+void Sound::stopAllSounds() {
+    for (auto& pair : m_soundBuffers) {
+        if (pair.second) {
+            pair.second->Stop();
+        }
+    }
+    m_currentBGM = "";
 }
 
 LPDIRECTSOUNDBUFFER Sound::loadWav(const std::wstring& filename) {
-    FILE* file = _wfopen(filename.c_str(), L"rb");
-    if (!file) {
+    FILE* file;
+    errno_t err = _wfopen_s(&file, filename.c_str(), L"rb");
+    if (err != 0) {
         MessageBoxW(NULL, (L"Could not open WAV file: " + filename).c_str(), L"Error", MB_OK);
         return nullptr;
     }
@@ -116,4 +141,8 @@ void Sound::loadAllSounds() {
     loadSound("stomp", L"resource/sound/smb_stomp.wav");
     loadSound("tino_attack", L"resource/sound/smb_tino_attack.wav");
     loadSound("world_clear", L"resource/sound/smb_world_clear.wav");
+
+    // BGM
+    loadSound("GroundTheme", L"resource/sound/bgm/GroundTheme.wav");
+    loadSound("CastleTheme", L"resource/sound/bgm/CastleTheme.wav");
 }

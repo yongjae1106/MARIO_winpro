@@ -76,6 +76,7 @@ public:
     void setGameState(GameState state);
     void setGameState_trans(GameState_Trans state_trans);
     void setStage_time(int time);
+    void setStageBGM();
 
     void spawnItem(Item::ItemType type, int x, int y);
     void spawnMonster(std::unique_ptr<Monster> monster);
@@ -83,6 +84,7 @@ public:
     void spawnPlayerFireball(int x, int y, int vx);
 
     void playSound(const std::string& name, bool loop = false);
+    void stopAllSounds();
 
     int title_select;
 

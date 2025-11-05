@@ -50,6 +50,10 @@ void GameWorld::playSound(const std::string& name, bool loop) {
     m_sound.play(name, loop);
 }
 
+void GameWorld::stopAllSounds() {
+    m_sound.stopAllSounds();
+}
+
 void GameWorld::update() {
     switch (gameState) {
         case GameState::GAME_TITLE:
@@ -282,6 +286,7 @@ void GameWorld::loadStage(int newStage) {
     stage = newStage;
     monsters.clear();
     setStage_time(400);
+    setStageBGM();
     if (stage == 1) {
         currentMap = map1;
     } else if (stage == 2) {
@@ -408,6 +413,7 @@ void GameWorld::checkCollisions() {
 
 
 void GameWorld::dead() {
+    stopAllSounds();
     player.setDead(true);
     gameState = GameState::GAME_OVER;
     deadStartTime = GetTickCount();
@@ -578,6 +584,11 @@ void GameWorld::checkPlayerMapCollision() {
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         // Add other item block types (60-65) here as needed
+        else if (currentMap[hitBlockY][hitBlockX] == 65) { // Star Box
+            playSound("powerup_appears");
+            spawnItem(Item::ItemType::Star, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
+            currentMap[hitBlockY][hitBlockX] = 16;
+        }
         else if (currentMap[hitBlockY][hitBlockX] == 60) { // Star Box
             playSound("powerup_appears");
             spawnItem(Item::ItemType::Star, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
@@ -713,6 +724,7 @@ void GameWorld::checkFlagCollision() {
             int screenY = i * 40;
             if ((currentMap[i][j] == 7 || currentMap[i][j] == 8) && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 10, 30))
             {
+                stopAllSounds();
                 playSound("stage_clear");
                 gameState = GameState::GAME_VICTORY;
                 victoryStart = GetTickCount();
@@ -732,6 +744,7 @@ void GameWorld::checkClearCollision() {
             int screenY = i * 40;
             if (j == 139 && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 40, 40))
             {
+                stopAllSounds();
                 playSound("world_clear");
                 gameState = GameState::GAME_CLEAR;
                 clearStart = GetTickCount();
@@ -800,6 +813,18 @@ void GameWorld::checkPlayerCoinCollision()
                 player.addCoin(1);
             }
         }
+    }
+}
+
+void GameWorld::setStageBGM()
+{
+    if (stage == 1 || stage == 2)
+    {
+        playSound("GroundTheme", true);
+    }
+    else if (stage == 3)
+    {
+        playSound("CastleTheme", true);
     }
 }
 
