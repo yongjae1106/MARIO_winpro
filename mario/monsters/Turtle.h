@@ -8,8 +8,7 @@ public:
 
     Turtle(MonsterType type, int x, int y, int width, int height);
 
-    void update(GameWorld& world) override;
-    void render(HDC hdc, int cameraX) override;
+    virtual void monster_logic(GameWorld& world) override;
     void takeDamage(GameWorld& world, int damage) override;
 
     TurtleState getState() const;

@@ -5,12 +5,40 @@ Turtle::Turtle(MonsterType type, int x, int y, int width, int height)
     : Monster(type, x, y, width, height), m_state(TurtleState::NORMAL), m_shellTimer(0) {
 }
 
-void Turtle::update(GameWorld& world) {
-    // Base class update logic
-}
+void Turtle::monster_logic(GameWorld& world) {
+    if (!isAlive() || isFalling()) return;
 
-void Turtle::render(HDC hdc, int cameraX) {
-    // Base class render logic
+    if (m_state == TurtleState::NORMAL) {
+        // Check for ledges
+        int nextX = getX() + getVx();
+        int footX = (getVx() < 0) ? nextX : nextX + getWidth();
+        int footTileX = footX / TILE_SIZE;
+        int footTileY = getY() / TILE_SIZE + 1;
+
+        const int(*currentMap)[MAP_WIDTH] = world.getCurrentMap();
+        bool willFall = true;
+        if (footTileX >= 0 && footTileX < MAP_WIDTH && footTileY >= 0 && footTileY < MAP_HEIGHT)
+        {
+            int tile = currentMap[footTileY][footTileX];
+            if (tile != 0 && tile != 2)
+                willFall = false;
+        }
+
+        if (willFall) {
+            setVx(-getVx());
+        }
+
+        setX(getX() + getVx());
+    }
+    else if (m_state == TurtleState::SHELL) {
+        if (GetTickCount() - m_shellTimer > 5000) {
+            setState(TurtleState::NORMAL);
+            setVx(-1);
+        }
+    }
+    else if (m_state == TurtleState::SPINNING) {
+        setX(getX() + getVx());
+    }
 }
 
 void Turtle::takeDamage(GameWorld& world, int damage) {
@@ -33,4 +61,8 @@ Turtle::TurtleState Turtle::getState() const {
 
 void Turtle::setState(TurtleState state) {
     m_state = state;
+}
+
+void Turtle::render(HDC hdc, int cameraX) {
+    // Rendering is handled by GameRender
 }
