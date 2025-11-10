@@ -71,6 +71,95 @@ void GameWorld::update() {
             {
                 case GameState_Trans::GAME_NONE:
                 {
+                    // 승리 모션
+                    if (gameState == GameState::GAME_VICTORY)
+                    {
+                        DWORD now = GetTickCount();
+
+                        if (now - victoryStart >= 5000)
+                        {
+                            stage++;
+                            loadStage(stage);
+                            gameState = GameState::GAME_RUNNING;
+                        }
+                    }
+                    // 최종 승리 모션
+                    else if (gameState == GameState::GAME_CLEAR)
+                    {
+
+                        if (GetTickCount() - clearStart >= 10000)
+                        {
+                            stage = 1;
+                            gameclear_text = false;
+                            gameStarted = false;
+
+                            gameState = GameState::GAME_RUNNING;
+                            return;
+                        }
+                    }
+                    // 시망모션
+                    else if (gameState == GameState::GAME_OVER)
+                    {
+                        DWORD now = GetTickCount();
+                        if (player.isDead())
+                        {
+                            static bool motion1;
+
+                            if (now - deadStartTime >= 2000)
+                            {
+                                if (player.getLife() <= 0)
+                                {
+                                    stage = 1;
+                                    gameclear_text = false;
+                                    gameStarted = false;
+
+                                    gameState = GameState::GAME_RUNNING;
+                                    return;
+                                }
+                                player.setDead(false);
+                                motion1 = false;
+                            }
+                            return;
+                        }
+
+
+                        return;
+                    }
+
+                    if (player.getCoin() > 99)
+                    {
+                        playSound("1-up");
+                        player.setLife(player.getLife() + 1);
+                        player.setCoin(0);
+                    }
+
+                    updatePlayer();
+                    updateMonsters();
+                    updateItems();
+                    checkCollisions();
+
+                    // 카메라 업데이트
+                    // 플레이어의 화면 X 위치 계산
+                    int playerX = player.getX();
+
+                    // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
+                    if (playerX > SCREEN_WIDTH / 2)
+                    {
+                        cameraX += player.getVx();
+                        player.setX(SCREEN_WIDTH / 2);
+                    }
+                    // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
+                    else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
+                    {
+                        cameraX += player.getVx();
+                        if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
+                        player.setX(SCREEN_WIDTH / 2);
+                    }
+
+                    // cameraX를 맵 경계 내로 제한
+                    if (cameraX < 0) cameraX = 0;
+                    if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
+                        cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
                     break;
                 }
                 // mushroom 변신 모션
@@ -115,100 +204,6 @@ void GameWorld::update() {
                     }
                     break;
                 }
-            }
-
-            // 승리 모션
-            if (gameState == GameState::GAME_VICTORY)
-            {
-                DWORD now = GetTickCount();
-
-                if (now - victoryStart >= 5000)
-                {
-                    stage++;
-                    loadStage(stage);
-                    gameState = GameState::GAME_RUNNING;
-                }
-            }
-            // 최종 승리 모션
-            else if (gameState == GameState::GAME_CLEAR)
-            {
-
-                if (GetTickCount() - clearStart >= 10000)
-                {
-                    stage = 1;
-                    gameclear_text = false;
-                    gameStarted = false;
-
-                    gameState = GameState::GAME_RUNNING;
-                    return;
-                }
-            }
-            // 시망모션
-            else if (gameState == GameState::GAME_OVER)
-            {
-                DWORD now = GetTickCount();
-                if (player.isDead())
-                {
-                    static bool motion1;
-
-                    if (now - deadStartTime >= 2000)
-                    {
-                        if (player.getLife() <= 0)
-                        {
-                            stage = 1;
-                            gameclear_text = false;
-                            gameStarted = false;
-
-                            gameState = GameState::GAME_RUNNING;
-                            return;
-                        }
-                        player.setDead(false);
-                        motion1 = false;
-                    }
-                    return;
-                }
-
-
-                return;
-            }
-
-            if (player.getCoin() > 99)
-            {
-                playSound("1-up");
-                player.setLife(player.getLife() + 1);
-                player.setCoin(0);
-            }
-
-            updatePlayer();
-            updateMonsters();
-            updateItems();
-            checkCollisions();
-
-            // Only update camera and player X if not transforming
-            if (gameState_trans == GameState_Trans::GAME_NONE) {
-                // 카메라 업데이트
-                // 플레이어의 화면 X 위치 계산
-                int playerX = player.getX();
-
-                // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
-                if (playerX > SCREEN_WIDTH / 2)
-                {
-                    cameraX += player.getVx();
-                    player.setX(SCREEN_WIDTH / 2);
-                }
-                // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
-                else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
-                {
-                    cameraX += player.getVx();
-                    if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
-                    player.setX(SCREEN_WIDTH / 2);
-                }
-
-                // cameraX를 맵 경계 내로 제한
-                if (cameraX < 0) cameraX = 0;
-                if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
-                    cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
-            }
 
         }
         default:
