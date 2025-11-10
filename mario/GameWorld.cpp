@@ -26,6 +26,7 @@ bool isSolidTile(int tileID) {
 
 GameWorld::GameWorld() {
     initMaps();
+    initMonsterSpawns();
     gameState = GameState::GAME_TITLE;
     gameState_trans = GameState_Trans::GAME_NONE;
     cameraX = 0;
@@ -124,7 +125,7 @@ void GameWorld::update() {
                 if (now - victoryStart >= 5000)
                 {
                     stage++;
-                    // stage_load();
+                    loadStage(stage);
                     gameState = GameState::GAME_RUNNING;
                 }
             }
@@ -183,28 +184,31 @@ void GameWorld::update() {
             updateItems();
             checkCollisions();
 
-            // 카메라 업데이트
-            // 플레이어의 화면 X 위치 계산
-            int playerX = player.getX();
+            // Only update camera and player X if not transforming
+            if (gameState_trans == GameState_Trans::GAME_NONE) {
+                // 카메라 업데이트
+                // 플레이어의 화면 X 위치 계산
+                int playerX = player.getX();
 
-            // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
-            if (playerX > SCREEN_WIDTH / 2)
-            {
-                cameraX += player.getVx();
-				player.setX(SCREEN_WIDTH / 2);
-            }
-            // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
-            else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
-            {
-                cameraX += player.getVx();
-                if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
-				player.setX(SCREEN_WIDTH / 2);
-            }
+                // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
+                if (playerX > SCREEN_WIDTH / 2)
+                {
+                    cameraX += player.getVx();
+                    player.setX(SCREEN_WIDTH / 2);
+                }
+                // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
+                else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
+                {
+                    cameraX += player.getVx();
+                    if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
+                    player.setX(SCREEN_WIDTH / 2);
+                }
 
-            // cameraX를 맵 경계 내로 제한
-            if (cameraX < 0) cameraX = 0;
-            if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
-                cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+                // cameraX를 맵 경계 내로 제한
+                if (cameraX < 0) cameraX = 0;
+                if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
+                    cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+            }
 
         }
         default:
@@ -294,27 +298,46 @@ void GameWorld::loadStage(int newStage) {
     } else if (stage == 3) {
         currentMap = map3;
     }
+    spawnMonsters();
+}
 
-    for (int i = 0; i < MAP_HEIGHT; ++i) {
-        for (int j = 0; j < MAP_WIDTH; ++j) {
-            int tileID = currentMap[i][j];
-            float x = j * 40.0f;
-            float y = i * 40.0f;
+void GameWorld::spawnMonsters()
+{
+    const std::vector<MonsterSpawnInfo>* currentMonsterSpawns = nullptr;
+    if (stage == 1) {
+        currentMonsterSpawns = &stage1Monsters;
+    } else if (stage == 2) {
+        currentMonsterSpawns = &stage2Monsters;
+    } else if (stage == 3) {
+        currentMonsterSpawns = &stage3Monsters;
+    }
 
-            if (tileID == 3) { // NormalGoomba
-                monsters.push_back(std::make_unique<NormalGoomba>(x, y));
-            } else if (tileID == 30) { // RedGoomba
-                monsters.push_back(std::make_unique<RedGoomba>(x, y));
-            } else if (tileID == 31) { // BlueGoomba
-                monsters.push_back(std::make_unique<BlueGoomba>(x, y));
-            } else if (tileID == 90) { // GreenTurtle
-                monsters.push_back(std::make_unique<GreenTurtle>(x, y));
-            } else if (tileID == 91) { // BrownTurtle
-                monsters.push_back(std::make_unique<BrownTurtle>(x, y));
-            } else if (tileID == 93) { // AngelTurtle
-                monsters.push_back(std::make_unique<AngelTurtle>(x, y));
-            } else if (tileID == 999) { // Bowser
-                monsters.push_back(std::make_unique<Bowser>(x, y));
+    if (currentMonsterSpawns) {
+        for (const auto& spawnInfo : *currentMonsterSpawns) {
+            float x = spawnInfo.x * TILE_SIZE;
+            float y = spawnInfo.y * TILE_SIZE;
+            switch (spawnInfo.type) {
+                case Monster::MonsterType::NormalGoomba:
+                    monsters.push_back(std::make_unique<NormalGoomba>(x, y));
+                    break;
+                case Monster::MonsterType::RedGoomba:
+                    monsters.push_back(std::make_unique<RedGoomba>(x, y));
+                    break;
+                case Monster::MonsterType::BlueGoomba:
+                    monsters.push_back(std::make_unique<BlueGoomba>(x, y));
+                    break;
+                case Monster::MonsterType::GreenTurtle:
+                    monsters.push_back(std::make_unique<GreenTurtle>(x, y));
+                    break;
+                case Monster::MonsterType::BrownTurtle:
+                    monsters.push_back(std::make_unique<BrownTurtle>(x, y));
+                    break;
+                case Monster::MonsterType::AngelTurtle:
+                    monsters.push_back(std::make_unique<AngelTurtle>(x, y));
+                    break;
+                case Monster::MonsterType::Bowser:
+                    monsters.push_back(std::make_unique<Bowser>(x, y));
+                    break;
             }
         }
     }
@@ -398,8 +421,8 @@ void GameWorld::updateItems() {
 }
 
 void GameWorld::checkCollisions() {
+    checkMonsterMapCollision();
     checkPlayerMapCollision();
-    //checkMonsterMapCollision();
     checkPlayerMonsterCollision();
     checkPlayerItemCollision();
     checkItemMapCollision();
@@ -428,7 +451,8 @@ void GameWorld::resurrection() {
     player.setGameOver(false);
     player.setLife(player.getLife() - 1);
     player.setState(PlayerState::Small);
-    player.setGodMode(true);
+    player.setSuperGodMode(true);
+    player.setStarGodMode(false);
     gameState = GameState::GAME_RUNNING;
 }
 
@@ -438,10 +462,6 @@ void GameWorld::monster_reset() {
 
 void GameWorld::item_reset() {
     items.clear();
-}
-
-void GameWorld::stage_load() {
-    loadStage(stage);
 }
 
 void GameWorld::spawnItem(Item::ItemType type, int x, int y) {
@@ -481,48 +501,82 @@ void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
-//void GameWorld::checkMonsterMapCollision() {
-//    for (auto& monster : monsters) {
-//        if (!monster->isAlive()) continue; // Skip dead monsters
-//
-//        // Apply gravity
-//        monster->setVy(monster->getVy() + 1);
-//        if (monster->getVy() > 10) monster->setVy(10);
-//        monster->setY(monster->getY() + monster->getVy());
-//
-//        // Horizontal movement
-//        monster->setX(monster->getX() + monster->getVx());
-//
-//        // Calculate tile coordinates for monster's bounding box
-//        int leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
-//        int rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
-//        int topTile = static_cast<int>(monster->getY() / TILE_SIZE);
-//        int bottomTile = static_cast<int>((monster->getY() + monster->getHeight() - 1) / TILE_SIZE);
-//        int middleTile = static_cast<int>((monster->getY() + monster->getHeight() / 2 - 1) / TILE_SIZE);
-//
-//        // Check for horizontal collision with walls
-//        if (monster->getVx() < 0) { // Moving left
-//            if (leftTile >= 0 && leftTile < MAP_WIDTH &&
-//                (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[bottomTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
-//                monster->setX((leftTile + 1) * TILE_SIZE);
-//                monster->setVx(-monster->getVx());
-//            }
-//        } else if (monster->getVx() > 0) { // Moving right
-//            if (rightTile < MAP_WIDTH && rightTile >= 0 &&
-//                (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[bottomTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
-//                monster->setX(rightTile * TILE_SIZE - monster->getWidth());
-//                monster->setVx(-monster->getVx());
-//            }
-//        }
-//
-//        // Check for vertical collision (ground)
-//        if (monster->getVy() > 0 && bottomTile < MAP_HEIGHT && bottomTile >= 0 &&
-//            (isSolidTile(currentMap[bottomTile][leftTile]) || isSolidTile(currentMap[bottomTile][rightTile]))) {
-//            monster->setY(bottomTile * TILE_SIZE - monster->getHeight());
-//            monster->setVy(0);
-//        }
-//    }
-//}
+void GameWorld::checkMonsterMapCollision() 
+{
+    for (auto& monster : monsters) {
+        if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
+
+        // Apply gravity
+        monster->setVy(monster->getVy() + 1);
+        if (monster->getVy() > 10) monster->setVy(10);
+        monster->setY(monster->getY() + monster->getVy());
+
+        // Horizontal movement
+        monster->setX(monster->getX() + monster->getVx());
+
+        // Calculate tile coordinates for monster's bounding box
+        int leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
+        int rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
+        int topTile = static_cast<int>(monster->getY() / TILE_SIZE);
+        int bottomTile = static_cast<int>((monster->getY() + monster->getHeight() - 1) / TILE_SIZE);
+        int middleTile = static_cast<int>((monster->getY() + monster->getHeight() / 2 - 1) / TILE_SIZE);
+
+        // Check for horizontal collision with walls
+        if (monster->getVx() < 0) { // Moving left
+            if (leftTile >= 0 && leftTile < MAP_WIDTH &&
+                (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
+                monster->setX((leftTile + 1) * TILE_SIZE);
+                monster->setVx(-monster->getVx());
+            }
+        } else if (monster->getVx() > 0) { // Moving right
+            if (rightTile < MAP_WIDTH && rightTile >= 0 &&
+                (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
+                monster->setX(rightTile * TILE_SIZE - monster->getWidth());
+                monster->setVx(-monster->getVx());
+            }
+        }
+
+        // Check for vertical collision (ground)
+        if (monster->getVy() > 0 && bottomTile < MAP_HEIGHT && bottomTile >= 0 &&
+            (isSolidTile(currentMap[bottomTile][leftTile]) || isSolidTile(currentMap[bottomTile][rightTile]))) {
+            monster->setY(bottomTile * TILE_SIZE - monster->getHeight());
+            monster->setVy(0);
+        }
+    }
+}
+
+void GameWorld::checkPlayerMonsterCollision() {
+    if (player.isSuperGodMode()) return; // Player is invincible
+
+    for (auto& monster : monsters) {
+        if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
+
+        if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
+                        monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight())) 
+        {
+            if (player.isStarGodMode()) { // Player is in Star mode
+                playSound("kick");
+                monster->setVy(-15); // Make monster fly upwards
+                monster->setFalling(true);
+            }
+            // Player is on top of the monster (stomping)
+            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) {
+                monster->takeDamage(*this, 1);
+                player.setVy(-10); // Player bounces up
+                playSound("stomp");
+            } else { // Player collides with monster from side or bottom
+                DamageResult result = player.takeDamage(1);
+                if (result == DamageResult::Shrunk) {
+                    gameState_trans = GameState_Trans::GAME_BIG_TRANS;
+                    transformStartTime = GetTickCount();
+                } else if (result == DamageResult::Died) {
+                    playSound("mariodie");
+                    dead();
+                }
+            }
+        }
+    }
+}
 
 void GameWorld::checkPlayerMapCollision() {
     // Player position and dimensions
@@ -633,38 +687,6 @@ void GameWorld::checkPlayerMapCollision() {
     }
 }
 
-void GameWorld::checkPlayerMonsterCollision() {
-    if (player.isGodMode()) return; // Player is invincible
-
-    for (auto& monster : monsters) {
-        if (!monster->isAlive()) continue; // Skip dead monsters
-
-        if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
-                        monster->getX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
-            if (player.hasStar()) { // Player is in Star mode
-                playSound("kick");
-                monster->setVy(-15); // Make monster fly upwards
-                monster->takeDamage(*this, 1);
-            }
-            // Player is on top of the monster (stomping)
-            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) {
-                monster->takeDamage(*this, 1);
-                player.setVy(-10); // Player bounces up
-                playSound("stomp");
-            } else { // Player collides with monster from side or bottom
-                DamageResult result = player.takeDamage(1);
-                if (result == DamageResult::Shrunk) {
-                    gameState_trans = GameState_Trans::GAME_BIG_TRANS;
-                    transformStartTime = GetTickCount();
-                } else if (result == DamageResult::Died) {
-                    playSound("mariodie");
-                    dead();
-                }
-            }
-        }
-    }
-}
-
 void GameWorld::checkPlayerItemCollision() 
 {
     for (auto it = items.begin(); it != items.end(); )
@@ -682,8 +704,7 @@ void GameWorld::checkPlayerItemCollision()
                     setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
                     break;
                 case Item::ItemType::Star:
-                    playSound("powerup");
-                    player.gainStar(); // Assuming player has a gainStar method
+                    player.gainStar(*this); // Assuming player has a gainStar method
                     break;
                 case Item::ItemType::Flower:
                     playSound("powerup");
@@ -816,6 +837,9 @@ void GameWorld::checkPlayerCoinCollision()
     }
 }
 
+
+// load 관련
+
 void GameWorld::setStageBGM()
 {
     if (stage == 1 || stage == 2)
@@ -832,6 +856,63 @@ void GameWorld::initMaps() {
     initMap1();
     initMap2();
     initMap3();
+}
+
+void GameWorld::initMonsterSpawns() {
+    stage1Monsters = {
+        { Monster::MonsterType::NormalGoomba, 20, 12 },
+        { Monster::MonsterType::NormalGoomba, 25, 12 },
+        { Monster::MonsterType::NormalGoomba, 30, 12 },
+        { Monster::MonsterType::NormalGoomba, 40, 12 },
+        { Monster::MonsterType::NormalGoomba, 48, 12 },
+        { Monster::MonsterType::NormalGoomba, 50, 12 },
+        { Monster::MonsterType::NormalGoomba, 58, 12 },
+        { Monster::MonsterType::NormalGoomba, 60, 12 },
+        { Monster::MonsterType::NormalGoomba, 62, 12 },
+        { Monster::MonsterType::NormalGoomba, 70, 12 },
+        { Monster::MonsterType::NormalGoomba, 78, 12 },
+        { Monster::MonsterType::NormalGoomba, 80, 12 },
+        { Monster::MonsterType::NormalGoomba, 88, 12 },
+        { Monster::MonsterType::NormalGoomba, 90, 12 },
+        { Monster::MonsterType::NormalGoomba, 92, 12 },
+        { Monster::MonsterType::GreenTurtle, 35, 10 },
+        { Monster::MonsterType::GreenTurtle, 55, 10 },
+        { Monster::MonsterType::GreenTurtle, 65, 10 },
+        { Monster::MonsterType::GreenTurtle, 85, 10 },
+        { Monster::MonsterType::GreenTurtle, 95, 10 },
+    };
+
+    stage2Monsters = {
+        { Monster::MonsterType::RedGoomba, 20, 12 },
+        { Monster::MonsterType::RedGoomba, 25, 12 },
+        { Monster::MonsterType::RedGoomba, 30, 12 },
+        { Monster::MonsterType::RedGoomba, 40, 12 },
+        { Monster::MonsterType::RedGoomba, 48, 12 },
+        { Monster::MonsterType::RedGoomba, 50, 12 },
+        { Monster::MonsterType::RedGoomba, 58, 12 },
+        { Monster::MonsterType::RedGoomba, 60, 12 },
+        { Monster::MonsterType::RedGoomba, 62, 12 },
+        { Monster::MonsterType::RedGoomba, 70, 12 },
+        { Monster::MonsterType::AngelTurtle, 15, 5 },
+        { Monster::MonsterType::AngelTurtle, 45, 5 },
+        { Monster::MonsterType::AngelTurtle, 65, 5 },
+        { Monster::MonsterType::AngelTurtle, 85, 5 },
+        { Monster::MonsterType::AngelTurtle, 105, 5 },
+    };
+
+    stage3Monsters = {
+        { Monster::MonsterType::BlueGoomba, 20, 8 },
+        { Monster::MonsterType::BlueGoomba, 25, 8 },
+        { Monster::MonsterType::BlueGoomba, 30, 8 },
+        { Monster::MonsterType::BlueGoomba, 40, 8 },
+        { Monster::MonsterType::BlueGoomba, 48, 8 },
+        { Monster::MonsterType::BrownTurtle, 35, 8 },
+        { Monster::MonsterType::BrownTurtle, 55, 8 },
+        { Monster::MonsterType::BrownTurtle, 65, 8 },
+        { Monster::MonsterType::BrownTurtle, 85, 8 },
+        { Monster::MonsterType::BrownTurtle, 95, 8 },
+        { Monster::MonsterType::Bowser, 130, 6 },
+    };
 }
 
 void GameWorld::initMap1() {
