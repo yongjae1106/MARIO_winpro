@@ -448,6 +448,7 @@ void GameWorld::checkCollisions() {
 
 void GameWorld::dead() {
     stopAllSounds();
+    playSound("mariodie");
     player.setDead(true);
     gameState = GameState::GAME_OVER;
     deadStartTime = GetTickCount();
@@ -508,6 +509,18 @@ void GameWorld::spawnFireball(int x, int y, int vx) {
 
 void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
     items.push_back(std::make_unique<PlayerFireball>(x, y, vx));
+}
+
+void GameWorld::applyplayertakedamage()
+{
+    DamageResult result = player.calculateDamageResult(1);
+                    player.applyDamageResult(result);
+                    if (result == DamageResult::Shrunk) {
+                        playSound("powerup"); // Use powerup sound for shrinking
+                    } else if (result == DamageResult::Died) {
+                        playSound("mariodie");
+                        dead(); // Call GameWorld's dead()
+                    }
 }
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -582,11 +595,7 @@ void GameWorld::checkPlayerMonsterCollision()
             } 
             else 
             { // Player collides with monster from side or bottom
-                DamageResult result = player.calculateDamageResult(1);
-                player.applyDamageResult(result);
-                if (result == DamageResult::Died) {
-                    dead(); // Call GameWorld's dead()
-                }
+                applyplayertakedamage();
             }
         }
     }
