@@ -36,6 +36,11 @@ GameWorld::GameWorld() {
     memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0; // Initialize new counter
     currentMap = map1;
+    transformStartTime = 0;
+    deadStartTime = 0;
+    victoryStart = 0;
+    clearStart = 0;
+    godstart = 0;
 }
 
 void GameWorld::sound_init(HWND hwnd) {
@@ -68,15 +73,17 @@ void GameWorld::update()
     }
     case GameState::GAME_RUNNING:
     {
-        switch (gameState_trans)
-        {
-        case GameState_Trans::GAME_NONE:
+        DWORD now = GetTickCount();
+        if(gameState_trans == GameState_Trans::GAME_NONE)
         {
             updatePlayer();
-            break; // No special action when not transforming
-        }
         }
         transUpdate();
+
+        if (getPlayer().isDead() && now - deadStartTime >= 2000)
+        {
+            gameState = GameState::GAME_OVER;
+        }
 
         if (player.getCoin() > 99)
         {
@@ -90,8 +97,6 @@ void GameWorld::update()
         checkCollisions(); // Always check collisions
 
         cameraUpdate();
-        default:
-            break;
     }
     // 승리 모션
     case GameState::GAME_VICTORY:
@@ -110,7 +115,6 @@ void GameWorld::update()
     // 최종 승리 모션
     case GameState::GAME_CLEAR:
     {
-
         if (GetTickCount() - clearStart >= 10000)
         {
             stage = 1;
@@ -124,32 +128,20 @@ void GameWorld::update()
     case GameState::GAME_OVER:
     {
         DWORD now = GetTickCount();
-        if (player.isDead())
+        // 게임오버 타이틀
+        if (now - deadStartTime >= 4000)
         {
-            static bool motion1;
-
-            if (now - deadStartTime >= 4000)
+            if (player.getLife() <= 0)
             {
-                if (player.getLife() <= 0)
-                {
-                    stage = 1;
-
-                    gameover_TitleDead = false;
-                    gameState = GameState::GAME_RUNNING;
-                    return;
-                }
-                gameover_TitleDead = false;
-                player.setDead(false);
-                motion1 = false;
+                resetForDeath();
+                stage = 1;
+                gameState = GameState::GAME_TITLE;
+                return;
             }
-            else if (now - deadStartTime >= 2000)
-            {
-                gameover_TitleDead = true;
-            }
-            return;
+            resetForDeath();
+            gameover_TitleDead = false;
+            player.setDead(false);
         }
-
-
         return;
     }
 
@@ -470,7 +462,6 @@ void GameWorld::dead() {
     stopAllSounds();
     playSound("mariodie");
     player.setDead(true);
-    gameState = GameState::GAME_OVER;
     deadStartTime = GetTickCount();
 }
 
