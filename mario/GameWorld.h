@@ -19,7 +19,6 @@
 // Declaration for the global collision function to make it accessible across files
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 bool isSolidTile(int tileID); // Existing declaration
-bool isWallTile(int tileID); // New declaration
 
 enum class GameState
 {
@@ -59,7 +58,7 @@ public:
     void handleKeyUp(WPARAM wParam);
 
     void loadStage(int stage);
-    void loadMonster();
+    void resetForDeath();
 
     // Getter for the renderer to allow safe access from other classes
     GameRender& getGameRender() { return m_gameRender; }
@@ -79,7 +78,8 @@ public:
     int getStageTime() const { return stage_time; }
     int getTinoCooldownZ() const { return player.getTinoCooldownZ(); }
     int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
-    bool getGameClearText() const { return gameclear_text; }
+    bool getGameClearText() const { return gameClearText; }
+    bool getGameoverTitleDead () const { return gameover_TitleDead; }
     int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
 
     const bool* getKeyState() const;
@@ -89,6 +89,7 @@ public:
     void setGameState_trans(GameState_Trans state_trans);
     void setStage_time(int time);
     void setStageBGM();
+    void setGameOverTitleDead(bool gameover);
     void setdeadStartTime(int time);
 
     void spawnItem(Item::ItemType type, int x, int y);
@@ -150,7 +151,8 @@ private:
     DWORD clearStart;
     DWORD godstart; // Missing member variable added
 
-    bool gameStarted;
+    bool gameover_TitleDead;
+    bool gameClearText;
 
     double cameraX;
     int map1[MAP_HEIGHT][MAP_WIDTH];
@@ -162,7 +164,6 @@ private:
     int stage_time;
 
     bool keyState[256];
-    bool gameclear_text;
     int m_global_animation_frame_counter;
 };
 

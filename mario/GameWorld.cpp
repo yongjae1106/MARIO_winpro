@@ -33,7 +33,6 @@ GameWorld::GameWorld() {
     cameraX = 0;
     stage = 1;
     stage_time = 0;
-    gameclear_text = false;
     memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0; // Initialize new counter
     currentMap = map1;
@@ -102,6 +101,7 @@ void GameWorld::update()
         if (now - victoryStart >= 5000)
         {
             stage++;
+            gameClearText = false;
             loadStage(stage);
             gameState = GameState::GAME_RUNNING;
         }
@@ -114,9 +114,7 @@ void GameWorld::update()
         if (GetTickCount() - clearStart >= 10000)
         {
             stage = 1;
-            gameclear_text = false;
-            gameStarted = false;
-
+            gameClearText = false;
             gameState = GameState::GAME_RUNNING;
             return;
         }
@@ -130,19 +128,23 @@ void GameWorld::update()
         {
             static bool motion1;
 
-            if (now - deadStartTime >= 2000)
+            if (now - deadStartTime >= 4000)
             {
                 if (player.getLife() <= 0)
                 {
                     stage = 1;
-                    gameclear_text = false;
-                    gameStarted = false;
 
+                    gameover_TitleDead = false;
                     gameState = GameState::GAME_RUNNING;
                     return;
                 }
+                gameover_TitleDead = false;
                 player.setDead(false);
                 motion1 = false;
+            }
+            else if (now - deadStartTime >= 2000)
+            {
+                gameover_TitleDead = true;
             }
             return;
         }
@@ -420,6 +422,12 @@ void GameWorld::setdeadStartTime(int time)
 {
     deadStartTime = time;
 }
+void GameWorld::setGameOverTitleDead(bool gameover)
+{
+    gameover_TitleDead = gameover;
+}
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡupdateㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 void GameWorld::updatePlayer() {
     player.update(*this);
 }
@@ -449,7 +457,6 @@ void GameWorld::updateItems() {
 }
 
 void GameWorld::checkCollisions() {
-    checkMonsterMapCollision();
     checkPlayerMapCollision();
     checkPlayerMonsterCollision();
     checkPlayerItemCollision();
@@ -458,9 +465,6 @@ void GameWorld::checkCollisions() {
     checkClearCollision();
     checkPlayerCoinCollision();
 }
-
-
-// ... other collision methods ...
 
 void GameWorld::dead() {
     stopAllSounds();
@@ -471,7 +475,7 @@ void GameWorld::dead() {
 }
 
 void GameWorld::resurrection() {
-    player.setX(100);
+    player.setX(140);
     player.setY(300);
     player.setVx(0);
     player.setVy(0);
@@ -490,6 +494,27 @@ void GameWorld::monster_reset() {
 
 void GameWorld::item_reset() {
     items.clear();
+}
+
+void GameWorld::resetForDeath() {
+    player.reset(); // Reset player's state (position, life, power-ups, etc.)
+    monster_reset(); // Clear all monsters
+    item_reset();    // Clear all items
+
+    cameraX = 0; // Reset camera position
+    stage_time = 400; // Reset stage timer to initial value
+    gameClearText = false; // Ensure game clear text is not shown
+    gameover_TitleDead = false; // Ensure game over title is not shown
+
+    // Reset game state flags
+    gameState = GameState::GAME_RUNNING;
+    gameState_trans = GameState_Trans::GAME_NONE;
+
+    m_global_animation_frame_counter = 0; // Reset global animation counter
+
+    // Reload the current stage's monsters and items
+    spawnMonsters(); // Repopulate monsters for the current stage
+    setStageBGM(); // Restart the stage BGM
 }
 
 void GameWorld::spawnItem(Item::ItemType type, int x, int y) {
@@ -540,61 +565,6 @@ void GameWorld::applyplayertakedamage()
 }
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-void GameWorld::checkMonsterMapCollision() 
-{
-    for (auto& monster : monsters) 
-    {
-        if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
-
-        // Apply gravity
-        monster->setVy(monster->getVy() + 1);
-        if (monster->getVy() > 10) monster->setVy(10);
-        float nextY = monster->getY() + monster->getVy(); // Calculate next Y position
-
-        // Calculate tile coordinates for monster's bounding box (based on current X, and nextY for vertical)
-        int leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
-        int rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
-        
-        // Calculate tile row of the monster's feet at nextY
-        int feetTileY = static_cast<int>((nextY + monster->getHeight()) / TILE_SIZE);
-
-        // Check for vertical collision (ground)
-        if (monster->getVy() > 0 && feetTileY < MAP_HEIGHT && feetTileY >= 0 &&
-            (isSolidTile(currentMap[feetTileY][leftTile]) || isSolidTile(currentMap[feetTileY][rightTile]))) {
-            // Collision detected. Snap monster to the top of the solid tile.
-            monster->setY(feetTileY * TILE_SIZE - monster->getHeight());
-            monster->setVy(0);
-        } else {
-            // No collision, update Y
-            monster->setY(nextY);
-        }
-
-        // Horizontal movement (after vertical resolution)
-        monster->setX(monster->getX() + monster->getVx());
-
-        // Recalculate tile coordinates for horizontal collision based on potentially new Y and new X
-        leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
-        int topTile = static_cast<int>(monster->getY() / TILE_SIZE); // Use resolved Y
-        rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
-        int middleTile = static_cast<int>((monster->getY() + monster->getHeight() / 2 - 1) / TILE_SIZE); // Use resolved Y
-
-        // Check for horizontal collision with walls
-        if (monster->getVx() < 0) { // Moving left
-            if (leftTile >= 0 && leftTile < MAP_WIDTH &&
-                (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
-                monster->setX((leftTile + 1) * TILE_SIZE);
-                monster->setVx(-monster->getVx());
-            }
-        } else if (monster->getVx() > 0) { // Moving right
-            if (rightTile < MAP_WIDTH && rightTile >= 0 &&
-                (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
-                monster->setX(rightTile * TILE_SIZE - monster->getWidth());
-                monster->setVx(-monster->getVx());
-            }
-        }
-    }
-}
 
 void GameWorld::checkPlayerMonsterCollision() 
 {
