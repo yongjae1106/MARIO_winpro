@@ -70,54 +70,13 @@ void GameWorld::update()
     {
         switch (gameState_trans)
         {
-            case GameState_Trans::GAME_NONE:
-            {
-                updatePlayer();
-                break; // No special action when not transforming
-            }
-            // mushroom 변신 모션
-            case GameState_Trans::GAME_BIG_TRANS:
-            {
-                DWORD now = GetTickCount();
-                if (now - transformStartTime >= 1500)
-                {
-                    if (!player.isBig())
-                    {
-                        player.grow();
-                        gameState_trans = GameState_Trans::GAME_NONE;
-                    }
-                }
-                break;
-            }
-            // flower 변신 모션
-            case GameState_Trans::GAME_FLOWER_TRANS:
-            {
-                DWORD now = GetTickCount();
-                if (now - transformStartTime >= 1500)
-                {
-                    if (!player.isFlower())
-                    {
-                        player.gainFlower();
-                        gameState_trans = GameState_Trans::GAME_NONE;
-                    }
-                }
-                break;
-            }
-            // tino 변신 모션
-            case GameState_Trans::GAME_TINO_TRANS:
-            {
-                DWORD now = GetTickCount();
-                if (now - transformStartTime >= 1500)
-                {
-                    if (!player.isTino())
-                    {
-                        player.gainTino();
-                        gameState_trans = GameState_Trans::GAME_NONE;
-                    }
-                }
-                break;
-            }
+        case GameState_Trans::GAME_NONE:
+        {
+            updatePlayer();
+            break; // No special action when not transforming
         }
+        }
+        transUpdate();
 
         if (player.getCoin() > 99)
         {
@@ -126,42 +85,12 @@ void GameWorld::update()
             player.setCoin(0);
         }
 
-        // 변신중일때 정지
-        if(gameState_trans != GameState_Trans::GAME_NONE) 
-        {
-            player.setStop();
-        }
-
         updateMonsters(); // Always update monsters
         updateItems();    // Always update items
         checkCollisions(); // Always check collisions
 
-        // Camera update only if not transforming
-        if (gameState_trans == GameState_Trans::GAME_NONE) 
-        {
-            // 카메라 업데이트
-            // 플레이어의 화면 X 위치 계산
-            int playerX = player.getX();
-
-            // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
-            if (playerX > SCREEN_WIDTH / 2)
-            {
-                cameraX += player.getVx();
-                player.setX(SCREEN_WIDTH / 2);
-            }
-            // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
-            else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
-            {
-                cameraX += player.getVx();
-                if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
-                player.setX(SCREEN_WIDTH / 2);
-            }
-
-            // cameraX를 맵 경계 내로 제한
-            if (cameraX < 0) cameraX = 0;
-            if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
-                cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
-        }        default:
+        cameraUpdate();
+        default:
             break;
     }
     // 승리 모션
@@ -222,6 +151,92 @@ void GameWorld::update()
     }
 
     }
+}
+void GameWorld::cameraUpdate()
+{
+    // Camera update only if not transforming
+    if (gameState_trans == GameState_Trans::GAME_NONE)
+    {
+        // 카메라 업데이트
+        // 플레이어의 화면 X 위치 계산
+        int playerX = player.getX();
+
+        // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
+        if (playerX > SCREEN_WIDTH / 2)
+        {
+            cameraX += player.getVx();
+            player.setX(SCREEN_WIDTH / 2);
+        }
+        // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
+        else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
+        {
+            cameraX += player.getVx();
+            if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
+            player.setX(SCREEN_WIDTH / 2);
+        }
+
+        // cameraX를 맵 경계 내로 제한
+        if (cameraX < 0) cameraX = 0;
+        if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
+            cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+    }
+}
+void GameWorld::transUpdate()
+{
+    switch (gameState_trans)
+    {
+    // mushroom 변신 모션
+    case GameState_Trans::GAME_BIG_TRANS:
+    {
+        DWORD now = GetTickCount();
+        if (now - transformStartTime >= 1500)
+        {
+            if (!player.isBig())
+            {
+                playSound("playerup");
+                player.grow();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
+        }
+        break;
+    }
+    // flower 변신 모션
+    case GameState_Trans::GAME_FLOWER_TRANS:
+    {
+        DWORD now = GetTickCount();
+        if (now - transformStartTime >= 1500)
+        {
+            if (!player.isFlower())
+            {
+                playSound("playerup");
+                player.gainFlower();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
+        }
+        break;
+    }
+    // tino 변신 모션
+    case GameState_Trans::GAME_TINO_TRANS:
+    {
+        DWORD now = GetTickCount();
+        if (now - transformStartTime >= 1500)
+        {
+            if (!player.isTino())
+            {
+                playSound("playerup");
+                player.gainTino();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
+        }
+        break;
+    }
+    }
+    // 변신중일때 정지
+    if (gameState_trans != GameState_Trans::GAME_NONE)
+    {
+        player.setStop();
+    }
+
 }
 
 void GameWorld::render(HDC hdc) {
@@ -323,7 +338,14 @@ void GameWorld::spawnMonsters()
     if (currentMonsterSpawns) {
         for (const auto& spawnInfo : *currentMonsterSpawns) {
             float x = spawnInfo.x * TILE_SIZE;
-            float y = spawnInfo.y * TILE_SIZE;
+            float y = spawnInfo.y * TILE_SIZE; 
+
+            // Adjust y for monsters based on their height to place their feet on the ground
+            if (spawnInfo.type == Monster::MonsterType::GreenTurtle ||
+                spawnInfo.type == Monster::MonsterType::BrownTurtle ||
+                spawnInfo.type == Monster::MonsterType::AngelTurtle) {
+                y = (spawnInfo.y * TILE_SIZE) - 60; // Assuming 60 is the height of the turtle
+            }
             switch (spawnInfo.type) {
                 case Monster::MonsterType::NormalGoomba:
                     monsters.push_back(std::make_unique<NormalGoomba>(x, y));
@@ -514,20 +536,21 @@ void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
 void GameWorld::applyplayertakedamage()
 {
     DamageResult result = player.calculateDamageResult(1);
-                    player.applyDamageResult(result);
-                    if (result == DamageResult::Shrunk) {
-                        playSound("powerup"); // Use powerup sound for shrinking
-                    } else if (result == DamageResult::Died) {
-                        playSound("mariodie");
-                        dead(); // Call GameWorld's dead()
-                    }
+    player.applyDamageResult(result);
+    if (result == DamageResult::Shrunk) {
+        playSound("powerdown"); // Use powerup sound for shrinking
+    } else if (result == DamageResult::Died) {
+        playSound("mariodie");
+        dead(); // Call GameWorld's dead()
+    }
 }
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
 void GameWorld::checkMonsterMapCollision() 
 {
-    for (auto& monster : monsters) {
+    for (auto& monster : monsters) 
+    {
         if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
 
         // Apply gravity
@@ -727,6 +750,7 @@ void GameWorld::checkPlayerItemCollision()
                     setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
                     break;
                 case Item::ItemType::Star:
+                    playSound("powerup");
                     player.gainStar(*this); // Assuming player has a gainStar method
                     break;
                 case Item::ItemType::Flower:
@@ -735,7 +759,6 @@ void GameWorld::checkPlayerItemCollision()
                     setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
                     break;
                 case Item::ItemType::Tino:
-                    playSound("tino_attack");
                     transformStartTime = GetTickCount();
                     setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
                     break;
