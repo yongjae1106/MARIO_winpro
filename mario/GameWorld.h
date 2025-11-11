@@ -18,6 +18,8 @@
 
 // Declaration for the global collision function to make it accessible across files
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
+bool isSolidTile(int tileID); // Existing declaration
+bool isWallTile(int tileID); // New declaration
 
 enum class GameState
 {
@@ -61,6 +63,9 @@ public:
 
     // Getter for the renderer to allow safe access from other classes
     GameRender& getGameRender() { return m_gameRender; }
+
+    void transUpdate();
+    void cameraUpdate();
 
     const Player& getPlayer() const;
     Player& getPlayer();
@@ -114,6 +119,8 @@ private:
     void checkFlagCollision();
     void checkClearCollision();
     void spawnMonsters();
+    
+    void applyplayertakedamage();
 
     void initMaps();
     void initMonsterSpawns();

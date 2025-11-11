@@ -24,6 +24,10 @@ bool isSolidTile(int tileID) {
     return tileID != 0 && tileID != 2 && tileID != 7 && tileID != 8;
 }
 
+bool isWallTile(int tileID) {
+    return isSolidTile(tileID) && tileID != 1; // Exclude ground tile (ID 1)
+}
+
 GameWorld::GameWorld() {
     initMaps();
     initMonsterSpawns();
@@ -571,13 +575,13 @@ void GameWorld::checkMonsterMapCollision()
         // Check for horizontal collision with walls
         if (monster->getVx() < 0) { // Moving left
             if (leftTile >= 0 && leftTile < MAP_WIDTH &&
-                (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
+                (isWallTile(currentMap[topTile][leftTile]) || isWallTile(currentMap[middleTile][leftTile]))) {
                 monster->setX((leftTile + 1) * TILE_SIZE);
                 monster->setVx(-monster->getVx());
             }
         } else if (monster->getVx() > 0) { // Moving right
             if (rightTile < MAP_WIDTH && rightTile >= 0 &&
-                (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
+                (isWallTile(currentMap[topTile][rightTile]) || isWallTile(currentMap[middleTile][rightTile]))) {
                 monster->setX(rightTile * TILE_SIZE - monster->getWidth());
                 monster->setVx(-monster->getVx());
             }
