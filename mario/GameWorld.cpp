@@ -62,10 +62,15 @@ void GameWorld::stopAllSounds() {
 
 void GameWorld::update() 
 {
+    TCHAR debugMessage[256];
+    _stprintf_s(debugMessage, _T("GameWorld::update() - Current GameState: %d, Stage: %d\n"), (int)gameState, stage);
+    OutputDebugString(debugMessage);
+
     switch (gameState) 
     {
     case GameState::GAME_START:
     {
+        OutputDebugString(_T("GameWorld::update() - Case GAME_START\n"));
         loadStage(1);
         player.reset(); // Reset player state for new game
         gameState = GameState::GAME_RUNNING;
@@ -73,6 +78,7 @@ void GameWorld::update()
     }
     case GameState::GAME_RUNNING:
     {
+        OutputDebugString(_T("GameWorld::update() - Case GAME_RUNNING\n"));
         DWORD now = GetTickCount();
         if(gameState_trans == GameState_Trans::GAME_NONE)
         {
@@ -102,6 +108,7 @@ void GameWorld::update()
     // 승리 모션
     case GameState::GAME_VICTORY:
     {
+        OutputDebugString(_T("GameWorld::update() - Case GAME_VICTORY\n"));
         DWORD now = GetTickCount();
 
         if (now - victoryStart >= 5000)
@@ -116,6 +123,7 @@ void GameWorld::update()
     // 최종 승리 모션
     case GameState::GAME_CLEAR:
     {
+        OutputDebugString(_T("GameWorld::update() - Case GAME_CLEAR\n"));
         if (GetTickCount() - clearStart >= 10000)
         {
             stage = 1;
@@ -128,6 +136,7 @@ void GameWorld::update()
     // 시망모션
     case GameState::GAME_OVER:
     {
+        OutputDebugString(_T("GameWorld::update() - Case GAME_OVER\n"));
         DWORD now = GetTickCount();
         // 게임오버 타이틀
         if (now - deadStartTime >= 4000)
@@ -239,8 +248,8 @@ void GameWorld::render(HDC hdc) {
     m_gameRender.render(hdc, *this);
 }
 
-// player.cpp의 move함수에서 역할을 수행함
 
+// player.cpp의 move함수에서 역할을 수행함
 void GameWorld::handleKeyDown(WPARAM wParam) 
 {
     if (wParam < 256) 
@@ -306,6 +315,10 @@ void GameWorld::handleKeyUp(WPARAM wParam)
 }
 
 void GameWorld::loadStage(int newStage) {
+    TCHAR debugMessage[256];
+    _stprintf_s(debugMessage, _T("GameWorld::loadStage() - Loading Stage: %d\n"), newStage);
+    OutputDebugString(debugMessage);
+
     stage = newStage;
     monsters.clear();
     setStage_time(400);
@@ -462,6 +475,8 @@ void GameWorld::checkCollisions() {
 void GameWorld::dead() {
     stopAllSounds();
     playSound("mariodie");
+    player.setVx(0);
+    player.setVy(0);
     player.setDead(true);
     deadStartTime = GetTickCount();
 }
@@ -475,7 +490,7 @@ void GameWorld::resurrection() {
     player.setGameOver(false);
     player.setLife(player.getLife() - 1);
     player.setState(PlayerState::Small);
-    player.setSuperGodMode(true);
+    player.setSuperGodMode(false);
     player.setStarGodMode(false);
     gameState = GameState::GAME_RUNNING;
 }
@@ -546,13 +561,18 @@ void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
 
 void GameWorld::applyplayertakedamage()
 {
+    if (player.isSuperGodMode() || player.isDead()) return;
     DamageResult result = player.calculateDamageResult(1);
     player.applyDamageResult(result);
-    if (result == DamageResult::Shrunk) {
+    if (result == DamageResult::Shrunk) 
+    {
         playSound("powerdown"); // Use powerup sound for shrinking
-    } else if (result == DamageResult::Died) {
-        playSound("mariodie");
+        return;
+    } 
+    else if (result == DamageResult::Died) 
+    {
         dead(); // Call GameWorld's dead()
+        return;
     }
 }
 
@@ -560,10 +580,12 @@ void GameWorld::applyplayertakedamage()
 
 void GameWorld::checkPlayerMonsterCollision() 
 {
-    if (player.isSuperGodMode()) return; // Player is invincible
-
-    for (auto& monster : monsters) 
+    for (auto& monster : monsters)
     {
+        if (player.isSuperGodMode() || player.isDead())
+        {
+            continue; // Player is invincible, but should still check other monsters (e.g., for star power)
+        }
         if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
 
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
@@ -701,6 +723,8 @@ void GameWorld::checkPlayerMapCollision() {
 
 void GameWorld::checkPlayerItemCollision() 
 {
+    if (player.isDead()) return; // 플레이어가 죽었을경우
+
     for (auto it = items.begin(); it != items.end(); )
     {
         Item* item = it->get();
@@ -757,6 +781,7 @@ void GameWorld::checkFlagCollision() {
             int screenY = i * 40;
             if ((currentMap[i][j] == 7 || currentMap[i][j] == 8) && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 10, 30))
             {
+                OutputDebugString(_T("GameWorld::checkFlagCollision() - Flag collision detected! Setting GameState to GAME_VICTORY\n"));
                 stopAllSounds();
                 playSound("stage_clear");
                 gameState = GameState::GAME_VICTORY;
