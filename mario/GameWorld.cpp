@@ -97,6 +97,7 @@ void GameWorld::update()
         checkCollisions(); // Always check collisions
 
         cameraUpdate();
+        break; // Add break to prevent fall-through
     }
     // 승리 모션
     case GameState::GAME_VICTORY:
