@@ -24,9 +24,6 @@ bool isSolidTile(int tileID) {
     return tileID != 0 && tileID != 2 && tileID != 7 && tileID != 8;
 }
 
-bool isWallTile(int tileID) {
-    return isSolidTile(tileID) && tileID != 1; // Exclude ground tile (ID 1)
-}
 
 GameWorld::GameWorld() {
     initMaps();
@@ -342,14 +339,7 @@ void GameWorld::spawnMonsters()
     if (currentMonsterSpawns) {
         for (const auto& spawnInfo : *currentMonsterSpawns) {
             float x = spawnInfo.x * TILE_SIZE;
-            float y = spawnInfo.y * TILE_SIZE; 
-
-            // Adjust y for monsters based on their height to place their feet on the ground
-            if (spawnInfo.type == Monster::MonsterType::GreenTurtle ||
-                spawnInfo.type == Monster::MonsterType::BrownTurtle ||
-                spawnInfo.type == Monster::MonsterType::AngelTurtle) {
-                y = (spawnInfo.y * TILE_SIZE) - 60; // Assuming 60 is the height of the turtle
-            }
+            float y = spawnInfo.y * TILE_SIZE;
             switch (spawnInfo.type) {
                 case Monster::MonsterType::NormalGoomba:
                     monsters.push_back(std::make_unique<NormalGoomba>(x, y));
@@ -560,38 +550,48 @@ void GameWorld::checkMonsterMapCollision()
         // Apply gravity
         monster->setVy(monster->getVy() + 1);
         if (monster->getVy() > 10) monster->setVy(10);
-        monster->setY(monster->getY() + monster->getVy());
+        float nextY = monster->getY() + monster->getVy(); // Calculate next Y position
 
-        // Horizontal movement
-        monster->setX(monster->getX() + monster->getVx());
-
-        // Calculate tile coordinates for monster's bounding box
+        // Calculate tile coordinates for monster's bounding box (based on current X, and nextY for vertical)
         int leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
         int rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
-        int topTile = static_cast<int>(monster->getY() / TILE_SIZE);
-        int bottomTile = static_cast<int>((monster->getY() + monster->getHeight() - 1) / TILE_SIZE);
-        int middleTile = static_cast<int>((monster->getY() + monster->getHeight() / 2 - 1) / TILE_SIZE);
+        
+        // Calculate tile row of the monster's feet at nextY
+        int feetTileY = static_cast<int>((nextY + monster->getHeight()) / TILE_SIZE);
+
+        // Check for vertical collision (ground)
+        if (monster->getVy() > 0 && feetTileY < MAP_HEIGHT && feetTileY >= 0 &&
+            (isSolidTile(currentMap[feetTileY][leftTile]) || isSolidTile(currentMap[feetTileY][rightTile]))) {
+            // Collision detected. Snap monster to the top of the solid tile.
+            monster->setY(feetTileY * TILE_SIZE - monster->getHeight());
+            monster->setVy(0);
+        } else {
+            // No collision, update Y
+            monster->setY(nextY);
+        }
+
+        // Horizontal movement (after vertical resolution)
+        monster->setX(monster->getX() + monster->getVx());
+
+        // Recalculate tile coordinates for horizontal collision based on potentially new Y and new X
+        leftTile = static_cast<int>(monster->getX() / TILE_SIZE);
+        int topTile = static_cast<int>(monster->getY() / TILE_SIZE); // Use resolved Y
+        rightTile = static_cast<int>((monster->getX() + monster->getWidth() - 1) / TILE_SIZE);
+        int middleTile = static_cast<int>((monster->getY() + monster->getHeight() / 2 - 1) / TILE_SIZE); // Use resolved Y
 
         // Check for horizontal collision with walls
         if (monster->getVx() < 0) { // Moving left
             if (leftTile >= 0 && leftTile < MAP_WIDTH &&
-                (isWallTile(currentMap[topTile][leftTile]) || isWallTile(currentMap[middleTile][leftTile]))) {
+                (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
                 monster->setX((leftTile + 1) * TILE_SIZE);
                 monster->setVx(-monster->getVx());
             }
         } else if (monster->getVx() > 0) { // Moving right
             if (rightTile < MAP_WIDTH && rightTile >= 0 &&
-                (isWallTile(currentMap[topTile][rightTile]) || isWallTile(currentMap[middleTile][rightTile]))) {
+                (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
                 monster->setX(rightTile * TILE_SIZE - monster->getWidth());
                 monster->setVx(-monster->getVx());
             }
-        }
-
-        // Check for vertical collision (ground)
-        if (monster->getVy() > 0 && bottomTile < MAP_HEIGHT && bottomTile >= 0 &&
-            (isSolidTile(currentMap[bottomTile][leftTile]) || isSolidTile(currentMap[bottomTile][rightTile]))) {
-            monster->setY(bottomTile * TILE_SIZE - monster->getHeight());
-            monster->setVy(0);
         }
     }
 }
