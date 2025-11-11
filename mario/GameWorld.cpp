@@ -582,7 +582,8 @@ void GameWorld::checkPlayerMonsterCollision()
             } 
             else 
             { // Player collides with monster from side or bottom
-                DamageResult result = player.takeDamage(1);
+                DamageResult result = player.calculateDamageResult(1);
+                player.applyDamageResult(result);
                 if (result == DamageResult::Died) {
                     dead(); // Call GameWorld's dead()
                 }

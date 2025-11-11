@@ -368,27 +368,42 @@ void Player::addLife(int count) {
 
 
 
-DamageResult Player::takeDamage(int damage) {
+DamageResult Player::calculateDamageResult(int damage) const {
     if (isStarGodMode() || isSuperGodMode()) return DamageResult::NoDamage; // Invincible
 
     if (isBig()) 
     {
-        // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
-        setY(getY() + 41); // Adjust position
-        currentState = PlayerState::Small;
-        setHeight(40);
         return DamageResult::Shrunk;
     }
     else if (isFlower() || isTino())
     {
-        // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
-        currentState = PlayerState::Big;
         return DamageResult::Shrunk;
     }
     else 
     {
-        // PlaySoundBuffer(die_Sound); // Assuming sound exists
         return DamageResult::Died;
+    }
+}
+
+void Player::applyDamageResult(DamageResult result) {
+    switch (result) {
+        case DamageResult::Shrunk:
+            if (isBig()) {
+                setY(getY() + 41); // Adjust position
+                currentState = PlayerState::Small;
+                setHeight(40);
+            } else if (isFlower() || isTino()) {
+                currentState = PlayerState::Big;
+            }
+            // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
+            break;
+        case DamageResult::Died:
+            // PlaySoundBuffer(die_Sound); // Assuming sound exists
+            // GameWorld will handle the actual game over state
+            break;
+        case DamageResult::NoDamage:
+            // Do nothing, player is invincible
+            break;
     }
 }
 

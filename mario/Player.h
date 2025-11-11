@@ -48,7 +48,8 @@ public:
     void gainTino();
     void addLife(int count);
     void tinoAttack(GameWorld& world);
-    DamageResult takeDamage(int damage);
+    DamageResult calculateDamageResult(int damage) const;
+    void applyDamageResult(DamageResult result);
 
     bool isBig() const;
     bool isFlower() const;
