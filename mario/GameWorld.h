@@ -36,6 +36,12 @@ enum class GameState_Trans
     GAME_TINO_TRANS,
 };
 
+struct MonsterSpawnInfo {
+    Monster::MonsterType type;
+    int x;
+    int y;
+};
+
 class GameWorld {
 public:
     GameWorld();
@@ -51,6 +57,7 @@ public:
     void handleKeyUp(WPARAM wParam);
 
     void loadStage(int stage);
+    void loadMonster();
 
     // Getter for the renderer to allow safe access from other classes
     GameRender& getGameRender() { return m_gameRender; }
@@ -77,6 +84,7 @@ public:
     void setGameState_trans(GameState_Trans state_trans);
     void setStage_time(int time);
     void setStageBGM();
+    void setdeadStartTime(int time);
 
     void spawnItem(Item::ItemType type, int x, int y);
     void spawnMonster(std::unique_ptr<Monster> monster);
@@ -97,30 +105,35 @@ private:
     void updateMonsters();
     void updateItems();
     void checkCollisions();
-    void checkPlayerCoinCollision();
-
-    void checkPlayerMapCollision();
     void checkMonsterMapCollision();
+    void checkPlayerCoinCollision();
+    void checkPlayerMapCollision();
     void checkPlayerMonsterCollision();
     void checkPlayerItemCollision();
     void checkItemMapCollision();
     void checkFlagCollision();
     void checkClearCollision();
+    void spawnMonsters();
+
+    void initMaps();
+    void initMonsterSpawns();
+    void initMap1();
+    void initMap2();
+    void initMap3();
 
     void dead();
     void resurrection();
     void monster_reset();
     void item_reset();
-    void stage_load();
 
-    void initMaps();
-    void initMap1();
-    void initMap2();
-    void initMap3();
 
     Player player;
     std::vector<std::unique_ptr<Monster>> monsters;
     std::vector<std::unique_ptr<Item>> items;
+
+    std::vector<MonsterSpawnInfo> stage1Monsters;
+    std::vector<MonsterSpawnInfo> stage2Monsters;
+    std::vector<MonsterSpawnInfo> stage3Monsters;
 
     GameState gameState;
     GameState_Trans gameState_trans;

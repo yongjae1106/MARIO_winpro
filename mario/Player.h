@@ -5,8 +5,7 @@ enum class PlayerState {
     Small,
     Big,
     Flower,
-    Tino,
-    Star
+    Tino
 };
 
 enum class DamageResult {
@@ -23,6 +22,8 @@ public:
 
     void update(GameWorld& world);
     void reset();
+
+    void setStop();
 
     int getX() const;
     void setX(int x);
@@ -42,7 +43,7 @@ public:
 
     void grow();
     void shrink();
-    void gainStar();
+    void gainStar(GameWorld& world);
     void gainFlower();
     void gainTino();
     void addLife(int count);
@@ -52,10 +53,12 @@ public:
     bool isBig() const;
     bool isFlower() const;
     bool isTino() const;
-    bool hasStar() const;
-    void setGodMode(bool godMode);
+    void setStarGodMode(bool godMode);
     void updateAnimation();
-    bool isGodMode() const;
+    bool isStarGodMode() const;
+
+    void setSuperGodMode(bool godMode);
+    bool isSuperGodMode() const;
 
     PlayerState getState() const;
     void setState(PlayerState state);
@@ -83,6 +86,9 @@ public:
     int getTinoCooldownZ() const;
     int getTinoCooldownSpace() const;
 
+
+
+
 private:
     void move(GameWorld& world);
     int x, y;
@@ -105,12 +111,14 @@ private:
     bool fire_motion;
     bool tino_motion;
     bool tino_fire_motion;
-    bool supergod;
     int m_fire_cooldown;
     DWORD m_god_timer;
 
-    bool _isGodModeActive; // New member for god mode status
-    DWORD _godModeEndTime; // New member for god mode end time
+    bool _isStarGodModeActive;
+    DWORD _starGodModeEndTime;
+
+    bool _isSuperGodModeActive;
+    DWORD _superGodModeEndTime;
 
     PlayerState currentState;
 

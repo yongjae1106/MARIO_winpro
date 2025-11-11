@@ -9,8 +9,10 @@ using namespace Gdiplus;
 
 Player::Player() {
     setState(PlayerState::Small);
-    _isGodModeActive = false;
-    _godModeEndTime = 0;
+    _isStarGodModeActive = false;
+    _starGodModeEndTime = 0;
+    _isSuperGodModeActive = false;
+    _superGodModeEndTime = 0;
 }
 
 void Player::reset() {
@@ -38,10 +40,11 @@ void Player::reset() {
     fire_motion = false;
     tino_motion = false;
     tino_fire_motion = false;
-    supergod = false;
     setState(PlayerState::Small);
-    _isGodModeActive = false;
-    _godModeEndTime = 0;
+    _isStarGodModeActive = false;
+    _starGodModeEndTime = 0;
+    _isSuperGodModeActive = false;
+    _superGodModeEndTime = 0;
 }
 
 void Player::update(GameWorld& world) {
@@ -51,7 +54,11 @@ void Player::update(GameWorld& world) {
         setVx(0);
         setVy(0);
         setWalking(false);
+        setSuperGodMode(true); // 변신 중 무적 활성화
         return; // Skip all other updates during transformation
+    }
+    else {
+        setSuperGodMode(false); // 변신 끝나면 무적 비활성화
     }
 
     if (world.getGameState() != GameState::GAME_VICTORY && world.getGameState() != GameState::GAME_CLEAR) {
@@ -85,15 +92,18 @@ void Player::update(GameWorld& world) {
         tino_cooldown_space--;
     }
 
-    if (_isGodModeActive) {
-        if (GetTickCount() >= _godModeEndTime) {
-            _isGodModeActive = false; // God mode ends
+    if (_isStarGodModeActive) {
+        if (GetTickCount() >= _starGodModeEndTime) {
+            _isStarGodModeActive = false; // God mode ends
+            world.stopAllSounds();
+            world.setStageBGM();
         }
     }
 
-    if (currentState == PlayerState::Star && (GetTickCount() - m_god_timer >= 10000)) { // 10 seconds of invincibility
-        currentState = PlayerState::Big;
-        world.playSound("world_clear"); // Placeholder sound
+    if (_isSuperGodModeActive) {
+        if (GetTickCount() >= _superGodModeEndTime) {
+            _isSuperGodModeActive = false; // Super god mode ends
+        }
     }
 }
 
@@ -149,6 +159,8 @@ void Player::move(GameWorld& world) {
 
     if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) {
         setVx(direction == 0 ? -15 : 15); // Dash
+        setSuperGodMode(true); // 대시 중 무적 활성화
+        _superGodModeEndTime = GetTickCount() + 1000; // 1초간 무적
         tino_cooldown_space = 60; // Cooldown for 60 frames
     }
 
@@ -165,6 +177,13 @@ void Player::updateAnimation() {
             m_walk_motion_timer = 0;
         }
     }
+}
+
+void Player::setStop()
+{
+    setVx(0);
+    setVy(0);
+    setWalking(false);
 }
 
 int Player::getX() const {
@@ -315,8 +334,10 @@ void Player::shrink() {
     }
 }
 
-void Player::gainStar() {
-    currentState = PlayerState::Star;
+void Player::gainStar(GameWorld& world) {
+    setStarGodMode(true);
+    world.stopAllSounds();
+    world.playSound("InvincibilityTheme", true);
     // Implement star power-up effects (e.g., temporary invincibility)
 }
 
@@ -345,27 +366,39 @@ void Player::addLife(int count) {
     life += count;
 }
 
-DamageResult Player::takeDamage(int damage) {
-    if (isGodMode()) return DamageResult::NoDamage; // Invincible
 
-    if (isBig() || isFlower() || isTino()) {
+
+DamageResult Player::takeDamage(int damage) {
+    if (isStarGodMode() || isSuperGodMode()) return DamageResult::NoDamage; // Invincible
+
+    if (isBig()) 
+    {
         // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
         setY(getY() + 41); // Adjust position
         currentState = PlayerState::Small;
         setHeight(40);
         return DamageResult::Shrunk;
-    } else {
+    }
+    else if (isFlower() || isTino())
+    {
+        // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
+        currentState = PlayerState::Big;
+        return DamageResult::Shrunk;
+    }
+    else 
+    {
         // PlaySoundBuffer(die_Sound); // Assuming sound exists
-        setDead(true);
         return DamageResult::Died;
     }
 }
 
-bool Player::isBig() const {
-    return currentState == PlayerState::Big || currentState == PlayerState::Flower || currentState == PlayerState::Tino || currentState == PlayerState::Star;
+bool Player::isBig() const 
+{
+    return currentState == PlayerState::Big || currentState == PlayerState::Flower || currentState == PlayerState::Tino;
 }
 
-bool Player::isFlower() const {
+bool Player::isFlower() const 
+{
     return currentState == PlayerState::Flower;
 }
 
@@ -373,22 +406,37 @@ bool Player::isTino() const {
     return currentState == PlayerState::Tino;
 }
 
-bool Player::hasStar() const {
-    return currentState == PlayerState::Star;
-}
-
-void Player::setGodMode(bool godMode) {
-    if (godMode) {
-        _isGodModeActive = true;
-        _godModeEndTime = GetTickCount() + 3000; // 3 seconds of god mode
+void Player::setStarGodMode(bool godMode) 
+{
+    if (godMode) 
+    {
+        _isStarGodModeActive = true;
+        _starGodModeEndTime = GetTickCount() + 10000; // 10 seconds of god mode
     } else {
-        _isGodModeActive = false;
-        _godModeEndTime = 0;
+        _isStarGodModeActive = false;
+        _starGodModeEndTime = 0;
     }
 }
 
-bool Player::isGodMode() const {
-    return _isGodModeActive && (GetTickCount() < _godModeEndTime);
+bool Player::isStarGodMode() const 
+{
+    return _isStarGodModeActive && (GetTickCount() < _starGodModeEndTime);
+}
+
+void Player::setSuperGodMode(bool godMode) 
+{
+    if (godMode) 
+    {
+        _isSuperGodModeActive = true;
+        _superGodModeEndTime = GetTickCount() + 3000; // 3 seconds of god mode by default
+    } else {
+        _isSuperGodModeActive = false;
+        _superGodModeEndTime = 0;
+    }
+}
+
+bool Player::isSuperGodMode() const {
+    return _isSuperGodModeActive && (GetTickCount() < _superGodModeEndTime);
 }
 
 void Player::tinoAttack(GameWorld& world) {

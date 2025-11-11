@@ -55,85 +55,154 @@ void GameWorld::stopAllSounds() {
     m_sound.stopAllSounds();
 }
 
-void GameWorld::update() {
-    switch (gameState) {
-        case GameState::GAME_TITLE:
-            // Only handle input for starting the game
-            break;
-        case GameState::GAME_START:
-            loadStage(1);
-            player.reset(); // Reset player state for new game
-            gameState = GameState::GAME_RUNNING;
-            break;
-        case GameState::GAME_RUNNING:
+void GameWorld::update() 
+{
+    switch (gameState) 
+    {
+    case GameState::GAME_START:
+    {
+        loadStage(1);
+        player.reset(); // Reset player state for new game
+        gameState = GameState::GAME_RUNNING;
+        break;
+    }
+    case GameState::GAME_RUNNING:
+    {
+        switch (gameState_trans)
         {
-            switch (gameState_trans)
+            case GameState_Trans::GAME_NONE:
             {
-                case GameState_Trans::GAME_NONE:
-                {
-                    break; // No special action when not transforming
-                }
-                // mushroom 변신 모션
-                case GameState_Trans::GAME_BIG_TRANS:
-                {
-                    DWORD now = GetTickCount();
-                    if (now - transformStartTime >= 1500)
-                    {
-                        if (!player.isBig())
-                        {
-                            player.grow();
-                            gameState_trans = GameState_Trans::GAME_NONE;
-                        }
-                    }
-                    break;
-                }
-                // flower 변신 모션
-                case GameState_Trans::GAME_FLOWER_TRANS:
-                {
-                    DWORD now = GetTickCount();
-                    if (now - transformStartTime >= 1500)
-                    {
-                        if (!player.isFlower())
-                        {
-                            player.gainFlower();
-                            gameState_trans = GameState_Trans::GAME_NONE;
-                        }
-                    }
-                    break;
-                }
-                // tino 변신 모션
-                case GameState_Trans::GAME_TINO_TRANS:
-                {
-                    DWORD now = GetTickCount();
-                    if (now - transformStartTime >= 1500)
-                    {
-                        if (!player.isTino())
-                        {
-                            player.gainTino();
-                            gameState_trans = GameState_Trans::GAME_NONE;
-                        }
-                    }
-                    break;
-                }
+                updatePlayer();
+                break; // No special action when not transforming
             }
-
-            // 승리 모션
-            if (gameState == GameState::GAME_VICTORY)
+            // mushroom 변신 모션
+            case GameState_Trans::GAME_BIG_TRANS:
             {
                 DWORD now = GetTickCount();
-
-                if (now - victoryStart >= 5000)
+                if (now - transformStartTime >= 1500)
                 {
-                    stage++;
-                    loadStage(stage);
-                    gameState = GameState::GAME_RUNNING;
+                    if (!player.isBig())
+                    {
+                        player.grow();
+                        gameState_trans = GameState_Trans::GAME_NONE;
+                    }
                 }
+                break;
             }
-            // 최종 승리 모션
-            else if (gameState == GameState::GAME_CLEAR)
+            // flower 변신 모션
+            case GameState_Trans::GAME_FLOWER_TRANS:
             {
+                DWORD now = GetTickCount();
+                if (now - transformStartTime >= 1500)
+                {
+                    if (!player.isFlower())
+                    {
+                        player.gainFlower();
+                        gameState_trans = GameState_Trans::GAME_NONE;
+                    }
+                }
+                break;
+            }
+            // tino 변신 모션
+            case GameState_Trans::GAME_TINO_TRANS:
+            {
+                DWORD now = GetTickCount();
+                if (now - transformStartTime >= 1500)
+                {
+                    if (!player.isTino())
+                    {
+                        player.gainTino();
+                        gameState_trans = GameState_Trans::GAME_NONE;
+                    }
+                }
+                break;
+            }
+        }
 
-                if (GetTickCount() - clearStart >= 10000)
+        if (player.getCoin() > 99)
+        {
+            playSound("1-up");
+            player.setLife(player.getLife() + 1);
+            player.setCoin(0);
+        }
+
+        // 변신중일때 정지
+        if(gameState_trans != GameState_Trans::GAME_NONE) 
+        {
+            player.setStop();
+        }
+
+        updateMonsters(); // Always update monsters
+        updateItems();    // Always update items
+        checkCollisions(); // Always check collisions
+
+        // Camera update only if not transforming
+        if (gameState_trans == GameState_Trans::GAME_NONE) 
+        {
+            // 카메라 업데이트
+            // 플레이어의 화면 X 위치 계산
+            int playerX = player.getX();
+
+            // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
+            if (playerX > SCREEN_WIDTH / 2)
+            {
+                cameraX += player.getVx();
+                player.setX(SCREEN_WIDTH / 2);
+            }
+            // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
+            else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
+            {
+                cameraX += player.getVx();
+                if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
+                player.setX(SCREEN_WIDTH / 2);
+            }
+
+            // cameraX를 맵 경계 내로 제한
+            if (cameraX < 0) cameraX = 0;
+            if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
+                cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+        }        default:
+            break;
+    }
+    // 승리 모션
+    case GameState::GAME_VICTORY:
+    {
+        DWORD now = GetTickCount();
+
+        if (now - victoryStart >= 5000)
+        {
+            stage++;
+            loadStage(stage);
+            gameState = GameState::GAME_RUNNING;
+        }
+        break;
+    }
+    // 최종 승리 모션
+    case GameState::GAME_CLEAR:
+    {
+
+        if (GetTickCount() - clearStart >= 10000)
+        {
+            stage = 1;
+            gameclear_text = false;
+            gameStarted = false;
+
+            gameState = GameState::GAME_RUNNING;
+            return;
+        }
+        break;
+    }
+    // 시망모션
+    case GameState::GAME_OVER:
+    {
+        DWORD now = GetTickCount();
+        if (player.isDead())
+        {
+            static bool motion1;
+
+            if (now - deadStartTime >= 2000)
+            {
+                if (player.getLife() <= 0)
                 {
                     stage = 1;
                     gameclear_text = false;
@@ -142,83 +211,16 @@ void GameWorld::update() {
                     gameState = GameState::GAME_RUNNING;
                     return;
                 }
+                player.setDead(false);
+                motion1 = false;
             }
-            // 시망모션
-            else if (gameState == GameState::GAME_OVER)
-            {
-                DWORD now = GetTickCount();
-                if (player.isDead())
-                {
-                    static bool motion1;
-
-                    if (now - deadStartTime >= 2000)
-                    {
-                        if (player.getLife() <= 0)
-                        {
-                            stage = 1;
-                            gameclear_text = false;
-                            gameStarted = false;
-
-                            gameState = GameState::GAME_RUNNING;
-                            return;
-                        }
-                        player.setDead(false);
-                        motion1 = false;
-                    }
-                    return;
-                }
+            return;
+        }
 
 
-                return;
-            }
+        return;
+    }
 
-            if (player.getCoin() > 99)
-            {
-                playSound("1-up");
-                player.setLife(player.getLife() + 1);
-                player.setCoin(0);
-            }
-
-            // Player update only if not transforming
-            if (gameState_trans == GameState_Trans::GAME_NONE) {
-                updatePlayer();
-            } else {
-                // During transformation, ensure player velocity is zero
-                player.setVx(0);
-                player.setVy(0);
-                player.setWalking(false);
-            }
-
-            updateMonsters(); // Always update monsters
-            updateItems();    // Always update items
-            checkCollisions(); // Always check collisions
-
-            // Camera update only if not transforming
-            if (gameState_trans == GameState_Trans::GAME_NONE) {
-                // 카메라 업데이트
-                // 플레이어의 화면 X 위치 계산
-                int playerX = player.getX();
-
-                // 플레이어가 화면 중앙을 넘어 오른쪽으로 이동하는 경우
-                if (playerX > SCREEN_WIDTH / 2)
-                {
-                    cameraX += player.getVx();
-                    player.setX(SCREEN_WIDTH / 2);
-                }
-                // 플레이어가 화면 중앙을 넘어 왼쪽으로 이동하는 경우 (cameraX가 0보다 큰 경우에만)
-                else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0)
-                {
-                    cameraX += player.getVx();
-                    if (cameraX < 0) cameraX = 0; // 카메라가 왼쪽 경계를 넘어가지 않도록 보장
-                    player.setX(SCREEN_WIDTH / 2);
-                }
-
-                // cameraX를 맵 경계 내로 제한
-                if (cameraX < 0) cameraX = 0;
-                if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
-                    cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
-            }        default:
-            break;
     }
 }
 
@@ -398,6 +400,10 @@ void GameWorld::setGameState_trans(GameState_Trans state_trans) {
 void GameWorld::setStage_time(int time) {
     stage_time = time;
 }
+void GameWorld::setdeadStartTime(int time)
+{
+    deadStartTime = time;
+}
 void GameWorld::updatePlayer() {
     player.update(*this);
 }
@@ -439,7 +445,6 @@ void GameWorld::checkCollisions() {
 
 
 // ... other collision methods ...
-
 
 void GameWorld::dead() {
     stopAllSounds();
@@ -551,33 +556,35 @@ void GameWorld::checkMonsterMapCollision()
     }
 }
 
-void GameWorld::checkPlayerMonsterCollision() {
+void GameWorld::checkPlayerMonsterCollision() 
+{
     if (player.isSuperGodMode()) return; // Player is invincible
 
-    for (auto& monster : monsters) {
+    for (auto& monster : monsters) 
+    {
         if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
 
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
                         monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight())) 
         {
-            if (player.isStarGodMode()) { // Player is in Star mode
+            if (player.isStarGodMode()) 
+            { // Player is in Star mode
                 playSound("kick");
                 monster->setVy(-15); // Make monster fly upwards
                 monster->setFalling(true);
             }
-            // Player is on top of the monster (stomping)
-            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) {
+            // 밟았을 때
+            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) 
+            {
                 monster->takeDamage(*this, 1);
                 player.setVy(-10); // Player bounces up
                 playSound("stomp");
-            } else { // Player collides with monster from side or bottom
+            } 
+            else 
+            { // Player collides with monster from side or bottom
                 DamageResult result = player.takeDamage(1);
-                if (result == DamageResult::Shrunk) {
-                    gameState_trans = GameState_Trans::GAME_BIG_TRANS;
-                    transformStartTime = GetTickCount();
-                } else if (result == DamageResult::Died) {
-                    playSound("mariodie");
-                    dead();
+                if (result == DamageResult::Died) {
+                    dead(); // Call GameWorld's dead()
                 }
             }
         }
