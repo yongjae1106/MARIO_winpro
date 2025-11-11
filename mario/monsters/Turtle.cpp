@@ -52,7 +52,16 @@ void Turtle::takeDamage(GameWorld& world, int damage) {
         m_shellTimer = GetTickCount();
     } else if (m_state == TurtleState::SHELL) {
         m_state = TurtleState::SPINNING;
-        // Set vx based on player's position, which should be handled in GameWorld
+        // Determine direction based on player's collision
+        int playerX = world.getPlayer().getX();
+        int monsterX = getX();
+        int spinSpeed = 5; // Define a spin speed
+
+        if (playerX < monsterX) { // Player collided from left, spin right
+            setVx(spinSpeed);
+        } else { // Player collided from right, spin left
+            setVx(-spinSpeed);
+        }
     } else if (m_state == TurtleState::SPINNING) {
         m_state = TurtleState::SHELL;
         setVx(0);
