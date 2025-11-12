@@ -60,6 +60,7 @@ private:
     void drawItems(Gdiplus::Graphics& graphics, const GameWorld& world);
     void drawUI(Gdiplus::Graphics& graphics, const GameWorld& world);
     void drawTitleScreen(Gdiplus::Graphics& graphics, const GameWorld& world);
+    void drawTitleDead(Gdiplus::Graphics& graphics, const GameWorld& world);
 
     // GDI+ startup token
     ULONG_PTR gdiplusToken;

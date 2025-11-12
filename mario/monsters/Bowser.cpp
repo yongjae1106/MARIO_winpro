@@ -11,7 +11,7 @@ Bowser::Bowser(int x, int y)
     direction = 1; // Assuming 1 for right, -1 for left
 }
 
-void Bowser::update(GameWorld& world) {
+void Bowser::monster_logic(GameWorld& world) {
     if (!isAlive()) return;
 
     // === Movement ===
@@ -68,10 +68,6 @@ void Bowser::update(GameWorld& world) {
         setAlive(false);
         // Remove koopa blocks
     }
-}
-
-void Bowser::render(HDC hdc, int cameraX) {
-    // Rendering is handled by GameRender::drawMonsters
 }
 
 void Bowser::takeDamage(GameWorld& world, int damage) {

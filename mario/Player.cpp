@@ -47,18 +47,17 @@ void Player::reset() {
     _superGodModeEndTime = 0;
 }
 
-void Player::update(GameWorld& world) {
+void Player::update(GameWorld& world) 
+{
     if (world.getGameState_trans() == GameState_Trans::GAME_BIG_TRANS ||
         world.getGameState_trans() == GameState_Trans::GAME_FLOWER_TRANS ||
-        world.getGameState_trans() == GameState_Trans::GAME_TINO_TRANS) {
+        world.getGameState_trans() == GameState_Trans::GAME_TINO_TRANS)
+    {
         setVx(0);
         setVy(0);
         setWalking(false);
         setSuperGodMode(true); // 변신 중 무적 활성화
         return; // Skip all other updates during transformation
-    }
-    else {
-        setSuperGodMode(false); // 변신 끝나면 무적 비활성화
     }
 
     if (world.getGameState() != GameState::GAME_VICTORY && world.getGameState() != GameState::GAME_CLEAR) {
@@ -107,8 +106,9 @@ void Player::update(GameWorld& world) {
     }
 }
 
-void Player::move(GameWorld& world) {
-
+void Player::move(GameWorld& world) 
+{
+    if (world.getPlayer().isDead()) return;
     const bool* keyState = world.getKeyState();
     // 디버그: move 함수 시작 시 키 상태 및 현재 vx 출력
     TCHAR debugMessage[256];
@@ -143,6 +143,16 @@ void Player::move(GameWorld& world) {
 
     if (keyState[VK_UP] && !isJumping())
     {
+        switch (currentState)
+        {
+            case (PlayerState::Small):
+            {
+                world.playSound("jump-small");
+                break;
+            }
+            default:
+                world.playSound("jump-super");
+        }
         setVy(-20);
         setJumping(true);
     }
@@ -385,28 +395,6 @@ DamageResult Player::calculateDamageResult(int damage) const {
     }
 }
 
-void Player::applyDamageResult(DamageResult result) {
-    switch (result) {
-        case DamageResult::Shrunk:
-            if (isBig()) {
-                setY(getY() + 41); // Adjust position
-                currentState = PlayerState::Small;
-                setHeight(40);
-            } else if (isFlower() || isTino()) {
-                currentState = PlayerState::Big;
-            }
-            // PlaySoundBuffer(powerdown_Sound); // Assuming sound exists
-            break;
-        case DamageResult::Died:
-            // PlaySoundBuffer(die_Sound); // Assuming sound exists
-            // GameWorld will handle the actual game over state
-            break;
-        case DamageResult::NoDamage:
-            // Do nothing, player is invincible
-            break;
-    }
-}
-
 bool Player::isBig() const 
 {
     return currentState == PlayerState::Big || currentState == PlayerState::Flower || currentState == PlayerState::Tino;
@@ -427,7 +415,9 @@ void Player::setStarGodMode(bool godMode)
     {
         _isStarGodModeActive = true;
         _starGodModeEndTime = GetTickCount() + 10000; // 10 seconds of god mode
-    } else {
+    } 
+    else 
+    {
         _isStarGodModeActive = false;
         _starGodModeEndTime = 0;
     }
@@ -444,14 +434,16 @@ void Player::setSuperGodMode(bool godMode)
     {
         _isSuperGodModeActive = true;
         _superGodModeEndTime = GetTickCount() + 3000; // 3 seconds of god mode by default
-    } else {
+    } 
+    else 
+    {
         _isSuperGodModeActive = false;
         _superGodModeEndTime = 0;
     }
 }
 
 bool Player::isSuperGodMode() const {
-    return _isSuperGodModeActive && (GetTickCount() < _superGodModeEndTime);
+    return _isSuperGodModeActive;
 }
 
 void Player::tinoAttack(GameWorld& world) {

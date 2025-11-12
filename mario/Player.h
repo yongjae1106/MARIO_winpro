@@ -49,7 +49,6 @@ public:
     void addLife(int count);
     void tinoAttack(GameWorld& world);
     DamageResult calculateDamageResult(int damage) const;
-    void applyDamageResult(DamageResult result);
 
     bool isBig() const;
     bool isFlower() const;
@@ -86,9 +85,6 @@ public:
     void setHeight(int height);
     int getTinoCooldownZ() const;
     int getTinoCooldownSpace() const;
-
-
-
 
 private:
     void move(GameWorld& world);

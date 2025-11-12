@@ -6,9 +6,7 @@ class BlueGoomba : public Goomba {
 public:
     BlueGoomba(int x, int y);
 
-    void update(GameWorld& world) override;
-    void render(HDC hdc, int cameraX) override;
-
+    void monster_logic(GameWorld& world) override;
 private:
     int m_jumpTimer;
 };

@@ -2,12 +2,12 @@
 #include "../GameWorld.h"
 
 RedGoomba::RedGoomba(int x, int y)
-    : Goomba(MonsterType::Goomba, x, y, 40, 40) {
+    : Goomba(MonsterType::RedGoomba, x, y, 40, 40) {
     setVx(-2); // Faster than NormalGoomba
 }
 
-void RedGoomba::update(GameWorld& world) {
-    if (!isAlive()) return;
+void RedGoomba::monster_logic(GameWorld& world) {
+    if (!isAlive() || isFalling()) return;
 
     // Check for ledges
     int nextX = getX() + getVx();
@@ -29,8 +29,4 @@ void RedGoomba::update(GameWorld& world) {
     }
 
     setX(getX() + getVx());
-}
-
-void RedGoomba::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
 }

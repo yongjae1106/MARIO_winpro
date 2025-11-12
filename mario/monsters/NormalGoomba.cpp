@@ -2,12 +2,12 @@
 #include "../GameWorld.h"
 
 NormalGoomba::NormalGoomba(int x, int y)
-    : Goomba(MonsterType::Goomba, x, y, 40, 40) {
+    : Goomba(MonsterType::NormalGoomba, x, y, 40, 40) {
     setVx(-1);
 }
 
-void NormalGoomba::update(GameWorld& world) {
-    if (!isAlive()) return;
+void NormalGoomba::monster_logic(GameWorld& world) {
+    if (!isAlive() || isFalling()) return;
 
     // Check for ledges
     int nextX = getX() + getVx();
@@ -16,21 +16,10 @@ void NormalGoomba::update(GameWorld& world) {
     int footTileY = getY() / TILE_SIZE + 1;
 
     const int(*currentMap)[MAP_WIDTH] = world.getCurrentMap();
-    bool willFall = true;
     if (footTileX >= 0 && footTileX < MAP_WIDTH && footTileY >= 0 && footTileY < MAP_HEIGHT)
     {
         int tile = currentMap[footTileY][footTileX];
-        if (tile != 0 && tile != 2)
-            willFall = false;
-    }
-
-    if (willFall) {
-        setVx(-getVx());
     }
 
     setX(getX() + getVx());
-}
-
-void NormalGoomba::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
 }

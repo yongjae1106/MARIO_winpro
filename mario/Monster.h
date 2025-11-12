@@ -6,15 +6,17 @@ class GameWorld;
 
 class Monster {
 public:
-    enum class MonsterType { Goomba, Turtle, AngelTurtle, Bowser };
+    enum class MonsterType { NormalGoomba, RedGoomba, BlueGoomba, GreenTurtle, BrownTurtle, AngelTurtle, Bowser };
 
     Monster(MonsterType type, int x, int y, int width, int height);
     virtual ~Monster() = default;
 
-    virtual void update(GameWorld& world) = 0;
-    virtual void render(HDC hdc, int cameraX) = 0;
+    virtual void checkMonsterMapCollision(GameWorld& world);
+
+    virtual void monster_logic(GameWorld& world) = 0;
 
     // Common getters and setters
+
     MonsterType getType() const;
     int getX() const;
     void setX(int x);
@@ -31,9 +33,11 @@ public:
     bool isDead() const;
     bool isFalling() const;
     void setFalling(bool isFalling);
+    void checkFallDeath();
+    void gravity();
+    void update(GameWorld& world);
     virtual void takeDamage(GameWorld& world, int damage);
 
-protected:
     MonsterType type;
     int x, y;
     int vx, vy;

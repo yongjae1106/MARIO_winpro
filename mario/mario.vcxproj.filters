@@ -10,8 +10,6 @@
     <ClCompile Include="monsters\Turtle.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
-    <ClCompile Include="Monster.cpp" />
-    <ClCompile Include="Item.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="monsters\AngelTurtle.cpp">
       <Filter>Monster</Filter>
@@ -40,26 +38,35 @@
     <ClCompile Include="monsters\RedGoomba.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
-    <ClCompile Include="items\Flower.cpp" />
     <ClCompile Include="items\Mushroom.cpp" />
-    <ClCompile Include="items\Tino.cpp" />
-    <ClCompile Include="items\UpMushroom.cpp" />
-    <ClCompile Include="items\Star.cpp" />
     <ClCompile Include="Sound.cpp" />
+    <ClCompile Include="Monster.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Tino.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="items\UpMushroom.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Star.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Flower.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
     <ClInclude Include="GameWorld.h" />
-    <ClInclude Include="Monster.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="monsters\Goomba.h">
       <Filter>Monster</Filter>
     </ClInclude>
-    <ClInclude Include="monsters\Turtle.h">
-      <Filter>Monster</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Item.h" />
     <ClInclude Include="monsters\AngelTurtle.h">
       <Filter>Monster</Filter>
     </ClInclude>
@@ -89,12 +96,29 @@
       <Filter>Monster</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="items\Flower.h" />
     <ClInclude Include="items\Mushroom.h" />
-    <ClInclude Include="items\Tino.h" />
-    <ClInclude Include="items\UpMushroom.h" />
-    <ClInclude Include="items\Star.h" />
     <ClInclude Include="Sound.h" />
+    <ClInclude Include="monsters\Turtle.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Tino.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="items\UpMushroom.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Star.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Flower.h">
+      <Filter>Item</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Monster">

@@ -202,6 +202,11 @@ void GameWorld::transUpdate()
                 player.grow();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
+            else if (player.isBig())
+            {
+                player.shrink();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
         }
         break;
     }
@@ -217,6 +222,11 @@ void GameWorld::transUpdate()
                 player.gainFlower();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
+            else
+            {
+                player.grow();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
         }
         break;
     }
@@ -230,6 +240,11 @@ void GameWorld::transUpdate()
             {
                 playSound("playerup");
                 player.gainTino();
+                gameState_trans = GameState_Trans::GAME_NONE;
+            }
+            else
+            {
+                player.grow();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
         }
@@ -562,18 +577,39 @@ void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
 void GameWorld::applyplayertakedamage()
 {
     if (player.isSuperGodMode() || player.isDead()) return;
+
     DamageResult result = player.calculateDamageResult(1);
-    player.applyDamageResult(result);
-    if (result == DamageResult::Shrunk) 
+    switch (result) 
     {
-        playSound("powerdown"); // Use powerup sound for shrinking
-        return;
-    } 
-    else if (result == DamageResult::Died) 
-    {
-        dead(); // Call GameWorld's dead()
-        return;
+        case DamageResult::Shrunk:
+            if (getPlayer().isBig())
+            {
+                playSound("pipe");
+                if (getPlayer().isFlower())
+                {
+                    getPlayer().setState(PlayerState::Big);
+                    setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
+                    break;
+                }
+                else if (getPlayer().isTino())
+                {
+                    getPlayer().setState(PlayerState::Big);
+                    setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
+                    break;
+                }
+                setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
+                break;
+            }
+            break;
+        case DamageResult::Died:
+            dead(); // Call GameWorld's dead()
+            break;
+        case DamageResult::NoDamage:
+            break;
     }
+    getPlayer().setSuperGodMode(true);
+
+    return;
 }
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ

@@ -64,9 +64,17 @@ void GameRender::render(HDC hdc, const GameWorld& world) {
     Gdiplus::Graphics graphics(memDC);
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
-    if (world.getGameState() == GameState::GAME_TITLE) {
+    if (world.getGameState() == GameState::GAME_TITLE) 
+    {
         drawTitleScreen(graphics, world);
-    } else {
+    } 
+    else if (world.getGameState() == GameState::GAME_OVER && world.getPlayer().isDead())
+    {
+        drawTitleDead(graphics, world);
+        drawUI(graphics, world);
+    }
+    else 
+    {
         drawBackground(graphics, world);
         drawMap(graphics, world);
         drawItems(graphics, world);
@@ -180,7 +188,7 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
         Gdiplus::Image* imageToDraw = nullptr;
 
         switch (monster->getType()) {
-            case Monster::MonsterType::Goomba:
+            case Monster::MonsterType::NormalGoomba:
             {
                 if ((monster->getX() / 20) % 2 == 0) {
                     imageToDraw = getGoombaImage();
@@ -189,16 +197,21 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
                 }
                 break;
             }
-            case Monster::MonsterType::Turtle:
+            case Monster::MonsterType::GreenTurtle:
             {
                 const Turtle* turtle = static_cast<const Turtle*>(monster.get());
                 if (turtle->getState() == Turtle::TurtleState::NORMAL) {
-                    if ((monster->getX() / 20) % 2 == 0) {
+                    if ((monster->getX() / 20) % 2 == 0) 
+                    {
                         imageToDraw = getTurtleImage();
-                    } else {
+                    } 
+                    else 
+                    {
                         imageToDraw = getTurtleImage2();
                     }
-                } else {
+                } 
+                else 
+                {
                     imageToDraw = getTurtleShellImage();
                 }
                 break;
@@ -215,7 +228,8 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
             // ... other monster types
         }
 
-        if (imageToDraw) {
+        if (imageToDraw) 
+        {
             if (monster->getVx() > 0) {
                 imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
             }
@@ -233,162 +247,6 @@ Gdiplus::Image* GameRender::loadImage(const WCHAR* path) {
         exit(1);
     }
     return image;
-}
-
-void GameRender::loadImages() {
-    peach = loadImage(L"resource/peach/peach.png");
-    stage_1_dirt = loadImage(L"resource/tile/stage_1_dirt.png");
-    stage_1_brick = loadImage(L"resource/tile/stage_1_brick.png");
-    stage_1_background = loadImage(L"resource/background/stage_1_background.png");
-    stage_2_background = loadImage(L"resource/background/stage_2_background.png");
-    mushroom_head_1 = loadImage(L"resource/tile/mushroom_head_1.png");
-    mushroom_head_2 = loadImage(L"resource/tile/mushroom_head_2.png");
-    mushroom_head_3 = loadImage(L"resource/tile/mushroom_head_3.png");
-    mushroom_trunk_1 = loadImage(L"resource/tile/mushroom_trunk_1.png");
-    mushroom_trunk_2 = loadImage(L"resource/tile/mushroom_trunk_2.png");
-    cloud_block = loadImage(L"resource/tile/cloud_block.png");
-    stone_tile = loadImage(L"resource/tile/stone_tile.png");
-    koopa_block = loadImage(L"resource/tile/koopa_block.png");
-    fire_head = loadImage(L"resource/tile/fire_head.png");
-    fire_body = loadImage(L"resource/tile/fire_body.png");
-    fire_switch_tile = loadImage(L"resource/tile/fire_switch_tile.png");
-    firetrap = loadImage(L"resource/tile/fire.png");
-    pipe_1 = loadImage(L"resource/pipe/pipe_1.png");
-    pipe_2 = loadImage(L"resource/pipe/pipe_2.png");
-    pipe_3 = loadImage(L"resource/pipe/pipe_3.png");
-    pipe_4 = loadImage(L"resource/pipe/pipe_4.png");
-    item_block_1 = loadImage(L"resource/tile/item_block_1.png");
-    item_block_2 = loadImage(L"resource/tile/item_block_2.png");
-    item_block_3 = loadImage(L"resource/tile/item_block_3.png");
-    item_block_used = loadImage(L"resource/tile/item_block_used.png");
-    unbreakable_block = loadImage(L"resource/tile/unbreakable_block.png");
-    castle_1 = loadImage(L"resource/tile/castle_1.png");
-    castle_blank = loadImage(L"resource/tile/castle_blank.png");
-    coin_1 = loadImage(L"resource/tile/coin_1.png");
-    coin_2 = loadImage(L"resource/tile/coin_2.png");
-    coin_3 = loadImage(L"resource/tile/coin_3.png");
-    mario_stop = loadImage(L"resource/mario/mario_stop.png");
-    mario_walk_motion_1 = loadImage(L"resource/mario/mario_walk_motion_1.png");
-    mario_walk_motion_2 = loadImage(L"resource/mario/mario_walk_motion_2.png");
-    mario_walk_motion_3 = loadImage(L"resource/mario/mario_walk_motion_3.png");
-    mario_jump = loadImage(L"resource/mario/mario_jump.png");
-    mario_dead = loadImage(L"resource/mario/mario_dead.png");
-    big_mario_stop = loadImage(L"resource/mario/big_mario_stop.png");
-    big_mario_walk_motion_1 = loadImage(L"resource/mario/big_mario_walk_motion_1.png");
-    big_mario_walk_motion_2 = loadImage(L"resource/mario/big_mario_walk_motion_2.png");
-    big_mario_walk_motion_3 = loadImage(L"resource/mario/big_mario_walk_motion_3.png");
-    big_mario_jump = loadImage(L"resource/mario/big_mario_jump.png");
-    big_mario_change = loadImage(L"resource/mario/big_mario_change.png");
-    tino_mario_stop = loadImage(L"resource/mario/tino/Tino_mario_stop.png");
-    tino_mario_jump = loadImage(L"resource/mario/tino/Tino_mario_jump.png");
-    tino_mario_walk_motion_1 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_1.png");
-    tino_mario_walk_motion_2 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_2.png");
-    tino_mario_walk_motion_3 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_3.png");
-    tino_mario_attack_1 = loadImage(L"resource/mario/tino/Tino_mario_attack_1.png");
-    tino_mario_attack_2 = loadImage(L"resource/mario/tino/Tino_mario_attack_2.png");
-    tino_mario_attack_3 = loadImage(L"resource/mario/tino/Tino_mario_attack_3.png");
-    tino_mario_attack_4 = loadImage(L"resource/mario/tino/Tino_mario_attack_4.png");
-    tino_mario_attack_5 = loadImage(L"resource/mario/tino/Tino_mario_attack_5.png");
-    tino_mario_attack_6 = loadImage(L"resource/mario/tino/Tino_mario_attack_6.png");
-    tino_mario_fire_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_1.png");
-    tino_mario_fire_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_2.png");
-    tino_mario_fire_R_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_1.png");
-    tino_mario_fire_R_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_2.png");
-    tino_mario_fire_fade_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_1.png");
-    tino_mario_fire_fade_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_2.png");
-    tino_mario_fire_fade_3 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_3.png");
-    flower_mario_stop = loadImage(L"resource/mario/flower/flower_mario_stop.png");
-    flower_mario_jump = loadImage(L"resource/mario/flower/flower_mario_jump.png");
-    flower_mario_walk_motion_1 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_1.png");
-    flower_mario_walk_motion_2 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_2.png");
-    flower_mario_walk_motion_3 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_3.png");
-    flower_mario_change = loadImage(L"resource/mario/flower/flower_mario_change.png");
-    flower_mario_fire = loadImage(L"resource/mario/flower/flower_mario_fire.png");
-    star_mario_stop_1 = loadImage(L"resource/mario/star/star_mario_stop_1.png");
-    star_mario_stop_2 = loadImage(L"resource/mario/star/star_mario_stop_2.png");
-    star_mario_stop_3 = loadImage(L"resource/mario/star/star_mario_stop_3.png");
-    star_mario_walk_motion_1_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_1.png");
-    star_mario_walk_motion_1_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_2.png");
-    star_mario_walk_motion_1_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_3.png");
-    star_mario_walk_motion_2_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_1.png");
-    star_mario_walk_motion_2_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_2.png");
-    star_mario_walk_motion_2_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_3.png");
-    star_mario_walk_motion_3_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_1.png");
-    star_mario_walk_motion_3_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_2.png");
-    star_mario_walk_motion_3_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_3.png");
-    star_mario_jump_1 = loadImage(L"resource/mario/star/star_mario_jump_1.png");
-    star_mario_jump_2 = loadImage(L"resource/mario/star/star_mario_jump_2.png");
-    star_mario_jump_3 = loadImage(L"resource/mario/star/star_mario_jump_3.png");
-    star_big_mario_stop_1 = loadImage(L"resource/mario/star/star_big_mario_stop_1.png");
-    star_big_mario_stop_2 = loadImage(L"resource/mario/star/star_big_mario_stop_2.png");
-    star_big_mario_stop_3 = loadImage(L"resource/mario/star/star_big_mario_stop_3.png");
-    star_big_mario_walk_motion_1_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_1.png");
-    star_big_mario_walk_motion_1_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_2.png");
-    star_big_mario_walk_motion_1_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_3.png");
-    star_big_mario_walk_motion_2_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_1.png");
-    star_big_mario_walk_motion_2_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_2.png");
-    star_big_mario_walk_motion_2_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_3.png");
-    star_big_mario_walk_motion_3_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_1.png");
-    star_big_mario_walk_motion_3_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_2.png");
-    star_big_mario_walk_motion_3_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_3.png");
-    star_big_mario_jump_1 = loadImage(L"resource/mario/star/star_big_mario_jump_1.png");
-    star_big_mario_jump_2 = loadImage(L"resource/mario/star/star_big_mario_jump_2.png");
-    star_big_mario_jump_3 = loadImage(L"resource/mario/star/star_big_mario_jump_3.png");
-    item_mushroom = loadImage(L"resource/items/mushroom.png");
-    item_up_mushroom = loadImage(L"resource/items/up_mushroom.png");
-    item_star_1 = loadImage(L"resource/items/star_1.png");
-    item_star_2 = loadImage(L"resource/items/star_2.png");
-    item_star_3 = loadImage(L"resource/items/star_3.png");
-    item_star_4 = loadImage(L"resource/items/star_4.png");
-    item_flower_1 = loadImage(L"resource/items/flower_1.png");
-    item_flower_2 = loadImage(L"resource/items/flower_2.png");
-    item_flower_3 = loadImage(L"resource/items/flower_3.png");
-    item_flower_4 = loadImage(L"resource/items/flower_4.png");
-    item_tino = loadImage(L"resource/items/tino.png");
-    shot_fireball_1 = loadImage(L"resource/items/shot/fireball_1.png");
-    shot_fireball_2 = loadImage(L"resource/items/shot/fireball_2.png");
-    shot_fireball_3 = loadImage(L"resource/items/shot/fireball_3.png");
-    shot_fireball_4 = loadImage(L"resource/items/shot/fireball_4.png");
-    shot_fireball_fadeout_1 = loadImage(L"resource/items/shot/fireball_fadeout_1.png");
-    shot_fireball_fadeout_2 = loadImage(L"resource/items/shot/fireball_fadeout_2.png");
-    shot_fireball_fadeout_3 = loadImage(L"resource/items/shot/fireball_fadeout_3.png");
-    monster1_motion1 = loadImage(L"resource/monster/monster1_motion1.png");
-    monster1_motion2 = loadImage(L"resource/monster/monster1_motion2.png");
-    monster1_dead = loadImage(L"resource/monster/monster1_dead.png");
-    monster2_motion1 = loadImage(L"resource/monster/monster2_motion1.png");
-    monster2_motion2 = loadImage(L"resource/monster/monster2_motion2.png");
-    monster2_dead = loadImage(L"resource/monster/monster2_dead.png");
-    monster3_motion1 = loadImage(L"resource/monster/monster3_motion1.png");
-    monster3_motion2 = loadImage(L"resource/monster/monster3_motion2.png");
-    monster3_dead = loadImage(L"resource/monster/monster3_dead.png");
-    turtle_1 = loadImage(L"resource/monster/turtle_1.png");
-    turtle_2 = loadImage(L"resource/monster/turtle_2.png");
-    turtle_R_1 = loadImage(L"resource/monster/turtle_R_1.png");
-    turtle_R_2 = loadImage(L"resource/monster/turtle_R_2.png");
-    turtle_hide = loadImage(L"resource/monster/turtle_hide.png");
-    brown_turtle_1 = loadImage(L"resource/monster/brown_turtle_1.png");
-    brown_turtle_2 = loadImage(L"resource/monster/brown_turtle_2.png");
-    brown_turtle_R_1 = loadImage(L"resource/monster/brown_turtle_R_1.png");
-    brown_turtle_R_2 = loadImage(L"resource/monster/brown_turtle_R_2.png");
-    brown_turtle_hide = loadImage(L"resource/monster/brown_turtle_hide.png");
-    angel_turtle_1 = loadImage(L"resource/monster/angel_turtle_1.png");
-    angel_turtle_2 = loadImage(L"resource/monster/angel_turtle_2.png");
-    bowser_walk_1 = loadImage(L"resource/monster/bowser_walk_1.png");
-    bowser_walk_2 = loadImage(L"resource/monster/bowser_walk_2.png");
-    bowser_fire_walk_1 = loadImage(L"resource/monster/bowser_fire_walk_1.png");
-    bowser_fire_walk_2 = loadImage(L"resource/monster/bowser_fire_walk_2.png");
-    bowser_fireball_1 = loadImage(L"resource/monster/bowser_fireball_1.png");
-    bowser_fireball_2 = loadImage(L"resource/monster/bowser_fireball_2.png");
-    screen_coin_1 = loadImage(L"resource/screen/screen_coin_1.png");
-    screen_coin_2 = loadImage(L"resource/screen/screen_coin_2.png");
-    screen_coin_3 = loadImage(L"resource/screen/screen_coin_3.png");
-    screen_coin_x = loadImage(L"resource/screen/screen_coin_x.png");
-    title_screen = loadImage(L"resource/title/title_screen.png");
-    title_cursor = loadImage(L"resource/title/title_cursor.png");
-    title_dead = loadImage(L"resource/title/title_dead.png");
-    flag_stick = loadImage(L"resource/tile/flag_stick.png");
-    flag_marble = loadImage(L"resource/tile/flag_marble.png");
-    flag = loadImage(L"resource/tile/flag.png");
 }
 
 void GameRender::drawBackground(Gdiplus::Graphics& graphics, const GameWorld& world) {
@@ -570,18 +428,29 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
         }
     }
     else if (world.getGameState_trans() == GameState_Trans::GAME_FLOWER_TRANS) { // Any state to Flower Mario
-        if ((world.getGlobalAnimationFrameCounter() / 5) % 2 == 0) {
-            if (player.getState() == PlayerState::Small) { // Small to Flower
+        if ((world.getGlobalAnimationFrameCounter() / 5) % 2 == 0) 
+        {
+            if (player.getState() == PlayerState::Small) 
+            { // Small to Flower
                 graphics.DrawImage(flower_mario_change, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), 40.0f * 2);
-            } else { // Big/Tino to Flower
+            } 
+            else 
+            { // Big/Tino to Flower
                 graphics.DrawImage(flower_mario_stop, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
             }
-        } else {
-            if (player.getState() == PlayerState::Small) { // Small to Flower
+        } 
+        else 
+        {
+            if (player.getState() == PlayerState::Small) 
+            { // Small to Flower
                 graphics.DrawImage(mario_stop, (REAL)drawX, (REAL)drawY + 40, (REAL)player.getWidth(), (REAL)player.getHeight());
-            } else if (player.getState() == PlayerState::Big) { // Big to Flower
+            } 
+            else if (player.getState() == PlayerState::Big) 
+            { // Big to Flower
                 graphics.DrawImage(big_mario_stop, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
-            } else if (player.getState() == PlayerState::Tino) { // Tino to Flower
+            }
+            else if (player.getState() == PlayerState::Tino) 
+            { // Tino to Flower
                 graphics.DrawImage(tino_mario_stop, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
             }
         }
@@ -605,77 +474,121 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
     }
     else
     {
-        switch (player.getState())
+        if (player.isStarGodMode())
         {
-        case PlayerState::Small:
-            if (player.isJumping()) imageToDraw = mario_jump;
-            else if (player.isWalking())
-            {
-                if (player.getWalkMotion() == 0) imageToDraw = mario_walk_motion_1;
-                else if (player.getWalkMotion() == 1) imageToDraw = mario_walk_motion_2;
-                else imageToDraw = mario_walk_motion_3;
-            }
-            else
-            {
-                imageToDraw = mario_stop;
-            }
-            break;
-        case PlayerState::Big:
-            if (player.isJumping()) imageToDraw = big_mario_jump;
-            else if (player.isWalking())
-            {
-                if (player.getWalkMotion() == 0) imageToDraw = big_mario_walk_motion_1;
-                else if (player.getWalkMotion() == 1) imageToDraw = big_mario_walk_motion_2;
-                else imageToDraw = big_mario_walk_motion_3;
-            }
-            else
-            {
-                imageToDraw = big_mario_stop;
-            }
+            int frame = (world.getGlobalAnimationFrameCounter() / 5) % 3; // 0, 1, 2
 
-            break;
-        case PlayerState::Flower:
-            if (player.isJumping()) imageToDraw = flower_mario_jump;
-            else if (player.isWalking())
-            {
-                if (player.getWalkMotion() == 0) imageToDraw = flower_mario_walk_motion_1;
-                else if (player.getWalkMotion() == 1) imageToDraw = flower_mario_walk_motion_2;
-                else imageToDraw = flower_mario_walk_motion_3;
+            if (player.isBig()) {
+                if (player.isJumping()) {
+                    if (frame == 0) imageToDraw = star_big_mario_jump_1;
+                    else if (frame == 1) imageToDraw = star_big_mario_jump_2;
+                    else imageToDraw = star_big_mario_jump_3;
+                } else if (player.isWalking()) {
+                    int walkMotion = player.getWalkMotion();
+                    if (walkMotion == 0) {
+                        if (frame == 0) imageToDraw = star_big_mario_walk_motion_1_1;
+                        else if (frame == 1) imageToDraw = star_big_mario_walk_motion_1_2;
+                        else imageToDraw = star_big_mario_walk_motion_1_3;
+                    } else if (walkMotion == 1) {
+                        if (frame == 0) imageToDraw = star_big_mario_walk_motion_2_1;
+                        else if (frame == 1) imageToDraw = star_big_mario_walk_motion_2_2;
+                        else imageToDraw = star_big_mario_walk_motion_2_3;
+                    } else {
+                        if (frame == 0) imageToDraw = star_big_mario_walk_motion_3_1;
+                        else if (frame == 1) imageToDraw = star_big_mario_walk_motion_3_2;
+                        else imageToDraw = star_big_mario_walk_motion_3_3;
+                    }
+                } else { // astop
+                    if (frame == 0) imageToDraw = star_big_mario_stop_1;
+                    else if (frame == 1) imageToDraw = star_big_mario_stop_2;
+                    else imageToDraw = star_big_mario_stop_3;
+                }
+            } else { // Small Mario
+                if (player.isJumping()) {
+                    if (frame == 0) imageToDraw = star_mario_jump_1;
+                    else if (frame == 1) imageToDraw = star_mario_jump_2;
+                    else imageToDraw = star_mario_jump_3;
+                } else if (player.isWalking()) {
+                    int walkMotion = player.getWalkMotion();
+                    if (walkMotion == 0) {
+                        if (frame == 0) imageToDraw = star_mario_walk_motion_1_1;
+                        else if (frame == 1) imageToDraw = star_mario_walk_motion_1_2;
+                        else imageToDraw = star_mario_walk_motion_1_3;
+                    } else if (walkMotion == 1) {
+                        if (frame == 0) imageToDraw = star_mario_walk_motion_2_1;
+                        else if (frame == 1) imageToDraw = star_mario_walk_motion_2_2;
+                        else imageToDraw = star_mario_walk_motion_2_3;
+                    } else {
+                        if (frame == 0) imageToDraw = star_mario_walk_motion_3_1;
+                        else if (frame == 1) imageToDraw = star_mario_walk_motion_3_2;
+                        else imageToDraw = star_mario_walk_motion_3_3;
+                    }
+                } else { // astop
+                    if (frame == 0) imageToDraw = star_mario_stop_1;
+                    else if (frame == 1) imageToDraw = star_mario_stop_2;
+                    else imageToDraw = star_mario_stop_3;
+                }
             }
-            else
+        }
+        else
+        {
+            switch (player.getState())
             {
-                imageToDraw = flower_mario_stop;
-            }
+            case PlayerState::Small:
+                if (player.isJumping()) imageToDraw = mario_jump;
+                else if (player.isWalking())
+                {
+                    if (player.getWalkMotion() == 0) imageToDraw = mario_walk_motion_1;
+                    else if (player.getWalkMotion() == 1) imageToDraw = mario_walk_motion_2;
+                    else imageToDraw = mario_walk_motion_3;
+                }
+                else
+                {
+                    imageToDraw = mario_stop;
+                }
+                break;
+            case PlayerState::Big:
+                if (player.isJumping()) imageToDraw = big_mario_jump;
+                else if (player.isWalking())
+                {
+                    if (player.getWalkMotion() == 0) imageToDraw = big_mario_walk_motion_1;
+                    else if (player.getWalkMotion() == 1) imageToDraw = big_mario_walk_motion_2;
+                    else imageToDraw = big_mario_walk_motion_3;
+                }
+                else
+                {
+                    imageToDraw = big_mario_stop;
+                }
 
-            break;
-        case PlayerState::Tino:
-            if (player.isJumping()) imageToDraw = tino_mario_jump;
-            else if (player.isWalking())
-            {
-                if (player.getWalkMotion() == 0) imageToDraw = tino_mario_walk_motion_1;
-                else if (player.getWalkMotion() == 1) imageToDraw = tino_mario_walk_motion_2;
-                else imageToDraw = tino_mario_walk_motion_3;
+                break;
+            case PlayerState::Flower:
+                if (player.isJumping()) imageToDraw = flower_mario_jump;
+                else if (player.isWalking())
+                {
+                    if (player.getWalkMotion() == 0) imageToDraw = flower_mario_walk_motion_1;
+                    else if (player.getWalkMotion() == 1) imageToDraw = flower_mario_walk_motion_2;
+                    else imageToDraw = flower_mario_walk_motion_3;
+                }
+                else
+                {
+                    imageToDraw = flower_mario_stop;
+                }
+
+                break;
+            case PlayerState::Tino:
+                if (player.isJumping()) imageToDraw = tino_mario_jump;
+                else if (player.isWalking())
+                {
+                    if (player.getWalkMotion() == 0) imageToDraw = tino_mario_walk_motion_1;
+                    else if (player.getWalkMotion() == 1) imageToDraw = tino_mario_walk_motion_2;
+                    else imageToDraw = tino_mario_walk_motion_3;
+                }
+                else
+                {
+                    imageToDraw = tino_mario_stop;
+                }
+                break;
             }
-            else
-            {
-                imageToDraw = tino_mario_stop;
-            }
-            break;
-        case PlayerState::Star:
-            // Star state will be handled by a color matrix or other effect
-            // For now, just use big mario images
-            if (player.isJumping()) imageToDraw = star_big_mario_jump_1;
-            else if (player.isWalking())
-            {
-                if (player.getWalkMotion() == 0) imageToDraw = star_big_mario_walk_motion_1_1;
-                else if (player.getWalkMotion() == 1) imageToDraw = star_big_mario_walk_motion_2_1;
-                else imageToDraw = star_big_mario_walk_motion_3_1;
-            }
-            else
-            {
-                imageToDraw = star_big_mario_stop_1;
-            }
-            break;
         }
         if (player.getDirection() == 0) { // Facing left
             imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
@@ -764,7 +677,178 @@ void GameRender::drawTitleScreen(Gdiplus::Graphics& graphics, const GameWorld& w
     drawUI(graphics, world);
 }
 
+void GameRender::drawTitleDead(Gdiplus::Graphics& graphics, const GameWorld& world)
+{
+    graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+
+    SolidBrush brush(Color(255, 255, 255, 255));
+    StringFormat stringFormat;
+    stringFormat.SetAlignment(StringAlignmentNear);
+
+    TCHAR life_print_dead[32], world_dead[32];
+
+    _stprintf_s(world_dead, _T("WORLD %d"), world.getStage());
+    _stprintf_s(life_print_dead, _T("%d"), world.getPlayer().getLife());
+
+    graphics.DrawImage(title_dead, 0, 0, 800, 640);
+    graphics.DrawString(world_dead, -1, m_font.get(), PointF(300, 207), &stringFormat, &brush);
+    graphics.DrawString(life_print_dead, -1, m_font.get(), PointF(430, 295), &stringFormat, &brush);
+}
 Gdiplus::Image* GameRender::getPlayerFireballImage() { return shot_fireball_1; }
 
-
+void GameRender::loadImages() {
+    peach = loadImage(L"resource/peach/peach.png");
+    stage_1_dirt = loadImage(L"resource/tile/stage_1_dirt.png");
+    stage_1_brick = loadImage(L"resource/tile/stage_1_brick.png");
+    stage_1_background = loadImage(L"resource/background/stage_1_background.png");
+    stage_2_background = loadImage(L"resource/background/stage_2_background.png");
+    mushroom_head_1 = loadImage(L"resource/tile/mushroom_head_1.png");
+    mushroom_head_2 = loadImage(L"resource/tile/mushroom_head_2.png");
+    mushroom_head_3 = loadImage(L"resource/tile/mushroom_head_3.png");
+    mushroom_trunk_1 = loadImage(L"resource/tile/mushroom_trunk_1.png");
+    mushroom_trunk_2 = loadImage(L"resource/tile/mushroom_trunk_2.png");
+    cloud_block = loadImage(L"resource/tile/cloud_block.png");
+    stone_tile = loadImage(L"resource/tile/stone_tile.png");
+    koopa_block = loadImage(L"resource/tile/koopa_block.png");
+    fire_head = loadImage(L"resource/tile/fire_head.png");
+    fire_body = loadImage(L"resource/tile/fire_body.png");
+    fire_switch_tile = loadImage(L"resource/tile/fire_switch_tile.png");
+    firetrap = loadImage(L"resource/tile/fire.png");
+    pipe_1 = loadImage(L"resource/pipe/pipe_1.png");
+    pipe_2 = loadImage(L"resource/pipe/pipe_2.png");
+    pipe_3 = loadImage(L"resource/pipe/pipe_3.png");
+    pipe_4 = loadImage(L"resource/pipe/pipe_4.png");
+    item_block_1 = loadImage(L"resource/tile/item_block_1.png");
+    item_block_2 = loadImage(L"resource/tile/item_block_2.png");
+    item_block_3 = loadImage(L"resource/tile/item_block_3.png");
+    item_block_used = loadImage(L"resource/tile/item_block_used.png");
+    unbreakable_block = loadImage(L"resource/tile/unbreakable_block.png");
+    castle_1 = loadImage(L"resource/tile/castle_1.png");
+    castle_blank = loadImage(L"resource/tile/castle_blank.png");
+    coin_1 = loadImage(L"resource/tile/coin_1.png");
+    coin_2 = loadImage(L"resource/tile/coin_2.png");
+    coin_3 = loadImage(L"resource/tile/coin_3.png");
+    mario_stop = loadImage(L"resource/mario/mario_stop.png");
+    mario_walk_motion_1 = loadImage(L"resource/mario/mario_walk_motion_1.png");
+    mario_walk_motion_2 = loadImage(L"resource/mario/mario_walk_motion_2.png");
+    mario_walk_motion_3 = loadImage(L"resource/mario/mario_walk_motion_3.png");
+    mario_jump = loadImage(L"resource/mario/mario_jump.png");
+    mario_dead = loadImage(L"resource/mario/mario_dead.png");
+    big_mario_stop = loadImage(L"resource/mario/big_mario_stop.png");
+    big_mario_walk_motion_1 = loadImage(L"resource/mario/big_mario_walk_motion_1.png");
+    big_mario_walk_motion_2 = loadImage(L"resource/mario/big_mario_walk_motion_2.png");
+    big_mario_walk_motion_3 = loadImage(L"resource/mario/big_mario_walk_motion_3.png");
+    big_mario_jump = loadImage(L"resource/mario/big_mario_jump.png");
+    big_mario_change = loadImage(L"resource/mario/big_mario_change.png");
+    tino_mario_stop = loadImage(L"resource/mario/tino/Tino_mario_stop.png");
+    tino_mario_jump = loadImage(L"resource/mario/tino/Tino_mario_jump.png");
+    tino_mario_walk_motion_1 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_1.png");
+    tino_mario_walk_motion_2 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_2.png");
+    tino_mario_walk_motion_3 = loadImage(L"resource/mario/tino/Tino_mario_walk_motion_3.png");
+    tino_mario_attack_1 = loadImage(L"resource/mario/tino/Tino_mario_attack_1.png");
+    tino_mario_attack_2 = loadImage(L"resource/mario/tino/Tino_mario_attack_2.png");
+    tino_mario_attack_3 = loadImage(L"resource/mario/tino/Tino_mario_attack_3.png");
+    tino_mario_attack_4 = loadImage(L"resource/mario/tino/Tino_mario_attack_4.png");
+    tino_mario_attack_5 = loadImage(L"resource/mario/tino/Tino_mario_attack_5.png");
+    tino_mario_attack_6 = loadImage(L"resource/mario/tino/Tino_mario_attack_6.png");
+    tino_mario_fire_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_1.png");
+    tino_mario_fire_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_2.png");
+    tino_mario_fire_R_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_1.png");
+    tino_mario_fire_R_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_2.png");
+    tino_mario_fire_fade_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_1.png");
+    tino_mario_fire_fade_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_2.png");
+    tino_mario_fire_fade_3 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_3.png");
+    flower_mario_stop = loadImage(L"resource/mario/flower/flower_mario_stop.png");
+    flower_mario_jump = loadImage(L"resource/mario/flower/flower_mario_jump.png");
+    flower_mario_walk_motion_1 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_1.png");
+    flower_mario_walk_motion_2 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_2.png");
+    flower_mario_walk_motion_3 = loadImage(L"resource/mario/flower/flower_mario_walk_motion_3.png");
+    flower_mario_change = loadImage(L"resource/mario/flower/flower_mario_change.png");
+    flower_mario_fire = loadImage(L"resource/mario/flower/flower_mario_fire.png");
+    star_mario_stop_1 = loadImage(L"resource/mario/star/star_mario_stop_1.png");
+    star_mario_stop_2 = loadImage(L"resource/mario/star/star_mario_stop_2.png");
+    star_mario_stop_3 = loadImage(L"resource/mario/star/star_mario_stop_3.png");
+    star_mario_walk_motion_1_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_1.png");
+    star_mario_walk_motion_1_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_2.png");
+    star_mario_walk_motion_1_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_1_3.png");
+    star_mario_walk_motion_2_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_1.png");
+    star_mario_walk_motion_2_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_2.png");
+    star_mario_walk_motion_2_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_2_3.png");
+    star_mario_walk_motion_3_1 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_1.png");
+    star_mario_walk_motion_3_2 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_2.png");
+    star_mario_walk_motion_3_3 = loadImage(L"resource/mario/star/star_mario_walk_motion_3_3.png");
+    star_mario_jump_1 = loadImage(L"resource/mario/star/star_mario_jump_1.png");
+    star_mario_jump_2 = loadImage(L"resource/mario/star/star_mario_jump_2.png");
+    star_mario_jump_3 = loadImage(L"resource/mario/star/star_mario_jump_3.png");
+    star_big_mario_stop_1 = loadImage(L"resource/mario/star/star_big_mario_stop_1.png");
+    star_big_mario_stop_2 = loadImage(L"resource/mario/star/star_big_mario_stop_2.png");
+    star_big_mario_stop_3 = loadImage(L"resource/mario/star/star_big_mario_stop_3.png");
+    star_big_mario_walk_motion_1_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_1.png");
+    star_big_mario_walk_motion_1_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_2.png");
+    star_big_mario_walk_motion_1_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_1_3.png");
+    star_big_mario_walk_motion_2_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_1.png");
+    star_big_mario_walk_motion_2_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_2.png");
+    star_big_mario_walk_motion_2_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_2_3.png");
+    star_big_mario_walk_motion_3_1 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_1.png");
+    star_big_mario_walk_motion_3_2 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_2.png");
+    star_big_mario_walk_motion_3_3 = loadImage(L"resource/mario/star/star_big_mario_walk_motion_3_3.png");
+    star_big_mario_jump_1 = loadImage(L"resource/mario/star/star_big_mario_jump_1.png");
+    star_big_mario_jump_2 = loadImage(L"resource/mario/star/star_big_mario_jump_2.png");
+    star_big_mario_jump_3 = loadImage(L"resource/mario/star/star_big_mario_jump_3.png");
+    item_mushroom = loadImage(L"resource/items/mushroom.png");
+    item_up_mushroom = loadImage(L"resource/items/up_mushroom.png");
+    item_star_1 = loadImage(L"resource/items/star_1.png");
+    item_star_2 = loadImage(L"resource/items/star_2.png");
+    item_star_3 = loadImage(L"resource/items/star_3.png");
+    item_star_4 = loadImage(L"resource/items/star_4.png");
+    item_flower_1 = loadImage(L"resource/items/flower_1.png");
+    item_flower_2 = loadImage(L"resource/items/flower_2.png");
+    item_flower_3 = loadImage(L"resource/items/flower_3.png");
+    item_flower_4 = loadImage(L"resource/items/flower_4.png");
+    item_tino = loadImage(L"resource/items/tino.png");
+    shot_fireball_1 = loadImage(L"resource/items/shot/fireball_1.png");
+    shot_fireball_2 = loadImage(L"resource/items/shot/fireball_2.png");
+    shot_fireball_3 = loadImage(L"resource/items/shot/fireball_3.png");
+    shot_fireball_4 = loadImage(L"resource/items/shot/fireball_4.png");
+    shot_fireball_fadeout_1 = loadImage(L"resource/items/shot/fireball_fadeout_1.png");
+    shot_fireball_fadeout_2 = loadImage(L"resource/items/shot/fireball_fadeout_2.png");
+    shot_fireball_fadeout_3 = loadImage(L"resource/items/shot/fireball_fadeout_3.png");
+    monster1_motion1 = loadImage(L"resource/monster/monster1_motion1.png");
+    monster1_motion2 = loadImage(L"resource/monster/monster1_motion2.png");
+    monster1_dead = loadImage(L"resource/monster/monster1_dead.png");
+    monster2_motion1 = loadImage(L"resource/monster/monster2_motion1.png");
+    monster2_motion2 = loadImage(L"resource/monster/monster2_motion2.png");
+    monster2_dead = loadImage(L"resource/monster/monster2_dead.png");
+    monster3_motion1 = loadImage(L"resource/monster/monster3_motion1.png");
+    monster3_motion2 = loadImage(L"resource/monster/monster3_motion2.png");
+    monster3_dead = loadImage(L"resource/monster/monster3_dead.png");
+    turtle_1 = loadImage(L"resource/monster/turtle_1.png");
+    turtle_2 = loadImage(L"resource/monster/turtle_2.png");
+    turtle_R_1 = loadImage(L"resource/monster/turtle_R_1.png");
+    turtle_R_2 = loadImage(L"resource/monster/turtle_R_2.png");
+    turtle_hide = loadImage(L"resource/monster/turtle_hide.png");
+    brown_turtle_1 = loadImage(L"resource/monster/brown_turtle_1.png");
+    brown_turtle_2 = loadImage(L"resource/monster/brown_turtle_2.png");
+    brown_turtle_R_1 = loadImage(L"resource/monster/brown_turtle_R_1.png");
+    brown_turtle_R_2 = loadImage(L"resource/monster/brown_turtle_R_2.png");
+    brown_turtle_hide = loadImage(L"resource/monster/brown_turtle_hide.png");
+    angel_turtle_1 = loadImage(L"resource/monster/angel_turtle_1.png");
+    angel_turtle_2 = loadImage(L"resource/monster/angel_turtle_2.png");
+    bowser_walk_1 = loadImage(L"resource/monster/bowser_walk_1.png");
+    bowser_walk_2 = loadImage(L"resource/monster/bowser_walk_2.png");
+    bowser_fire_walk_1 = loadImage(L"resource/monster/bowser_fire_walk_1.png");
+    bowser_fire_walk_2 = loadImage(L"resource/monster/bowser_fire_walk_2.png");
+    bowser_fireball_1 = loadImage(L"resource/monster/bowser_fireball_1.png");
+    bowser_fireball_2 = loadImage(L"resource/monster/bowser_fireball_2.png");
+    screen_coin_1 = loadImage(L"resource/screen/screen_coin_1.png");
+    screen_coin_2 = loadImage(L"resource/screen/screen_coin_2.png");
+    screen_coin_3 = loadImage(L"resource/screen/screen_coin_3.png");
+    screen_coin_x = loadImage(L"resource/screen/screen_coin_x.png");
+    title_screen = loadImage(L"resource/title/title_screen.png");
+    title_cursor = loadImage(L"resource/title/title_cursor.png");
+    title_dead = loadImage(L"resource/title/title_dead.png");
+    flag_stick = loadImage(L"resource/tile/flag_stick.png");
+    flag_marble = loadImage(L"resource/tile/flag_marble.png");
+    flag = loadImage(L"resource/tile/flag.png");
+}
 

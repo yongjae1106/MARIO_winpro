@@ -2,9 +2,10 @@
 
 #include "../Monster.h"
 
-class Turtle : public Monster {
+class Turtle : public Monster 
+{
 public:
-    enum class TurtleState { NORMAL, SHELL, SPINNING };
+    enum class TurtleState { ANGEL, NORMAL, SHELL, SPINNING };
 
     Turtle(MonsterType type, int x, int y, int width, int height);
 

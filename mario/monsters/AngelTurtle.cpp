@@ -7,10 +7,12 @@ AngelTurtle::AngelTurtle(int x, int y)
     setVy(1);
 }
 
-void AngelTurtle::update(GameWorld& world) {
-    if (!isAlive()) return;
+void AngelTurtle::monster_logic(GameWorld& world)
+{
+    if (!isAlive() || isFalling()) return;
 
-    if (m_state == TurtleState::NORMAL) {
+    if (m_state == TurtleState::ANGEL) 
+    {
         if (m_goingUp)
             setY(getY() - getVy());
         else
@@ -20,14 +22,12 @@ void AngelTurtle::update(GameWorld& world) {
             m_goingUp = false;
         else if (getY() >= m_bottomY)
             m_goingUp = true;
-    } else {
+    } 
+    else 
+    {
         // After being stomped, it behaves like a normal turtle shell
         Turtle::update(world);
     }
-}
-
-void AngelTurtle::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
 }
 
 void AngelTurtle::takeDamage(GameWorld& world, int damage) {

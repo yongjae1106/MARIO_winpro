@@ -36,7 +36,9 @@ void Turtle::monster_logic(GameWorld& world) {
     {
         if (GetTickCount() - m_shellTimer > 5000) {
             setState(TurtleState::NORMAL);
+            height = 60;
             setVx(-1);
+            setVy(-10);
         }
     }
     else if (m_state == TurtleState::SPINNING) 
@@ -46,23 +48,30 @@ void Turtle::monster_logic(GameWorld& world) {
 }
 
 void Turtle::takeDamage(GameWorld& world, int damage) {
-    if (m_state == TurtleState::NORMAL) {
+    if (m_state == TurtleState::NORMAL) 
+    {
         m_state = TurtleState::SHELL;
         setVx(0);
+        height = 40;
         m_shellTimer = GetTickCount();
-    } else if (m_state == TurtleState::SHELL) {
+    } 
+    else if (m_state == TurtleState::SHELL) 
+    {
         m_state = TurtleState::SPINNING;
         // Determine direction based on player's collision
         int playerX = world.getPlayer().getX();
         int monsterX = getX();
         int spinSpeed = 5; // Define a spin speed
 
-        if (playerX < monsterX) { // Player collided from left, spin right
+        if (playerX < monsterX) 
+        { // Player collided from left, spin right
             setVx(spinSpeed);
         } else { // Player collided from right, spin left
             setVx(-spinSpeed);
         }
-    } else if (m_state == TurtleState::SPINNING) {
+    } 
+    else if (m_state == TurtleState::SPINNING) 
+    {
         m_state = TurtleState::SHELL;
         setVx(0);
     }

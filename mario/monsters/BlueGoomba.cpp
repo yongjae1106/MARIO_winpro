@@ -2,12 +2,12 @@
 #include "../GameWorld.h"
 
 BlueGoomba::BlueGoomba(int x, int y)
-    : Goomba(MonsterType::Goomba, x, y, 40, 40), m_jumpTimer(0) {
+    : Goomba(MonsterType::BlueGoomba, x, y, 40, 40), m_jumpTimer(0) {
     setVx(-1);
 }
 
-void BlueGoomba::update(GameWorld& world) {
-    if (!isAlive()) return;
+void BlueGoomba::monster_logic(GameWorld& world) {
+    if (!isAlive() || isFalling()) return;
 
     // Check for ledges
     int nextX = getX() + getVx();
@@ -35,8 +35,4 @@ void BlueGoomba::update(GameWorld& world) {
         setVy(-10);
         m_jumpTimer = 0;
     }
-}
-
-void BlueGoomba::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
 }

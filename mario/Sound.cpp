@@ -145,4 +145,5 @@ void Sound::loadAllSounds() {
     // BGM
     loadSound("GroundTheme", L"resource/sound/bgm/GroundTheme.wav");
     loadSound("CastleTheme", L"resource/sound/bgm/CastleTheme.wav");
+    loadSound("InvincibilityTheme", L"resource/sound/bgm/InvincibilityTheme.wav");
 }
