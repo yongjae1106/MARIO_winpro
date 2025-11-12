@@ -165,7 +165,7 @@ void Player::move(GameWorld& world)
     }
 
     if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
-        world.spawnPlayerFireball(getX(), getY(), (direction == 0 ? -10 : 10));
+        world.spawnPlayerFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -10 : 10));
         m_fire_cooldown = 20; // Cooldown for 20 frames
         fire_motion = true;
         m_fire_motion_timer = 10; // Play fire motion for 10 frames
