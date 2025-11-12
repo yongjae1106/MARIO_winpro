@@ -13,17 +13,14 @@
 #include "items/UpMushroom.h"
 #include "projectiles/Fireball.h"
 #include "projectiles/PlayerFireball.h"
+#include "Particle.h"
+#include "monsters/Turtle.h"
 #include <memory>
 #include <tchar.h>
 
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
     return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
 }
-
-bool isSolidTile(int tileID) {
-    return tileID != 0 && tileID != 2 && tileID != 7 && tileID != 8;
-}
-
 
 GameWorld::GameWorld() {
     initMaps();
@@ -41,6 +38,12 @@ GameWorld::GameWorld() {
     victoryStart = 0;
     clearStart = 0;
     godstart = 0;
+}
+
+bool GameWorld::isSolidTile(int tileValue) const {
+    // Based on mario_old/data.h comments and fireball collision logic
+    // 0: hole, 2: coin, 7: flag, 8: flag top are NOT solid for fireballs
+    return !(tileValue == 0 || tileValue == 2 || tileValue == 7 || tileValue == 8);
 }
 
 void GameWorld::sound_init(HWND hwnd) {
@@ -100,6 +103,7 @@ void GameWorld::update()
 
         updateMonsters(); // Always update monsters
         updateItems();    // Always update items
+        updateParticles();
         checkCollisions(); // Always check collisions
 
         cameraUpdate();
@@ -216,15 +220,15 @@ void GameWorld::transUpdate()
         DWORD now = GetTickCount();
         if (now - transformStartTime >= 1500)
         {
-            if (!player.isFlower())
+            if (!player.isFlower()) // Powering up
             {
                 playSound("playerup");
                 player.gainFlower();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
-            else
+            else // Powering down
             {
-                player.grow();
+                player.setState(PlayerState::Big);
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
         }
@@ -236,15 +240,15 @@ void GameWorld::transUpdate()
         DWORD now = GetTickCount();
         if (now - transformStartTime >= 1500)
         {
-            if (!player.isTino())
+            if (!player.isTino()) // Powering up
             {
                 playSound("playerup");
                 player.gainTino();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
-            else
+            else // Powering down
             {
-                player.grow();
+                player.setState(PlayerState::Big);
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
         }
@@ -336,6 +340,8 @@ void GameWorld::loadStage(int newStage) {
 
     stage = newStage;
     monsters.clear();
+    items.clear();
+    particles.clear();
     setStage_time(400);
     setStageBGM();
     if (stage == 1) {
@@ -418,6 +424,10 @@ const std::vector<std::unique_ptr<Item>>& GameWorld::getItems() const {
     return items;
 }
 
+const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const {
+    return particles;
+}
+
 const bool* GameWorld::getKeyState() const {
     return keyState;
 }
@@ -475,12 +485,30 @@ void GameWorld::updateItems() {
     for (auto& item : items) {
         item->update(*this);
     }
+
+    // Remove inactive items
+    items.erase(std::remove_if(items.begin(), items.end(), [](const std::unique_ptr<Item>& item) {
+        return !item->isActive();
+    }), items.end());
+}
+
+void GameWorld::updateParticles() {
+    for (auto& particle : particles) {
+        particle->update(*this);
+    }
+
+    // Remove inactive particles
+    particles.erase(std::remove_if(particles.begin(), particles.end(), [](const std::unique_ptr<Particle>& particle) {
+        return !particle->isActive();
+    }), particles.end());
 }
 
 void GameWorld::checkCollisions() {
     checkPlayerMapCollision();
     checkPlayerMonsterCollision();
     checkPlayerItemCollision();
+    checkParticleMonsterCollision();
+    checkMonsterMonsterCollision();
     checkItemMapCollision();
     checkFlagCollision();
     checkClearCollision();
@@ -493,6 +521,7 @@ void GameWorld::dead() {
     player.setVx(0);
     player.setVy(0);
     player.setDead(true);
+    player.setLife(getLife() - 1);
     deadStartTime = GetTickCount();
 }
 
@@ -503,7 +532,6 @@ void GameWorld::resurrection() {
     player.setVy(0);
     player.setDead(false);
     player.setGameOver(false);
-    player.setLife(player.getLife() - 1);
     player.setState(PlayerState::Small);
     player.setSuperGodMode(false);
     player.setStarGodMode(false);
@@ -512,6 +540,7 @@ void GameWorld::resurrection() {
 
 void GameWorld::monster_reset() {
     monsters.clear();
+    particles.clear();
 }
 
 void GameWorld::item_reset() {
@@ -566,12 +595,16 @@ void GameWorld::spawnMonster(std::unique_ptr<Monster> monster) {
     monsters.push_back(std::move(monster));
 }
 
+void GameWorld::spawnParticle(std::unique_ptr<Particle> particle) {
+    particles.push_back(std::move(particle));
+}
+
 void GameWorld::spawnFireball(int x, int y, int vx) {
-    items.push_back(std::make_unique<Fireball>(x, y, vx));
+    // items.push_back(std::make_unique<Fireball>(x, y, vx));
 }
 
 void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
-    items.push_back(std::make_unique<PlayerFireball>(x, y, vx));
+    spawnParticle(std::make_unique<PlayerFireball>(x, y, vx));
 }
 
 void GameWorld::applyplayertakedamage()
@@ -579,33 +612,32 @@ void GameWorld::applyplayertakedamage()
     if (player.isSuperGodMode() || player.isDead()) return;
 
     DamageResult result = player.calculateDamageResult(1);
-    switch (result) 
+    switch (result)
     {
-        case DamageResult::Shrunk:
-            if (getPlayer().isBig())
+    case DamageResult::Shrunk:
+        if (getPlayer().isBig())
+        {
+            playSound("pipe");
+            transformStartTime = GetTickCount(); // Set transform start time for all shrink cases
+            if (getPlayer().isFlower())
             {
-                playSound("pipe");
-                if (getPlayer().isFlower())
-                {
-                    getPlayer().setState(PlayerState::Big);
-                    setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
-                    break;
-                }
-                else if (getPlayer().isTino())
-                {
-                    getPlayer().setState(PlayerState::Big);
-                    setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
-                    break;
-                }
-                setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
-                break;
+                setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
             }
-            break;
-        case DamageResult::Died:
-            dead(); // Call GameWorld's dead()
-            break;
-        case DamageResult::NoDamage:
-            break;
+            else if (getPlayer().isTino())
+            {
+                setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
+            }
+            else
+            {
+                setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
+            }
+        }
+        break;
+    case DamageResult::Died:
+        dead(); // Call GameWorld's dead()
+        break;
+    case DamageResult::NoDamage:
+        break;
     }
     getPlayer().setSuperGodMode(true);
 
@@ -613,6 +645,68 @@ void GameWorld::applyplayertakedamage()
 }
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+void GameWorld::checkParticleMonsterCollision() {
+    for (auto& particle : particles) {
+        if (!particle->isActive()) {
+            continue;
+        }
+
+        for (auto& monster : monsters) {
+            if (!monster->isAlive() || monster->isFalling()) continue;
+
+            int monsterScreenX = monster->getX() - cameraX;
+            int particleScreenX = particle->getX() - cameraX;
+
+            if (isColliding(particleScreenX, particle->getY(), particle->getWidth(), particle->getHeight(),
+                            monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight()))
+            {
+                if (particle->getType() == Particle::ParticleType::PlayerFireball) {
+                    playSound("kick");
+                    monster->takeDamage(*this, 1);
+                    particle->setActive(false);
+                    break; 
+                }
+            }
+        }
+    }
+}
+
+void GameWorld::checkMonsterMonsterCollision() {
+    for (size_t i = 0; i < monsters.size(); ++i) {
+        for (size_t j = i + 1; j < monsters.size(); ++j) {
+            Monster* monster1 = monsters[i].get();
+            Monster* monster2 = monsters[j].get();
+
+            if (!monster1->isAlive() || !monster2->isAlive() || monster1->isFalling() || monster2->isFalling()) {
+                continue;
+            }
+
+            if (isColliding(monster1->getX(), monster1->getY(), monster1->getWidth(), monster1->getHeight(),
+                            monster2->getX(), monster2->getY(), monster2->getWidth(), monster2->getHeight())) {
+                
+                Turtle* turtle1 = dynamic_cast<Turtle*>(monster1);
+                Turtle* turtle2 = dynamic_cast<Turtle*>(monster2);
+                Monster* spinning_shell = nullptr;
+                Monster* other_monster = nullptr;
+
+                if (turtle1 && turtle1->getState() == Turtle::TurtleState::SPINNING) {
+                    spinning_shell = turtle1;
+                    other_monster = monster2;
+                } else if (turtle2 && turtle2->getState() == Turtle::TurtleState::SPINNING) {
+                    spinning_shell = turtle2;
+                    other_monster = monster1;
+                }
+
+                if (spinning_shell && other_monster) {
+                    playSound("kick");
+                    other_monster->setVy(-15);
+                    other_monster->setFalling(true);
+                }
+            }
+        }
+    }
+}
 
 void GameWorld::checkPlayerMonsterCollision() 
 {
@@ -625,7 +719,7 @@ void GameWorld::checkPlayerMonsterCollision()
         if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
 
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
-                        monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight())) 
+                        monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight() - TILE_SIZE/4)) 
         {
             if (player.isStarGodMode()) 
             { // Player is in Star mode
@@ -642,7 +736,17 @@ void GameWorld::checkPlayerMonsterCollision()
             } 
             else 
             { // Player collides with monster from side or bottom
-                applyplayertakedamage();
+                Turtle* turtle = dynamic_cast<Turtle*>(monster.get());
+                if (turtle && turtle->getState() == Turtle::TurtleState::SHELL) 
+                {
+                    // It's a shell, kick it
+                    turtle->takeDamage(*this, 1);
+                    playSound("kick");
+                }
+                else {
+                    // It's a normal monster, player gets hurt
+                    applyplayertakedamage();
+                }
             }
         }
     }
@@ -764,6 +868,10 @@ void GameWorld::checkPlayerItemCollision()
     for (auto it = items.begin(); it != items.end(); )
     {
         Item* item = it->get();
+        if (item->getType() == Item::ItemType::PlayerFireball) {
+            ++it;
+            continue;
+        }
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
                         item->getX() - cameraX, item->getY(), item->getWidth(), item->getHeight())) 
         {
@@ -773,7 +881,7 @@ void GameWorld::checkPlayerItemCollision()
                 case Item::ItemType::Mushroom:
                     playSound("powerup");
                     transformStartTime = GetTickCount();
-                    setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
+                    if (!getPlayer().isBig()) setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
                     break;
                 case Item::ItemType::Star:
                     playSound("powerup");
@@ -850,6 +958,18 @@ void GameWorld::checkClearCollision() {
 void GameWorld::checkItemMapCollision() {
     for (auto& item : items) {
         if (!item->isActive()) continue;
+
+        // PlayerFireball handles its own physics
+        if (item->getType() == Item::ItemType::PlayerFireball) {
+            continue;
+        }
+
+        // Stationary items that shouldn't fall
+        if (item->getType() == Item::ItemType::Flower ||
+            item->getType() == Item::ItemType::Tino ||
+            item->getType() == Item::ItemType::UpMushroom) {
+            continue;
+        }
 
         // Apply gravity
         item->setVy(item->getVy() + 1);
@@ -949,9 +1069,9 @@ void GameWorld::initMonsterSpawns() {
         { Monster::MonsterType::NormalGoomba, 90, 12 },
         { Monster::MonsterType::NormalGoomba, 92, 12 },
         { Monster::MonsterType::GreenTurtle, 35, 10 },
-        { Monster::MonsterType::GreenTurtle, 55, 10 },
+        { Monster::MonsterType::GreenTurtle, 53, 10 },
         { Monster::MonsterType::GreenTurtle, 65, 10 },
-        { Monster::MonsterType::GreenTurtle, 85, 10 },
+        { Monster::MonsterType::GreenTurtle, 82, 10 },
         { Monster::MonsterType::GreenTurtle, 95, 10 },
     };
 
@@ -995,6 +1115,7 @@ void GameWorld::initMap1() {
         map1[MAP_HEIGHT - 2][j] = 1;
         map1[MAP_HEIGHT - 1][j] = 1;
     }
+    map1[7][0] = 61;
     map1[9][1] = 65;    // 보여주기식 스타박스
     //벽돌
     map1[6][16] = 10;

@@ -44,7 +44,7 @@ void Monster::checkMonsterMapCollision(GameWorld& world)
 
     // Check for vertical collision (ground)
     if (getVy() > 0 && feetTileY < MAP_HEIGHT && feetTileY >= 0 &&
-        (isSolidTile(currentMap[feetTileY][leftTile]) || isSolidTile(currentMap[feetTileY][rightTile]))) {
+        (world.isSolidTile(currentMap[feetTileY][leftTile]) || world.isSolidTile(currentMap[feetTileY][rightTile]))) {
         // Collision detected. Snap monster to the top of the solid tile.
         setY(feetTileY * TILE_SIZE - getHeight());
         setVy(0);
@@ -66,14 +66,14 @@ void Monster::checkMonsterMapCollision(GameWorld& world)
     // Check for horizontal collision with walls
     if (getVx() < 0) { // Moving left
         if (leftTile >= 0 && leftTile < MAP_WIDTH &&
-            (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[middleTile][leftTile]))) {
+            (world.isSolidTile(currentMap[topTile][leftTile]) || world.isSolidTile(currentMap[middleTile][leftTile]))) {
             setX((leftTile + 1) * TILE_SIZE);
             setVx(-getVx());
         }
     }
     else if (getVx() > 0) { // Moving right
         if (rightTile < MAP_WIDTH && rightTile >= 0 &&
-            (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
+            (world.isSolidTile(currentMap[topTile][rightTile]) || world.isSolidTile(currentMap[middleTile][rightTile]))) {
             setX(rightTile * TILE_SIZE - getWidth());
             setVx(-getVx());
         }

@@ -31,6 +31,7 @@ void Player::reset() {
     tino_cooldown_z = 0;
     tino_cooldown_space = 0;
     m_fire_cooldown = 0;
+    m_fire_motion_timer = 0;
     m_god_timer = 0;
     setJumping(false);
     setFlying(false);
@@ -89,6 +90,12 @@ void Player::update(GameWorld& world)
 
     if (tino_cooldown_space > 0) {
         tino_cooldown_space--;
+    }
+
+    if (m_fire_motion_timer > 0) {
+        m_fire_motion_timer--;
+    } else {
+        fire_motion = false;
     }
 
     if (_isStarGodModeActive) {
@@ -160,6 +167,8 @@ void Player::move(GameWorld& world)
     if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
         world.spawnPlayerFireball(getX(), getY(), (direction == 0 ? -10 : 10));
         m_fire_cooldown = 20; // Cooldown for 20 frames
+        fire_motion = true;
+        m_fire_motion_timer = 10; // Play fire motion for 10 frames
     }
 
     if (keyState['X'] && isTino() && tino_cooldown_z == 0) {
@@ -339,6 +348,7 @@ void Player::grow() {
 
 void Player::shrink() {
     if (isBig()) {
+        setY(getY() + TILE_SIZE);
         currentState = PlayerState::Small;
         setHeight(40);
     }
@@ -446,6 +456,10 @@ bool Player::isSuperGodMode() const {
     return _isSuperGodModeActive;
 }
 
+bool Player::isFiring() const {
+    return fire_motion;
+}
+
 void Player::tinoAttack(GameWorld& world) {
     // Tino attack logic (collision with monsters)
     for (auto& monster : world.getMonsters()) {
@@ -457,7 +471,7 @@ void Player::tinoAttack(GameWorld& world) {
         int attackHeight = 100;
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
-                        monster->getX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
+                        monster->getX() - world.getCameraX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
             world.playSound("kick");
             monster->takeDamage(world, 1);
         }

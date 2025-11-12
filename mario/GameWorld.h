@@ -3,6 +3,7 @@
 #include "Player.h"
 #include "Monster.h"
 #include "Item.h"
+#include "Particle.h"
 #include "GameRender.h"
 #include "Sound.h"
 #include <vector>
@@ -18,7 +19,6 @@
 
 // Declaration for the global collision function to make it accessible across files
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
-bool isSolidTile(int tileID); // Existing declaration
 
 enum class GameState
 {
@@ -73,6 +73,7 @@ public:
     double getCameraX() const;
     const std::vector<std::unique_ptr<Monster>>& getMonsters() const;
     const std::vector<std::unique_ptr<Item>>& getItems() const;
+    const std::vector<std::unique_ptr<Particle>>& getParticles() const;
     int getLife() const { return player.getLife(); }
     int getCoin() const { return player.getCoin(); }
     int getStageTime() const { return stage_time; }
@@ -94,8 +95,10 @@ public:
 
     void spawnItem(Item::ItemType type, int x, int y);
     void spawnMonster(std::unique_ptr<Monster> monster);
+    void spawnParticle(std::unique_ptr<Particle> particle);
     void spawnFireball(int x, int y, int vx);
     void spawnPlayerFireball(int x, int y, int vx);
+    bool isSolidTile(int tileValue) const; // Added as member function
 
     void playSound(const std::string& name, bool loop = false);
     void stopAllSounds();
@@ -110,12 +113,15 @@ private:
     void updatePlayer();
     void updateMonsters();
     void updateItems();
+    void updateParticles();
     void checkCollisions();
     void checkMonsterMapCollision();
     void checkPlayerCoinCollision();
     void checkPlayerMapCollision();
     void checkPlayerMonsterCollision();
     void checkPlayerItemCollision();
+    void checkParticleMonsterCollision();
+    void checkMonsterMonsterCollision();
     void checkItemMapCollision();
     void checkFlagCollision();
     void checkClearCollision();
@@ -138,6 +144,7 @@ private:
     Player player;
     std::vector<std::unique_ptr<Monster>> monsters;
     std::vector<std::unique_ptr<Item>> items;
+    std::vector<std::unique_ptr<Particle>> particles;
 
     std::vector<MonsterSpawnInfo> stage1Monsters;
     std::vector<MonsterSpawnInfo> stage2Monsters;

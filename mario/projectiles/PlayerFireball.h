@@ -1,11 +1,19 @@
 #pragma once
 
-#include "../Item.h"
+#include "../Particle.h"
 
-class PlayerFireball : public Item {
+class PlayerFireball : public Particle {
 public:
     PlayerFireball(int x, int y, int vx);
 
     void update(GameWorld& world) override;
     void render(HDC hdc, int cameraX) override;
+
+    bool isFading() const { return fade; }
+    int getMotion() const { return motion; }
+
+private:
+    int motion;
+    bool fade;
+    int fade_timer;
 };

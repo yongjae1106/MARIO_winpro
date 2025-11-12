@@ -5,6 +5,8 @@
 #include "items/Flower.h"
 #include "items/Tino.h"
 #include "monsters/Turtle.h"
+#include "Particle.h"
+#include "projectiles/PlayerFireball.h"
 #include <tchar.h>
 #include <gdiplus.h>
 #include <mmsystem.h>  // PlaySound 함수 포함
@@ -76,8 +78,9 @@ void GameRender::render(HDC hdc, const GameWorld& world) {
     else 
     {
         drawBackground(graphics, world);
-        drawMap(graphics, world);
         drawItems(graphics, world);
+        drawMap(graphics, world);
+        drawParticles(graphics, world);
         drawMonsters(graphics, world);
         drawPlayer(graphics, world, world.getPlayer());
         drawUI(graphics, world);
@@ -122,7 +125,7 @@ void GameRender::drawItems(Gdiplus::Graphics& graphics, const GameWorld& world) 
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
     for (const auto& item : world.getItems()) {
-        if (!(item->isActive() &&item->isMotion())) continue;
+        if (!item->isActive()) continue;
 
         int screenX = item->getX() - world.getCameraX();
         int screenY = item->getY();
@@ -136,9 +139,8 @@ void GameRender::drawItems(Gdiplus::Graphics& graphics, const GameWorld& world) 
             case Item::ItemType::Star:
             {
                 int globalFrame = world.getGlobalAnimationFrameCounter();
-                // Star has 4 frames (0, 1, 2, 3). Let's say it animates every 5 global frames.
                 int frame = (globalFrame / 5) % 4;
-                if (frame == 0) imageToDraw = item_star_1; // Use direct image pointers
+                if (frame == 0) imageToDraw = item_star_1;
                 else if (frame == 1) imageToDraw = item_star_2;
                 else if (frame == 2) imageToDraw = item_star_3;
                 else imageToDraw = item_star_4;
@@ -148,9 +150,8 @@ void GameRender::drawItems(Gdiplus::Graphics& graphics, const GameWorld& world) 
             case Item::ItemType::Flower:
             {
                 int globalFrame = world.getGlobalAnimationFrameCounter();
-                // Flower has 4 frames (0, 1, 2, 3). Let's say it animates every 5 global frames.
                 int frame = (globalFrame / 5) % 4;
-                if (frame == 0) imageToDraw = item_flower_1; // Use direct image pointers
+                if (frame == 0) imageToDraw = item_flower_1;
                 else if (frame == 1) imageToDraw = item_flower_2;
                 else if (frame == 2) imageToDraw = item_flower_3;
                 else imageToDraw = item_flower_4;
@@ -164,14 +165,51 @@ void GameRender::drawItems(Gdiplus::Graphics& graphics, const GameWorld& world) 
             case Item::ItemType::Fireball:
                 imageToDraw = getFireballImage();
                 break;
-            case Item::ItemType::PlayerFireball:
-                imageToDraw = getPlayerFireballImage();
-                break;
             // ... other item types
         }
 
         if (imageToDraw) {
             graphics.DrawImage(imageToDraw, (REAL)screenX, (REAL)screenY, (REAL)item->getWidth(), (REAL)item->getHeight());
+        }
+    }
+}
+
+void GameRender::drawParticles(Gdiplus::Graphics& graphics, const GameWorld& world) 
+{
+    graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
+
+    for (const auto& particle : world.getParticles()) {
+        if (!particle->isActive()) continue;
+
+        int screenX = particle->getX() - world.getCameraX();
+        int screenY = particle->getY();
+
+        Gdiplus::Image* imageToDraw = nullptr;
+
+        switch (particle->getType()) {
+            case Particle::ParticleType::PlayerFireball:
+            {
+                PlayerFireball* fireball = dynamic_cast<PlayerFireball*>(particle.get());
+                if (fireball) {
+                    if (fireball->isFading()) {
+                        int motion = fireball->getMotion(); // Use motion for fade-out animation frames
+                        if (motion == 0) imageToDraw = shot_fireball_fadeout_1;
+                        else if (motion == 1) imageToDraw = shot_fireball_fadeout_2;
+                        else imageToDraw = shot_fireball_fadeout_3;
+                    } else {
+                        int motion = fireball->getMotion();
+                        if (motion == 0) imageToDraw = shot_fireball_1;
+                        else if (motion == 1) imageToDraw = shot_fireball_2;
+                        else if (motion == 2) imageToDraw = shot_fireball_3;
+                        else imageToDraw = shot_fireball_4;
+                    }
+                }
+                break;
+            }
+        }
+
+        if (imageToDraw) {
+            graphics.DrawImage(imageToDraw, (REAL)screenX, (REAL)screenY, (REAL)particle->getWidth(), (REAL)particle->getHeight());
         }
     }
 }
@@ -405,14 +443,16 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
     if (world.getGameState_trans() == GameState_Trans::GAME_BIG_TRANS)
     {
         if (player.isBig()) // Big Mario shrinking to Small Mario
-        { 
-            if ((world.getGlobalAnimationFrameCounter() / 5) % 2 == 0) 
+        {
+            if ((world.getGlobalAnimationFrameCounter() / 5) % 2 == 0)
             {
-                graphics.DrawImage(big_mario_change, (REAL)drawX, (REAL)drawY - TILE_SIZE, (REAL)player.getWidth(), (REAL)player.getHeight());
-            } 
-            else 
+                // Draw the big mario sprite normally.
+                graphics.DrawImage(big_mario_stop, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
+            }
+            else
             {
-                graphics.DrawImage(mario_stop, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
+                // Draw the small mario sprite, but positioned at the bottom.
+                graphics.DrawImage(mario_stop, (REAL)drawX, (REAL)drawY + (player.getHeight() - 40), 40.0f, 40.0f);
             }
         } 
         else // Small Mario growing to Big Mario 
@@ -534,6 +574,22 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
         {
             switch (player.getState())
             {
+            case PlayerState::Flower:
+                if (player.isFiring()) {
+                    imageToDraw = flower_mario_fire;
+                }
+                else if (player.isJumping()) imageToDraw = flower_mario_jump;
+                else if (player.isWalking())
+                {
+                    if (player.getWalkMotion() == 0) imageToDraw = flower_mario_walk_motion_1;
+                    else if (player.getWalkMotion() == 1) imageToDraw = flower_mario_walk_motion_2;
+                    else imageToDraw = flower_mario_walk_motion_3;
+                }
+                else
+                {
+                    imageToDraw = flower_mario_stop;
+                }
+                break;
             case PlayerState::Small:
                 if (player.isJumping()) imageToDraw = mario_jump;
                 else if (player.isWalking())
@@ -558,20 +614,6 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
                 else
                 {
                     imageToDraw = big_mario_stop;
-                }
-
-                break;
-            case PlayerState::Flower:
-                if (player.isJumping()) imageToDraw = flower_mario_jump;
-                else if (player.isWalking())
-                {
-                    if (player.getWalkMotion() == 0) imageToDraw = flower_mario_walk_motion_1;
-                    else if (player.getWalkMotion() == 1) imageToDraw = flower_mario_walk_motion_2;
-                    else imageToDraw = flower_mario_walk_motion_3;
-                }
-                else
-                {
-                    imageToDraw = flower_mario_stop;
                 }
 
                 break;
