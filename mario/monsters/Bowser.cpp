@@ -42,7 +42,7 @@ void Bowser::monster_logic(GameWorld& world) {
     if (fireTimer > fireInterval) 
     {
         int dir = (world.getPlayer().getX() < getX()) ? -1 : 1;
-        world.spawnFireball(getX() + getWidth() / 2, getY() + getHeight() / 2, 6 * dir);
+        //world.spawnFireball(getX() + getWidth() / 2, getY() + getHeight() / 2, 6 * dir);
 
         fireTimer = 0;
         fireInterval = 120 + rand() % 120;

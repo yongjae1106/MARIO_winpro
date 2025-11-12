@@ -2,19 +2,18 @@
 
 #include "../Particle.h"
 
-class PlayerFireball : public Particle {
+class TinoFireball : public Particle {
 public:
-    PlayerFireball(int x, int y, int vx);
+    TinoFireball(int x, int y, int vx, int direction);
 
     void update(GameWorld& world) override;
     void render(HDC hdc, int cameraX) override;
 
-    bool isFading() const { return fade; }
-    void setFade(bool isFading) { fade = isFading; }
     int getMotion() const { return motion; }
+    int getDirection() const { return direction; }
 
 private:
     int motion;
-    bool fade;
-    int fade_timer;
+    int duration;
+    int direction;
 };

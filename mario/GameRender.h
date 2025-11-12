@@ -61,6 +61,7 @@ private:
     void drawUI(Gdiplus::Graphics& graphics, const GameWorld& world);
     void drawTitleScreen(Gdiplus::Graphics& graphics, const GameWorld& world);
     void drawTitleDead(Gdiplus::Graphics& graphics, const GameWorld& world);
+    void drawParticles(Gdiplus::Graphics& graphics, const GameWorld& world);
 
     // GDI+ startup token
     ULONG_PTR gdiplusToken;
@@ -186,6 +187,13 @@ private:
     Gdiplus::Image* shot_fireball_fadeout_1;
     Gdiplus::Image* shot_fireball_fadeout_2;
     Gdiplus::Image* shot_fireball_fadeout_3;
+    Gdiplus::Image* tino_fire_1;
+    Gdiplus::Image* tino_fire_2;
+    Gdiplus::Image* tino_fire_R_1;
+    Gdiplus::Image* tino_fire_R_2;
+    Gdiplus::Image* tino_fire_fade_1;
+    Gdiplus::Image* tino_fire_fade_2;
+    Gdiplus::Image* tino_fire_fade_3;
     Gdiplus::Image* monster1_motion1;
     Gdiplus::Image* monster1_motion2;
     Gdiplus::Image* monster1_dead;

@@ -77,14 +77,20 @@ public:
     bool isWalking() const;
     void setWalking(bool walking);
 
+    bool isFiring() const;
+
     int getWalkMotion() const;
     int getDirection() const;
     int getWidth() const;
     void setWidth(int width);
     int getHeight() const;
     void setHeight(int height);
-    int getTinoCooldownZ() const;
+    int getTinoCooldownTinoFireball() const;
     int getTinoCooldownSpace() const;
+    int getFireMotionTimer() const; // New getter
+    int getTinoAttackMotionTimer() const; // New getter
+    bool isTinoFireMotion() const; // New getter
+    bool isTinoAttackMotion() const; // New getter
 
 private:
     void move(GameWorld& world);
@@ -97,8 +103,8 @@ private:
     int walk_motion;
     int motion_timer;
     int m_walk_motion_timer;
-    int tino_cooldown_z;
     int tino_cooldown_space;
+    int m_fire_motion_timer;
 
     bool m_isJumping;
     bool m_isFlying;
@@ -108,8 +114,11 @@ private:
     bool fire_motion;
     bool tino_motion;
     bool tino_fire_motion;
+    bool tino_attack_motion; // New member variable for Tino attack motion
     int m_fire_cooldown;
+    int m_tinofire_cooldown;
     DWORD m_god_timer;
+    int m_tino_attack_motion_timer; // New member variable for Tino attack motion timer
 
     bool _isStarGodModeActive;
     DWORD _starGodModeEndTime;

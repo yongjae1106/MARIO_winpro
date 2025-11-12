@@ -47,6 +47,8 @@ class GameWorld {
 public:
     GameWorld();
 
+    bool isSolidTile(int tileValue) const;
+
     void init();
     void sound_init(HWND hwnd);
 
@@ -71,13 +73,17 @@ public:
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;
     double getCameraX() const;
+
     const std::vector<std::unique_ptr<Monster>>& getMonsters() const;
     const std::vector<std::unique_ptr<Item>>& getItems() const;
     const std::vector<std::unique_ptr<Particle>>& getParticles() const;
+    const std::vector<std::unique_ptr<Particle>>& getNewParticles() const;
+
+    void newParticles_insertTo_Particles();
+
     int getLife() const { return player.getLife(); }
     int getCoin() const { return player.getCoin(); }
     int getStageTime() const { return stage_time; }
-    int getTinoCooldownZ() const { return player.getTinoCooldownZ(); }
     int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
     bool getGameClearText() const { return gameClearText; }
     bool getGameoverTitleDead () const { return gameover_TitleDead; }
@@ -96,9 +102,9 @@ public:
     void spawnItem(Item::ItemType type, int x, int y);
     void spawnMonster(std::unique_ptr<Monster> monster);
     void spawnParticle(std::unique_ptr<Particle> particle);
-    void spawnFireball(int x, int y, int vx);
     void spawnPlayerFireball(int x, int y, int vx);
-    bool isSolidTile(int tileValue) const; // Added as member function
+    void spawnTinoFireball(int x, int y, int vx, int direction);
+    void spawnTinoFireballEffect(int x, int y, int vx, int direction);
 
     void playSound(const std::string& name, bool loop = false);
     void stopAllSounds();
@@ -145,6 +151,7 @@ private:
     std::vector<std::unique_ptr<Monster>> monsters;
     std::vector<std::unique_ptr<Item>> items;
     std::vector<std::unique_ptr<Particle>> particles;
+    std::vector<std::unique_ptr<Particle>> newParticles;
 
     std::vector<MonsterSpawnInfo> stage1Monsters;
     std::vector<MonsterSpawnInfo> stage2Monsters;

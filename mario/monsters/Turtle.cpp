@@ -60,10 +60,10 @@ void Turtle::takeDamage(GameWorld& world, int damage) {
         m_state = TurtleState::SPINNING;
         // Determine direction based on player's collision
         int playerX = world.getPlayer().getX();
-        int monsterX = getX();
+        int monsterScreenX = getX() - world.getCameraX();
         int spinSpeed = 5; // Define a spin speed
 
-        if (playerX < monsterX) 
+        if (playerX < monsterScreenX) 
         { // Player collided from left, spin right
             setVx(spinSpeed);
         } else { // Player collided from right, spin left

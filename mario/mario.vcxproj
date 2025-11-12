@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,6 +142,7 @@
     <ClCompile Include="monsters\NormalGoomba.cpp" />
     <ClCompile Include="monsters\RedGoomba.cpp" />
     <ClCompile Include="monsters\Turtle.cpp" />
+    <ClCompile Include="Particle.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="items\Flower.cpp" />
     <ClCompile Include="items\Mushroom.cpp" />
@@ -149,6 +151,8 @@
     <ClCompile Include="items\UpMushroom.cpp" />
     <ClCompile Include="projectiles\Fireball.cpp" />
     <ClCompile Include="projectiles\PlayerFireball.cpp" />
+    <ClCompile Include="projectiles\TinoFireball.cpp" />
+    <ClCompile Include="projectiles\TinoFireballEffect.cpp" />
     <ClCompile Include="Sound.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +169,7 @@
     <ClInclude Include="monsters\NormalGoomba.h" />
     <ClInclude Include="monsters\RedGoomba.h" />
     <ClInclude Include="monsters\Turtle.h" />
+    <ClInclude Include="Particle.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="items\Flower.h" />
     <ClInclude Include="items\Mushroom.h" />
@@ -173,6 +178,8 @@
     <ClInclude Include="items\UpMushroom.h" />
     <ClInclude Include="projectiles\Fireball.h" />
     <ClInclude Include="projectiles\PlayerFireball.h" />
+    <ClInclude Include="projectiles\TinoFireball.h" />
+    <ClInclude Include="projectiles\TinoFireballEffect.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />
     <ClInclude Include="Sound.h" />

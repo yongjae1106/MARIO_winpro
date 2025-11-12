@@ -5,8 +5,13 @@
 #include "items/Flower.h"
 #include "items/Tino.h"
 #include "monsters/Turtle.h"
+#include "monsters/Goomba.h"
+#include "monsters/Bowser.h"
+#include "Monster.h"
 #include "Particle.h"
 #include "projectiles/PlayerFireball.h"
+#include "projectiles/TinoFireball.h"
+#include "projectiles/TinoFireballEffect.h"
 #include <tchar.h>
 #include <gdiplus.h>
 #include <mmsystem.h>  // PlaySound 함수 포함
@@ -203,6 +208,33 @@ void GameRender::drawParticles(Gdiplus::Graphics& graphics, const GameWorld& wor
                         else if (motion == 2) imageToDraw = shot_fireball_3;
                         else imageToDraw = shot_fireball_4;
                     }
+                }
+                break;
+            }
+            case Particle::ParticleType::TinoFireball:
+            {
+                TinoFireball* tinofireball = dynamic_cast<TinoFireball*>(particle.get());
+                if (tinofireball) {
+                    if (tinofireball->getDirection() == 0) { // Left
+                        if (tinofireball->getMotion() < 3) imageToDraw = tino_fire_1;
+                        else imageToDraw = tino_fire_2;
+                    }
+                    else { // Right
+                        if (tinofireball->getMotion() < 3) imageToDraw = tino_fire_R_1;
+                        else imageToDraw = tino_fire_R_2;
+                    }
+                }
+                break;
+            }
+            case Particle::ParticleType::TinoFireballEffect:
+            {
+                TinoFireballEffect* tinofireballEffect = dynamic_cast<TinoFireballEffect*>(particle.get());
+                if (tinofireballEffect) 
+                {
+                    int timer = tinofireballEffect->getTimer();
+                    if (timer < 5) imageToDraw = tino_fire_fade_1;
+                    else if (timer < 10) imageToDraw = tino_fire_fade_2;
+                    else imageToDraw = tino_fire_fade_3;
                 }
                 break;
             }
@@ -570,6 +602,22 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
                 }
             }
         }
+        else if (player.isTinoFireMotion()) // Tino Fireball Motion
+        {
+            int timer = player.getFireMotionTimer(); // Use getter
+            if (timer > 5) imageToDraw = tino_mario_attack_1;
+            else imageToDraw = tino_mario_attack_2;
+        }
+        else if (player.isTinoAttackMotion()) // Tino Attack Motion
+        {
+            int timer = player.getTinoAttackMotionTimer(); // Use getter
+            if (timer > 25) imageToDraw = tino_mario_attack_1;
+            else if (timer > 20) imageToDraw = tino_mario_attack_2;
+            else if (timer > 15) imageToDraw = tino_mario_attack_3;
+            else if (timer > 10) imageToDraw = tino_mario_attack_4;
+            else if (timer > 5) imageToDraw = tino_mario_attack_5;
+            else imageToDraw = tino_mario_attack_6; // Use the last frame for the final part of the animation
+        }
         else
         {
             switch (player.getState())
@@ -636,7 +684,14 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
             imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
         }
 
-        graphics.DrawImage(imageToDraw, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
+        if (player.isTinoAttackMotion() || player.isTinoFireMotion())
+        {
+            graphics.DrawImage(imageToDraw, (REAL)drawX - 25, (REAL)drawY - 15, (REAL)100, (REAL)100);
+        }
+        else
+        {
+            graphics.DrawImage(imageToDraw, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
+        }
 
         if (player.getDirection() == 0) { // Flip back
             imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
@@ -654,6 +709,7 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     TCHAR life_print[32], life_print2[32], time_print[32], time_print2[32], coin_print[32], stage_print[32], stage_print2[32];
     TCHAR clear_text_1[32];
     TCHAR clear_text_2[32];
+    TCHAR cooldown_z[32], cooldown_space[32];
 
     int frame_motion = (world.getGlobalAnimationFrameCounter() / 8) % 7;
 
@@ -680,6 +736,8 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     _stprintf_s(stage_print2, _T("%d"), world.getStage());
     _stprintf_s(clear_text_1, _T("THANK YOU MARIO!"));
     _stprintf_s(clear_text_2, _T("YOUR QUEST IS OVER.!"));
+    _stprintf_s(cooldown_z, _T("Z (fire): %d"), world.getPlayer().getTinoCooldownTinoFireball());
+    _stprintf_s(cooldown_space, _T("SPACE (bite): %d"), world.getPlayer().getTinoCooldownSpace());
 
     graphics.DrawString(life_print, -1, m_font.get(), PointF(80, 20), &stringFormat, &brush);
     graphics.DrawString(life_print2, -1, m_font.get(), PointF(80, 40), &stringFormat, &brush);
@@ -691,6 +749,12 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     graphics.DrawString(coin_print, -1, m_font.get(), PointF(320, 40), &stringFormat, &brush);
     graphics.DrawString(stage_print, -1, m_font.get(), PointF(440, 20), &stringFormat, &brush);
     graphics.DrawString(stage_print2, -1, m_font.get(), PointF(480, 40), &stringFormat, &brush);
+
+    if (world.getPlayer().isTino())
+    {
+        graphics.DrawString(cooldown_z, -1, m_font.get(), PointF(80, 80), &stringFormat, &brush);
+        graphics.DrawString(cooldown_space, -1, m_font.get(), PointF(80, 100), &stringFormat, &brush);
+    }
 
     if (world.getGameClearText())
     {
@@ -793,8 +857,6 @@ void GameRender::loadImages() {
     tino_mario_attack_4 = loadImage(L"resource/mario/tino/Tino_mario_attack_4.png");
     tino_mario_attack_5 = loadImage(L"resource/mario/tino/Tino_mario_attack_5.png");
     tino_mario_attack_6 = loadImage(L"resource/mario/tino/Tino_mario_attack_6.png");
-    tino_mario_fire_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_1.png");
-    tino_mario_fire_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_2.png");
     tino_mario_fire_R_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_1.png");
     tino_mario_fire_R_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_2.png");
     tino_mario_fire_fade_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_1.png");
@@ -855,6 +917,13 @@ void GameRender::loadImages() {
     shot_fireball_fadeout_1 = loadImage(L"resource/items/shot/fireball_fadeout_1.png");
     shot_fireball_fadeout_2 = loadImage(L"resource/items/shot/fireball_fadeout_2.png");
     shot_fireball_fadeout_3 = loadImage(L"resource/items/shot/fireball_fadeout_3.png");
+    tino_fire_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_1.png");
+    tino_fire_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_2.png");
+    tino_fire_R_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_1.png");
+    tino_fire_R_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_R_2.png");
+    tino_fire_fade_1 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_1.png");
+    tino_fire_fade_2 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_2.png");
+    tino_fire_fade_3 = loadImage(L"resource/mario/tino/Tino_mario_fire_fade_3.png");
     monster1_motion1 = loadImage(L"resource/monster/monster1_motion1.png");
     monster1_motion2 = loadImage(L"resource/monster/monster1_motion2.png");
     monster1_dead = loadImage(L"resource/monster/monster1_dead.png");

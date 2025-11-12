@@ -58,6 +58,18 @@
     <ClCompile Include="items\Flower.cpp">
       <Filter>Item</Filter>
     </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="projectiles\TinoFireball.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="projectiles\TinoFireballEffect.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="projectiles\TinoAttack.cpp">
+      <Filter>projectiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
@@ -118,6 +130,15 @@
     </ClInclude>
     <ClInclude Include="items\Flower.h">
       <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="projectiles\TinoFireball.h">
+      <Filter>projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="projectiles\TinoFireballEffect.h">
+      <Filter>projectiles</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

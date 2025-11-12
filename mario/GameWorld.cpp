@@ -13,10 +13,12 @@
 #include "items/UpMushroom.h"
 #include "projectiles/Fireball.h"
 #include "projectiles/PlayerFireball.h"
+#include "projectiles/TinoFireball.h"
+#include "projectiles/TinoFireballEffect.h"
 #include "Particle.h"
 #include "monsters/Turtle.h"
 #include <memory>
-#include <tchar.h>
+#include <tchar.h> // Added for _stprintf_s and OutputDebugString
 
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
     return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
@@ -427,6 +429,10 @@ const std::vector<std::unique_ptr<Item>>& GameWorld::getItems() const {
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const {
     return particles;
 }
+const std::vector<std::unique_ptr<Particle>>& GameWorld::getNewParticles() const
+{
+    return newParticles;
+}
 
 const bool* GameWorld::getKeyState() const {
     return keyState;
@@ -492,15 +498,31 @@ void GameWorld::updateItems() {
     }), items.end());
 }
 
-void GameWorld::updateParticles() {
-    for (auto& particle : particles) {
+void GameWorld::updateParticles() 
+{
+    if (!newParticles.empty()) {
+        for (auto& p : newParticles)
+            particles.push_back(std::move(p));
+        newParticles.clear();
+    }
+
+    for (auto& particle : particles) 
+    {
+        if (!particle) 
+        {
+            OutputDebugString(L"[WARN] nullptr particle skipped\n");
+            continue;
+        }
         particle->update(*this);
     }
 
     // Remove inactive particles
-    particles.erase(std::remove_if(particles.begin(), particles.end(), [](const std::unique_ptr<Particle>& particle) {
-        return !particle->isActive();
-    }), particles.end());
+    particles.erase(
+        std::remove_if(particles.begin(), particles.end(),
+            [](const std::unique_ptr<Particle>& particle) {
+                return !particle || !particle->isActive();
+            }),
+        particles.end());
 }
 
 void GameWorld::checkCollisions() {
@@ -599,12 +621,16 @@ void GameWorld::spawnParticle(std::unique_ptr<Particle> particle) {
     particles.push_back(std::move(particle));
 }
 
-void GameWorld::spawnFireball(int x, int y, int vx) {
-    // items.push_back(std::make_unique<Fireball>(x, y, vx));
-}
-
 void GameWorld::spawnPlayerFireball(int x, int y, int vx) {
     spawnParticle(std::make_unique<PlayerFireball>(x, y, vx));
+}
+
+void GameWorld::spawnTinoFireball(int x, int y, int vx, int direction) {
+    spawnParticle(std::make_unique<TinoFireball>(x, y, vx, direction));
+}
+
+void GameWorld::spawnTinoFireballEffect(int x, int y, int vx, int direction) {
+    newParticles.push_back(std::move(std::make_unique<TinoFireballEffect>(x, y, vx, direction)));
 }
 
 void GameWorld::applyplayertakedamage()
@@ -647,8 +673,14 @@ void GameWorld::applyplayertakedamage()
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
 void GameWorld::checkParticleMonsterCollision() {
-    for (auto& particle : particles) {
-        if (!particle->isActive()) {
+    for (auto& particle : particles) 
+    {
+        if (!particle || !particle->isActive()) {
+            continue;
+        }
+        if (particle->getType() == Particle::ParticleType::TinoFireballEffect) {
+            // TinoFireballEffect는 시각적 효과이며 충돌에 관여하지 않습니다.
+            // 잠재적으로 해제되었거나 유효하지 않은 메모리에 접근하는 것을 방지하기 위해 건너뜁니다.
             continue;
         }
 
@@ -664,8 +696,26 @@ void GameWorld::checkParticleMonsterCollision() {
                 if (particle->getType() == Particle::ParticleType::PlayerFireball) {
                     playSound("kick");
                     monster->takeDamage(*this, 1);
-                    particle->setActive(false);
+                    PlayerFireball* fireball = dynamic_cast<PlayerFireball*>(particle.get());
+                    if (fireball) 
+                    {
+                        fireball->setFade(true);
+                        fireball->setVx(0); // Stop horizontal movement
+                        fireball->setVy(0); // Stop vertical movement
+                    } 
+                    else 
+                    {
+                        particle->setActive(false); // Fallback for other particle types
+                    }
                     break; 
+                }
+                else if (particle->getType() == Particle::ParticleType::TinoFireball) 
+                {
+                    playSound("kick");
+                    spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, 0); // Spawn effect
+                    monster->takeDamage(*this, 1);
+                    // TinoFireball does not become inactive on hit, its lifespan is duration-based
+                    // No break here, as TinoFireball can hit multiple monsters
                 }
             }
         }
@@ -1116,6 +1166,7 @@ void GameWorld::initMap1() {
         map1[MAP_HEIGHT - 1][j] = 1;
     }
     map1[7][0] = 61;
+    map1[7][4] = 62;
     map1[9][1] = 65;    // 보여주기식 스타박스
     //벽돌
     map1[6][16] = 10;

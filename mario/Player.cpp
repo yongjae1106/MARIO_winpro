@@ -1,5 +1,7 @@
 #include "Player.h"
 #include "GameWorld.h"
+#include "monsters/Bowser.h"
+#include "Monster.h"
 #include <Gdiplus.h>
 #include <tchar.h>
 #include <format>
@@ -13,6 +15,9 @@ Player::Player() {
     _starGodModeEndTime = 0;
     _isSuperGodModeActive = false;
     _superGodModeEndTime = 0;
+    m_tinofire_cooldown = 0;
+    tino_attack_motion = false; // Initialize new member variable
+    m_tino_attack_motion_timer = 0; // Initialize new member variable
 }
 
 void Player::reset() {
@@ -28,9 +33,9 @@ void Player::reset() {
     walk_motion = 0;
     motion_timer = 0;
     m_walk_motion_timer = 0;
-    tino_cooldown_z = 0;
     tino_cooldown_space = 0;
     m_fire_cooldown = 0;
+    m_tinofire_cooldown = 0;
     m_fire_motion_timer = 0;
     m_god_timer = 0;
     setJumping(false);
@@ -41,6 +46,7 @@ void Player::reset() {
     fire_motion = false;
     tino_motion = false;
     tino_fire_motion = false;
+    tino_attack_motion = false; // Initialize new member variable
     setState(PlayerState::Small);
     _isStarGodModeActive = false;
     _starGodModeEndTime = 0;
@@ -84,18 +90,34 @@ void Player::update(GameWorld& world)
         m_fire_cooldown--;
     }
 
-    if (tino_cooldown_z > 0) {
-        tino_cooldown_z--;
+    if (m_tinofire_cooldown > 0) {
+        m_tinofire_cooldown--;
+    }
+    else
+    {
+        tino_fire_motion = false;
     }
 
     if (tino_cooldown_space > 0) {
         tino_cooldown_space--;
     }
 
-    if (m_fire_motion_timer > 0) {
+    if (m_fire_motion_timer > 0) 
+    {
         m_fire_motion_timer--;
-    } else {
+    } 
+    else 
+    {
         fire_motion = false;
+    }
+
+    if (m_tino_attack_motion_timer > 0) 
+    {
+        m_tino_attack_motion_timer--;
+    } 
+    else 
+    {
+        tino_attack_motion = false;
     }
 
     if (_isStarGodModeActive) {
@@ -171,16 +193,21 @@ void Player::move(GameWorld& world)
         m_fire_motion_timer = 10; // Play fire motion for 10 frames
     }
 
-    if (keyState['X'] && isTino() && tino_cooldown_z == 0) {
-        tinoAttack(world);
-        tino_cooldown_z = 30; // Cooldown for 30 frames
+    if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
+        world.spawnTinoFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -7 : 7), direction);
+        m_tinofire_cooldown = 30; // Cooldown for 30 frames
+        world.playSound("tino_fire_shoot");
+        tino_fire_motion = true; // Set Tino Fireball motion flag
+        m_fire_motion_timer = 10; // Set motion timer
     }
 
-    if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) {
-        setVx(direction == 0 ? -15 : 15); // Dash
-        setSuperGodMode(true); // 대시 중 무적 활성화
-        _superGodModeEndTime = GetTickCount() + 1000; // 1초간 무적
-        tino_cooldown_space = 60; // Cooldown for 60 frames
+    if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack
+        tinoAttack(world);
+        tino_cooldown_space = 100; // Cooldown for 30 frames
+        tino_attack_motion = true; // Set Tino Attack motion flag
+        m_tino_attack_motion_timer = 30; // Set motion timer
+        setSuperGodMode(true); // Activate invincibility
+        _superGodModeEndTime = GetTickCount() + (m_tino_attack_motion_timer * (3000 / 60)); // Invincibility duration based on motion timer
     }
 
     // 디버그: 입력 처리 후 Vx 값 출력
@@ -189,6 +216,13 @@ void Player::move(GameWorld& world)
 }
 
 void Player::updateAnimation() {
+    if (tino_fire_motion || tino_attack_motion) {
+        // Specific animation logic for Tino fire or attack motion
+        // For now, we just ensure walking animation is paused/overridden
+        walk_motion = 0; // Stop walking animation
+        return;
+    }
+
     if (isWalking()) {
         m_walk_motion_timer++;
         if (m_walk_motion_timer > 5) {
@@ -325,12 +359,28 @@ void Player::setHeight(int newHeight) {
     height = newHeight;
 }
 
-int Player::getTinoCooldownZ() const {
-    return tino_cooldown_z;
+int Player::getTinoCooldownTinoFireball() const {
+    return m_tinofire_cooldown;
 }
 
 int Player::getTinoCooldownSpace() const {
     return tino_cooldown_space;
+}
+
+int Player::getFireMotionTimer() const {
+    return m_fire_motion_timer;
+}
+
+int Player::getTinoAttackMotionTimer() const {
+    return m_tino_attack_motion_timer;
+}
+
+bool Player::isTinoFireMotion() const {
+    return tino_fire_motion;
+}
+
+bool Player::isTinoAttackMotion() const {
+    return tino_attack_motion;
 }
 
 void Player::addCoin(int count) {
@@ -462,18 +512,36 @@ bool Player::isFiring() const {
 
 void Player::tinoAttack(GameWorld& world) {
     // Tino attack logic (collision with monsters)
+    // Attack box definition
+    int attackRangeX = (direction == 0) ? getX() - 50 : getX() + 50;
+    int attackRangeY = getY() - 15; // Centered vertically, 50px height
+    int attackWidth = 50;
+    int attackHeight = 100; // Smaller, more focused attack box
+
     for (auto& monster : world.getMonsters()) {
         if (!monster->isAlive()) continue;
 
-        int attackRangeX = (direction == 0) ? getX() - 50 : getX() + getWidth();
-        int attackRangeY = getY() - 15;
-        int attackWidth = 50;
-        int attackHeight = 100;
+        int monsterScreenX = monster->getX() - world.getCameraX();
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
-                        monster->getX() - world.getCameraX(), monster->getY(), monster->getWidth(), monster->getHeight())) {
+                        monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
             world.playSound("kick");
-            monster->takeDamage(world, 1);
+
+            // Handle Bowser specific logic
+            Bowser* bowserMonster = dynamic_cast<Bowser*>(monster.get());
+            if (bowserMonster)
+            {
+                monster->takeDamage(world, 10); // Deal more damage to Bowser
+            } 
+            else 
+            {
+                // Knockback for non-Bowser monsters
+                monster->setVy(-15); // Make monster fly upwards
+                monster->setFalling(true);
+            }
+            
+            // Add visual feedback
+            world.spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, direction);
         }
     }
 }
