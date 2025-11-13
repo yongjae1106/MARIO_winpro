@@ -6,7 +6,7 @@ using namespace Gdiplus;
 Monster::Monster(MonsterType type, int x, int y, int width, int height)
     : type(type), x(x), y(y), vx(0), vy(0),
     width(width), height(height),
-    alive(true), falling(false) {}
+    alive(true), falling(false), lastHitByTinoTime(0) {}
 
 void Monster::checkFallDeath()
 {
@@ -22,6 +22,14 @@ void Monster::update(GameWorld& world)
     gravity();
     checkFallDeath();
     checkMonsterMapCollision(world);
+}
+
+bool Monster::isImmuneToTino() const {
+    return GetTickCount() - lastHitByTinoTime < tinoHitCooldown;
+}
+
+void Monster::setHitByTino() {
+    lastHitByTinoTime = GetTickCount();
 }
 
 void Monster::checkMonsterMapCollision(GameWorld& world)

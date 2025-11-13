@@ -12,6 +12,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case WM_CREATE: {
             SetTimer(hWnd, 1, 15, NULL);
             SetTimer(hWnd, 2, 15, NULL);
+            SetTimer(hWnd, 3, 1000, NULL);
             break;
         }
         case WM_TIMER: {
@@ -22,6 +23,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     break;
                 case(2):
                     gameWorld.updateAnimations();
+                    break;
+                case(3):
+                    gameWorld.getPlayer().updateCooldown();
                     break;
             }
             break;

@@ -468,7 +468,6 @@ void GameWorld::setGameOverTitleDead(bool gameover)
 void GameWorld::updatePlayer() {
     player.update(*this);
 }
-
 void GameWorld::updateAnimations() {
     player.updateAnimation();
     m_global_animation_frame_counter++; // Increment global animation frame counter
@@ -673,7 +672,7 @@ void GameWorld::applyplayertakedamage()
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ충돌ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
 void GameWorld::checkParticleMonsterCollision() {
-    for (auto& particle : particles) 
+    for (auto& particle : particles)
     {
         if (!particle || !particle->isActive()) {
             continue;
@@ -691,29 +690,34 @@ void GameWorld::checkParticleMonsterCollision() {
             int particleScreenX = particle->getX() - cameraX;
 
             if (isColliding(particleScreenX, particle->getY(), particle->getWidth(), particle->getHeight(),
-                            monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight()))
+                monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight()))
             {
                 if (particle->getType() == Particle::ParticleType::PlayerFireball) {
                     playSound("kick");
                     monster->takeDamage(*this, 1);
                     PlayerFireball* fireball = dynamic_cast<PlayerFireball*>(particle.get());
-                    if (fireball) 
+                    if (fireball)
                     {
                         fireball->setFade(true);
                         fireball->setVx(0); // Stop horizontal movement
                         fireball->setVy(0); // Stop vertical movement
-                    } 
-                    else 
+                    }
+                    else
                     {
                         particle->setActive(false); // Fallback for other particle types
                     }
-                    break; 
+                    break;
                 }
-                else if (particle->getType() == Particle::ParticleType::TinoFireball) 
+                else if (particle->getType() == Particle::ParticleType::TinoFireball)
                 {
-                    playSound("kick");
-                    spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, 0); // Spawn effect
-                    monster->takeDamage(*this, 1);
+                    // 몬스터가 티노파이어에 대해 무적상태가 아닐 때만 피해를 줍니다.
+                    if (!monster->isImmuneToTino())
+                    {
+                        playSound("kick");
+                        spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, 0); // Spawn effect
+                        monster->takeDamage(*this, 1);
+                        monster->setHitByTino(); // 몬스터를 무적 상태로 만듭니다.
+                    }
                     // TinoFireball does not become inactive on hit, its lifespan is duration-based
                     // No break here, as TinoFireball can hit multiple monsters
                 }

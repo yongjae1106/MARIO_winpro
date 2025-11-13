@@ -22,6 +22,7 @@ public:
 
     void update(GameWorld& world);
     void reset();
+    void updateCooldown();
 
     void setStop();
 
@@ -105,6 +106,7 @@ private:
     int m_walk_motion_timer;
     int tino_cooldown_space;
     int m_fire_motion_timer;
+    int m_tino_fire_motion_timer;
 
     bool m_isJumping;
     bool m_isFlying;

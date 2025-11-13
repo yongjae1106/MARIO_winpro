@@ -38,10 +38,19 @@ public:
     void update(GameWorld& world);
     virtual void takeDamage(GameWorld& world, int damage);
 
+    // TinoFireball immunity
+    bool isImmuneToTino() const;
+    void setHitByTino();
+
+protected:
     MonsterType type;
     int x, y;
     int vx, vy;
     int width, height;
     bool alive;
     bool falling;
+
+    // TinoFireball immunity
+    DWORD lastHitByTinoTime;
+    static const DWORD tinoHitCooldown = 500; // 0.5초 무적
 };

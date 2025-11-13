@@ -86,38 +86,31 @@ void Player::update(GameWorld& world)
         setDead(true);
     }
 
-    if (m_fire_cooldown > 0) {
-        m_fire_cooldown--;
-    }
-
-    if (m_tinofire_cooldown > 0) {
-        m_tinofire_cooldown--;
-    }
-    else
-    {
-        tino_fire_motion = false;
-    }
-
-    if (tino_cooldown_space > 0) {
-        tino_cooldown_space--;
-    }
-
-    if (m_fire_motion_timer > 0) 
+    if (m_fire_motion_timer > 0)
     {
         m_fire_motion_timer--;
-    } 
-    else 
+    }
+    else
     {
         fire_motion = false;
     }
 
-    if (m_tino_attack_motion_timer > 0) 
+    if (m_tino_attack_motion_timer > 0)
     {
         m_tino_attack_motion_timer--;
-    } 
-    else 
+    }
+    else
     {
         tino_attack_motion = false;
+    }
+
+    if (m_tino_fire_motion_timer > 0)
+    {
+        m_tino_fire_motion_timer--;
+    }
+    else
+    {
+        tino_fire_motion = false;
     }
 
     if (_isStarGodModeActive) {
@@ -133,6 +126,24 @@ void Player::update(GameWorld& world)
             _isSuperGodModeActive = false; // Super god mode ends
         }
     }
+}
+
+void Player::updateCooldown()
+{
+    if (m_fire_cooldown > 0) {
+        m_fire_cooldown--;
+    }
+
+    if (m_tinofire_cooldown > 0) {
+        m_tinofire_cooldown--;
+    }
+
+
+    if (tino_cooldown_space > 0) {
+        tino_cooldown_space--;
+    }
+
+
 }
 
 void Player::move(GameWorld& world) 
@@ -188,22 +199,22 @@ void Player::move(GameWorld& world)
 
     if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
         world.spawnPlayerFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -10 : 10));
-        m_fire_cooldown = 20; // Cooldown for 20 frames
+        m_fire_cooldown = 2; // Cooldown for 20 frames
         fire_motion = true;
         m_fire_motion_timer = 10; // Play fire motion for 10 frames
     }
 
     if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
         world.spawnTinoFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -7 : 7), direction);
-        m_tinofire_cooldown = 30; // Cooldown for 30 frames
+        m_tinofire_cooldown = 5; // Cooldown for 30 frames
         world.playSound("tino_fire_shoot");
         tino_fire_motion = true; // Set Tino Fireball motion flag
-        m_fire_motion_timer = 10; // Set motion timer
+        m_tino_fire_motion_timer = 10; // Set motion timer
     }
 
     if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack
         tinoAttack(world);
-        tino_cooldown_space = 100; // Cooldown for 30 frames
+        tino_cooldown_space = 15; // Cooldown for 30 frames
         tino_attack_motion = true; // Set Tino Attack motion flag
         m_tino_attack_motion_timer = 30; // Set motion timer
         setSuperGodMode(true); // Activate invincibility
