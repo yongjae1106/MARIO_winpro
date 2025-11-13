@@ -9,9 +9,9 @@
 #include "monsters/Bowser.h"
 #include "Monster.h"
 #include "Particle.h"
-#include "projectiles/PlayerFireball.h"
-#include "projectiles/TinoFireball.h"
-#include "projectiles/TinoFireballEffect.h"
+#include "Particles/PlayerFireball.h"
+#include "Particles/TinoFireball.h"
+#include "Particles/TinoFireballEffect.h"
 #include <tchar.h>
 #include <gdiplus.h>
 #include <mmsystem.h>  // PlaySound 함수 포함

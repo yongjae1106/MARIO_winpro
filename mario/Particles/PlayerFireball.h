@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Particle.h"
+#include "Particles/Particle.h"
 
 class PlayerFireball : public Particle {
 public:

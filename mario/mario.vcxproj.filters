@@ -18,10 +18,10 @@
       <Filter>Monster</Filter>
     </ClCompile>
     <ClCompile Include="projectiles\Fireball.cpp">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClCompile>
     <ClCompile Include="projectiles\PlayerFireball.cpp">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClCompile>
     <ClCompile Include="monsters\BlueGoomba.cpp">
       <Filter>Monster</Filter>
@@ -38,7 +38,6 @@
     <ClCompile Include="monsters\RedGoomba.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
-    <ClCompile Include="items\Mushroom.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Monster.cpp">
       <Filter>Monster</Filter>
@@ -59,16 +58,19 @@
       <Filter>Item</Filter>
     </ClCompile>
     <ClCompile Include="Particle.cpp">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClCompile>
     <ClCompile Include="projectiles\TinoFireball.cpp">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClCompile>
     <ClCompile Include="projectiles\TinoFireballEffect.cpp">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClCompile>
-    <ClCompile Include="projectiles\TinoAttack.cpp">
-      <Filter>projectiles</Filter>
+    <ClCompile Include="items\Mushroom.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkManager.cpp">
+      <Filter>NetworkManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -78,19 +80,17 @@
     <ClInclude Include="monsters\Goomba.h">
       <Filter>Monster</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="monsters\AngelTurtle.h">
       <Filter>Monster</Filter>
     </ClInclude>
     <ClInclude Include="monsters\Bowser.h">
       <Filter>Monster</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="projectiles\Fireball.h">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClInclude>
     <ClInclude Include="projectiles\PlayerFireball.h">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClInclude>
     <ClInclude Include="monsters\BlueGoomba.h">
       <Filter>Monster</Filter>
@@ -107,8 +107,6 @@
     <ClInclude Include="monsters\RedGoomba.h">
       <Filter>Monster</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h" />
-    <ClInclude Include="items\Mushroom.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="monsters\Turtle.h">
       <Filter>Monster</Filter>
@@ -132,33 +130,61 @@
       <Filter>Item</Filter>
     </ClInclude>
     <ClInclude Include="projectiles\TinoFireball.h">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClInclude>
     <ClInclude Include="Particle.h">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
     </ClInclude>
     <ClInclude Include="projectiles\TinoFireballEffect.h">
-      <Filter>projectiles</Filter>
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Mushroom.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkManager.h">
+      <Filter>NetworkManager</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadSafeQueue.h">
+      <Filter>NetworkManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Monster">
       <UniqueIdentifier>{734c746c-c557-4206-b00a-ecdd6415f06b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="projectiles">
-      <UniqueIdentifier>{1ee2e47b-80d5-44a1-b3ba-456f241cda68}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Item">
       <UniqueIdentifier>{622d8485-0572-4429-a4e8-527be9fb0dd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetworkManager">
+      <UniqueIdentifier>{263149e1-3ca7-45dd-8e4a-665d421f0b07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Particles">
+      <UniqueIdentifier>{1ee2e47b-80d5-44a1-b3ba-456f241cda68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource_WINAPI">
+      <UniqueIdentifier>{7fce8dc8-5f46-4479-aa3c-261256abc067}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="mario.ico" />
-    <Image Include="small.ico" />
+    <Image Include="small.ico">
+      <Filter>Resource_WINAPI</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="mario.rc" />
-    <ResourceCompile Include="Resource.rc" />
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resource_WINAPI</Filter>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mario.aps" />
