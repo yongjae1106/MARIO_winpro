@@ -18,6 +18,8 @@ Player::Player(int id) : playerID(id)
     _superGodModeEndTime = 0;
     m_tinofire_cooldown = 0;
     tino_attack_motion = false; // Initialize new member variable
+    m_state_trans = GameState_Trans::GAME_TRANS_NONE; // New
+    m_transformStartTime = 0; // New
     reset();
 }
 
@@ -44,6 +46,8 @@ void Player::reset()
     setDead(false);
     setGameOver(false);
     setState(PlayerState::Small);
+    setGameState_trans(GameState_Trans::GAME_TRANS_NONE); // New
+    setTransformStartTime(0); // New
     _isStarGodModeActive = false;
     _starGodModeEndTime = 0;
     _isSuperGodModeActive = false;
@@ -52,14 +56,12 @@ void Player::reset()
 
 void Player::update(GameWorld& world)
 {
-    if (world.getGameState_trans() == GameState_Trans::GAME_BIG_TRANS ||
-        world.getGameState_trans() == GameState_Trans::GAME_FLOWER_TRANS ||
-        world.getGameState_trans() == GameState_Trans::GAME_TINO_TRANS)
+    if (getGameState_trans() != GameState_Trans::GAME_TRANS_NONE) // Modified
     {
         setVx(0);
         setVy(0);
         setWalking(false);
-        setSuperGodMode(true); // ���� �� ���� Ȱ��ȭ
+        setSuperGodMode(true); //    Ȱȭ
         return; // Skip all other updates during transformation
     }
 
@@ -112,7 +114,7 @@ void Player::move(GameWorld& world)
 {
     if (this->isDead()) return;
     const bool* keyState = world.getKeyState();
-    // �����: move �Լ� ���� �� Ű ���� �� ���� vx ���
+    // : move Լ   Ű    vx 
     TCHAR debugMessage[256];
     _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), keyState[VK_LEFT], keyState[VK_RIGHT], getVx());
     OutputDebugString(debugMessage);
@@ -130,7 +132,7 @@ void Player::move(GameWorld& world)
     }
     else if (keyState[VK_LEFT] && keyState[VK_RIGHT])
     {
-        // �� �� ���� ��� ������ ���� ����
+        //       
         setVx((getDirection() == 0 ? -5 : 5));
         setWalking(true);
     }
@@ -420,5 +422,18 @@ void Player::tinoAttack(GameWorld& world) {
     }
 }
 
+GameState_Trans Player::getGameState_trans() const {
+    return m_state_trans;
+}
 
+void Player::setGameState_trans(GameState_Trans trans_state) {
+    m_state_trans = trans_state;
+}
 
+DWORD Player::getTransformStartTime() const {
+    return m_transformStartTime;
+}
+
+void Player::setTransformStartTime(DWORD time) {
+    m_transformStartTime = time;
+}

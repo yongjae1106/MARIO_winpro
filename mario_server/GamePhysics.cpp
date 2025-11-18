@@ -35,7 +35,7 @@ GameWorld::GameWorld() {
     memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0; // Initialize new counter
     currentMap = map1;
-    transformStartTime = 0;
+
     deadStartTime = 0;
     victoryStart = 0;
     clearStart = 0;
@@ -486,15 +486,36 @@ void GameWorld::checkPlayerItemCollision(Player& player) {
         Item* item = it->get();
         if (item->getType() == Item::ItemType::PlayerFireball) { ++it; continue; }
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), item->getX(), item->getY(), item->getWidth(), item->getHeight())) {
-            switch (item->getType()) {
-            case Item::ItemType::Mushroom: pushEvent(GameEvent::POWERUP); transformStartTime = GetTickCount(); if (!player.isBig()) setGameState_trans(GameState_Trans::GAME_BIG_TRANS); break;
-            case Item::ItemType::Star: pushEvent(GameEvent::POWERUP); player.setStarGodMode(true); break;
-            case Item::ItemType::Flower: pushEvent(GameEvent::POWERUP); transformStartTime = GetTickCount(); setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS); break;
-            case Item::ItemType::Tino: transformStartTime = GetTickCount(); setGameState_trans(GameState_Trans::GAME_TINO_TRANS); break;
-            case Item::ItemType::UpMushroom: pushEvent(GameEvent::ONE_UP); addLife(1); break;
+            switch (item->getType()) 
+            {
+            case Item::ItemType::Mushroom: 
+                pushEvent(GameEvent::POWERUP); 
+                player.setTransformStartTime(GetTickCount()); 
+                if (!player.isBig()) 
+                    player.setGameState_trans(GameState_Trans::GAME_BIG_TRANS); 
+                break;
+            case Item::ItemType::Star: 
+                pushEvent(GameEvent::POWERUP); 
+                player.setStarGodMode(true); 
+                break;
+            case Item::ItemType::Flower: 
+                pushEvent(GameEvent::POWERUP); 
+                player.setTransformStartTime(GetTickCount()); 
+                player.setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS); 
+                break;
+            case Item::ItemType::Tino: 
+                player.setTransformStartTime(GetTickCount()); 
+                player.setGameState_trans(GameState_Trans::GAME_TINO_TRANS); 
+                break;
+            case Item::ItemType::UpMushroom: 
+                pushEvent(GameEvent::ONE_UP); 
+                addLife(1); 
+                break;
             }
             it = items.erase(it);
-        } else {
+        } 
+        else 
+        {
             ++it;
         }
     }

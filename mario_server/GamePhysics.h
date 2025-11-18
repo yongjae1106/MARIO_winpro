@@ -99,9 +99,7 @@ public:
 
     const bool* getKeyState() const;
     GameState getGameState() const;
-    GameState_Trans getGameState_trans() const;
     void setGameState(GameState state);
-    void setGameState_trans(GameState_Trans state_trans);
     void setStage_time(int time);
     void setGameOverTitleDead(bool gameover);
     void setdeadStartTime(int time);
@@ -165,8 +163,7 @@ private:
     std::vector<MonsterSpawnInfo> stage3Monsters;
 
     GameState gameState;
-    GameState_Trans gameState_trans;
-    DWORD transformStartTime;
+
     DWORD deadStartTime;
     DWORD victoryStart;
     DWORD clearStart;

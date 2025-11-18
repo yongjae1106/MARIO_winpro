@@ -18,6 +18,14 @@ enum class DamageResult {
     Died
 };
 
+enum class GameState_Trans
+{
+    GAME_TRANS_NONE,
+    GAME_BIG_TRANS,
+    GAME_FLOWER_TRANS,
+    GAME_TINO_TRANS
+};
+
 class Player {
 public:
     Player(int id = -1); // Constructor with optional player ID
@@ -43,6 +51,8 @@ public:
     int getTinoCooldownSpace() const;
     int getFireMotionTimer() const;
     PlayerState getState() const;
+    GameState_Trans getGameState_trans() const;
+    DWORD getTransformStartTime() const;
     bool isDead() const;
     bool isFlying() const;
     bool isGameOver() const;
@@ -63,6 +73,8 @@ public:
     void setWidth(int newWidth);
     void setHeight(int newHeight);
     void setState(PlayerState newState);
+    void setGameState_trans(GameState_Trans trans_state);
+    void setTransformStartTime(DWORD time);
     void setDead(bool isDead);
     void setFlying(bool flying);
     void setGameOver(bool isGameOver);
@@ -95,6 +107,8 @@ private:
     bool tino_attack_motion;
 
     PlayerState currentState;
+    GameState_Trans m_state_trans;
+    DWORD m_transformStartTime;
 
     bool _isStarGodModeActive;
     DWORD _starGodModeEndTime;
