@@ -1,5 +1,5 @@
 #include "AngelTurtle.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 #include "GreenTurtle.h"
 
 AngelTurtle::AngelTurtle(int x, int y)

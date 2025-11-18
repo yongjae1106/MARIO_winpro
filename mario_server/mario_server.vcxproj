@@ -124,15 +124,61 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="GamePhysics.cpp" />
+    <ClCompile Include="items\Flower.cpp" />
+    <ClCompile Include="items\Item.cpp" />
+    <ClCompile Include="items\Mushroom.cpp" />
+    <ClCompile Include="items\Star.cpp" />
+    <ClCompile Include="items\Tino.cpp" />
+    <ClCompile Include="items\UpMushroom.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="monsters\AngelTurtle.cpp" />
+    <ClCompile Include="monsters\BlueGoomba.cpp" />
+    <ClCompile Include="monsters\Bowser.cpp" />
+    <ClCompile Include="monsters\BrownTurtle.cpp" />
+    <ClCompile Include="monsters\Goomba.cpp" />
+    <ClCompile Include="monsters\GreenTurtle.cpp" />
+    <ClCompile Include="monsters\Monster.cpp" />
+    <ClCompile Include="monsters\NormalGoomba.cpp" />
+    <ClCompile Include="monsters\RedGoomba.cpp" />
+    <ClCompile Include="monsters\Turtle.cpp" />
     <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="PacketManager.cpp" />
+    <ClCompile Include="Particles\Fireball.cpp" />
+    <ClCompile Include="Particles\Particle.cpp" />
+    <ClCompile Include="Particles\PlayerFireball.cpp" />
+    <ClCompile Include="Particles\TinoFireball.cpp" />
+    <ClCompile Include="Particles\TinoFireballEffect.cpp" />
+    <ClCompile Include="player.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="GamePhysics.h" />
+    <ClInclude Include="items\Flower.h" />
+    <ClInclude Include="items\Item.h" />
+    <ClInclude Include="items\Mushroom.h" />
+    <ClInclude Include="items\Star.h" />
+    <ClInclude Include="items\Tino.h" />
+    <ClInclude Include="items\UpMushroom.h" />
+    <ClInclude Include="monsters\AngelTurtle.h" />
+    <ClInclude Include="monsters\BlueGoomba.h" />
+    <ClInclude Include="monsters\Bowser.h" />
+    <ClInclude Include="monsters\BrownTurtle.h" />
+    <ClInclude Include="monsters\Goomba.h" />
+    <ClInclude Include="monsters\GreenTurtle.h" />
+    <ClInclude Include="monsters\Monster.h" />
+    <ClInclude Include="monsters\NormalGoomba.h" />
+    <ClInclude Include="monsters\RedGoomba.h" />
+    <ClInclude Include="monsters\Turtle.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="PacketInfo.h" />
+    <ClInclude Include="Particles\Fireball.h" />
+    <ClInclude Include="Particles\Particle.h" />
+    <ClInclude Include="Particles\PlayerFireball.h" />
+    <ClInclude Include="Particles\TinoFireball.h" />
+    <ClInclude Include="Particles\TinoFireballEffect.h" />
+    <ClInclude Include="player.h" />
     <ClInclude Include="ThreadManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

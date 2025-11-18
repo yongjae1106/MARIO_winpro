@@ -1,5 +1,5 @@
 #include "NormalGoomba.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 NormalGoomba::NormalGoomba(int x, int y)
     : Goomba(MonsterType::NormalGoomba, x, y, 40, 40) {

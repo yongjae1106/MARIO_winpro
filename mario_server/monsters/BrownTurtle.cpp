@@ -1,5 +1,5 @@
 #include "BrownTurtle.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 BrownTurtle::BrownTurtle(int x, int y)
     : Turtle(MonsterType::BrownTurtle, x, y, 40, 60) {

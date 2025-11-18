@@ -8,6 +8,7 @@ enum class BGM_Type {
     CASTLE_THEME,
     STAR_POWER,
     VICTORY,
+    WORLD_CLEAR
 };
 
 // 사운드 효과 등 일회성 이벤트를 정의하는 열거형

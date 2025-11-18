@@ -1,5 +1,5 @@
 #include "Turtle.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 Turtle::Turtle(MonsterType type, int x, int y, int width, int height)
     : Monster(type, x, y, width, height), m_state(TurtleState::NORMAL), m_shellTimer(0) {

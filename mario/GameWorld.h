@@ -22,21 +22,12 @@ bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, flo
 
 enum class GameState
 {
-    GAME_TITLE,
     GAME_START,
     GAME_RUNNING,
     GAME_VICTORY,
     GAME_CLEAR,
     GAME_OVER
 };
-enum class GameState_Trans
-{
-    GAME_NONE,
-    GAME_BIG_TRANS,
-    GAME_FLOWER_TRANS,
-    GAME_TINO_TRANS,
-};
-
 struct MonsterSpawnInfo {
     Monster::MonsterType type;
     int x;

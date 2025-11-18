@@ -1,5 +1,5 @@
 #include "TinoFireball.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 TinoFireball::TinoFireball(int x, int y, int vx, int direction)
     : Particle(ParticleType::TinoFireball, x, y), motion(0), duration(0), direction(direction) {

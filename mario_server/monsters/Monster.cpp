@@ -1,5 +1,5 @@
 #include "Monster.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 #include <Gdiplus.h>
 using namespace Gdiplus;
 

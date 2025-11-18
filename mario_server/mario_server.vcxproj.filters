@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="GamePhysics">
+      <UniqueIdentifier>{fc473996-5cf6-494e-9dfc-d4e6bf1f5601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GamePhysics\monsters">
+      <UniqueIdentifier>{7ab62b28-d11c-4e4c-a9d2-44013f442dca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GamePhysics\Items">
+      <UniqueIdentifier>{a3013712-6da3-45d3-9fca-7a252f2420c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GamePhysics\Particles">
+      <UniqueIdentifier>{0e0026e2-1f07-488f-a53a-6dd776d977e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp">
@@ -30,6 +42,75 @@
     <ClCompile Include="PacketManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="monsters\AngelTurtle.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BlueGoomba.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Bowser.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BrownTurtle.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Goomba.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\GreenTurtle.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Monster.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\NormalGoomba.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\RedGoomba.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Turtle.cpp">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Flower.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Item.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Mushroom.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Star.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Tino.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\UpMushroom.cpp">
+      <Filter>GamePhysics\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Fireball.cpp">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Particle.cpp">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\PlayerFireball.cpp">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireball.cpp">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireballEffect.cpp">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePhysics.cpp">
+      <Filter>GamePhysics</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>GamePhysics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -43,6 +124,75 @@
     </ClInclude>
     <ClInclude Include="PacketInfo.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\AngelTurtle.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BlueGoomba.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Bowser.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BrownTurtle.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Goomba.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\GreenTurtle.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Monster.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\NormalGoomba.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\RedGoomba.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Turtle.h">
+      <Filter>GamePhysics\monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Flower.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Item.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Mushroom.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Star.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Tino.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\UpMushroom.h">
+      <Filter>GamePhysics\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Fireball.h">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Particle.h">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\PlayerFireball.h">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireball.h">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireballEffect.h">
+      <Filter>GamePhysics\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePhysics.h">
+      <Filter>GamePhysics</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>GamePhysics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

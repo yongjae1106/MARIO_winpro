@@ -1,5 +1,5 @@
 #include "TinoFireballEffect.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 #include <tchar.h>
 
 TinoFireballEffect::TinoFireballEffect(int x, int y, int vx, int direction)

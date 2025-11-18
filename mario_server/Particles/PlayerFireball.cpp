@@ -1,5 +1,5 @@
 ﻿#include "PlayerFireball.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 PlayerFireball::PlayerFireball(int x, int y, int vx)
     : Particle(ParticleType::PlayerFireball, x, y), motion(0), fade(false), fade_timer(0) {
@@ -11,29 +11,6 @@ PlayerFireball::PlayerFireball(int x, int y, int vx)
 
 void PlayerFireball::update(GameWorld& world) {
     if (!isActive()) return;
-
-    if (fade) {
-        fade_timer++;
-        // Update motion for fade-out animation (3 frames: 0, 1, 2)
-        // Cycle through fade-out frames
-        if (fade_timer % 3 == 1) { // Change frame every 3 updates, starting from 1
-            motion = (motion + 1) % 3;
-        }
-        // Ensure motion doesn't go beyond the last fade-out frame if fade_timer is very large
-        if (motion > 2) motion = 2;
-
-
-        if (fade_timer >= 10) { // Play fade-out animation for 10 frames
-            setActive(false);
-        }
-        return; // Stop all other updates if fading
-    }
-
-    // Animation motion for active fireball (4 frames: 0, 1, 2, 3)
-    motion++;
-    if (motion > 3) {
-        motion = 0;
-    }
 
     // Horizontal movement
     setX(getX() + getVx());

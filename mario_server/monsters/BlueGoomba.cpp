@@ -1,5 +1,5 @@
 #include "BlueGoomba.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 BlueGoomba::BlueGoomba(int x, int y)
     : Goomba(MonsterType::BlueGoomba, x, y, 40, 40), m_jumpTimer(0) {
