@@ -110,18 +110,6 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 {
     printf("[Client Thread %d] 시작. 네트워크 I/O 전담.\n", playerID);
 
-    // ===================================================================
-    // [추가] 클라이언트 소켓을 블로킹 모드로 명시적 재설정
-    // - Accept 소켓이 리스닝 소켓의 논블로킹 속성을 상속받는 문제를 해결
-    // - 이로써 recv()가 데이터가 올 때까지 스레드를 안전하게 대기시킵니다.
-    u_long blocking = 0; // 0은 블로킹 모드를 의미
-    if (ioctlsocket(clientSock, FIONBIO, &blocking) == SOCKET_ERROR) {
-        // 치명적인 오류는 아니지만, 오류 발생 시 로깅
-        err_display("ioctlsocket(FIONBIO, blocking) 실패");
-        // 오류가 발생해도 스레드는 계속 진행하여 recv()를 호출합니다.
-    }
-    // ===================================================================
-
     char buf[512];
     int retval;
 
