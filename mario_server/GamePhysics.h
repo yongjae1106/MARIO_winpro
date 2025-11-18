@@ -35,6 +35,8 @@ struct MonsterSpawnInfo
     int y;
 };
 
+#include <map>
+
 class GameWorld 
 {
 public:
@@ -61,13 +63,17 @@ public:
     void handleKeyUp(WPARAM wParam);
 
     void loadStage(int stage);
-    void resetForDeath();
+    void resetForDeath(int playerID);
 
     void transUpdate();
     void cameraUpdate();
 
-    const Player& getPlayer() const;
-    Player& getPlayer();
+    // New player management methods
+    void addPlayer(int playerID);
+    void removePlayer(int playerID);
+    Player* getPlayer(int playerID);
+    std::map<int, Player>& getPlayers();
+
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;
     double getCameraX() const;
@@ -87,7 +93,6 @@ public:
     void addCoin(int amount) { m_coin += amount; }
 
     int getStageTime() const { return stage_time; }
-    int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
     bool getGameClearText() const { return gameClearText; }
     bool getGameoverTitleDead() const { return gameover_TitleDead; }
     int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
@@ -119,24 +124,24 @@ private:
     GameWorld();
     ~GameWorld();
 
-    void updatePlayer();
+    void updatePlayers();
     void updateMonsters();
     void updateItems();
     void updateParticles();
     void checkCollisions();
     void checkMonsterMapCollision();
-    void checkPlayerCoinCollision();
-    void checkPlayerMapCollision();
-    void checkPlayerMonsterCollision();
-    void checkPlayerItemCollision();
+    void checkPlayerCoinCollision(Player& player);
+    void checkPlayerMapCollision(Player& player);
+    void checkPlayerMonsterCollision(Player& player);
+    void checkPlayerItemCollision(Player& player);
     void checkParticleMonsterCollision();
     void checkMonsterMonsterCollision();
     void checkItemMapCollision();
-    void checkFlagCollision();
-    void checkClearCollision();
+    void checkFlagCollision(Player& player);
+    void checkClearCollision(Player& player);
     void spawnMonsters();
 
-    void applyplayertakedamage();
+    void applyplayertakedamage(Player& player);
 
     void initMaps();
     void initMonsterSpawns();
@@ -144,13 +149,12 @@ private:
     void initMap2();
     void initMap3();
 
-    void dead();
-    void resurrection();
+    void dead(int playerID);
+    void resurrection(int playerID);
     void monster_reset();
     void item_reset();
 
-
-    Player player;
+    std::map<int, Player> m_players;
     std::vector<std::unique_ptr<Monster>> monsters;
     std::vector<std::unique_ptr<Item>> items;
     std::vector<std::unique_ptr<Particle>> particles;

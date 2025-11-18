@@ -9,7 +9,7 @@
 
 using namespace Gdiplus;
 
-Player::Player() 
+Player::Player(int id) : playerID(id)
 {
     setState(PlayerState::Small);
     _isStarGodModeActive = false;
@@ -18,6 +18,11 @@ Player::Player()
     _superGodModeEndTime = 0;
     m_tinofire_cooldown = 0;
     tino_attack_motion = false; // Initialize new member variable
+    reset();
+}
+
+int Player::getPlayerID() const {
+    return playerID;
 }
 
 void Player::reset() 
@@ -105,7 +110,7 @@ void Player::updateCooldown()
 
 void Player::move(GameWorld& world)
 {
-    if (world.getPlayer().isDead()) return;
+    if (this->isDead()) return;
     const bool* keyState = world.getKeyState();
     // �����: move �Լ� ���� �� Ű ���� �� ���� vx ���
     TCHAR debugMessage[256];
@@ -141,29 +146,29 @@ void Player::move(GameWorld& world)
         {
         case (PlayerState::Small):
         {
-            // eventQueue.push_back(GameEvent::PLAYER_SMALL_JUMP);
+            world.pushEvent(GameEvent::PLAYER_SMALL_JUMP);
             break;
         }
         default:
-            // eventQueue.push_back(GameEvent::PLAYER_BIG_JUMP);
+            world.pushEvent(GameEvent::PLAYER_BIG_JUMP);
         }
         setVy(-20);
         setJumping(true);
     }
 
     if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
-        world.spawnPlayerFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -10 : 10));
+        world.spawnPlayerFireball(getX(), getY(), (direction == 0 ? -10 : 10));
         m_fire_cooldown = 2; // Cooldown for 20 frames
         fire_motion = true;
         m_fire_motion_timer = 10; // Play fire motion for 10 frames
-        // eventQueue.push_back(GameEvent::PLAYER_FIRE);
+        world.pushEvent(GameEvent::PLAYER_FIRE);
     }
 
     if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
-        world.spawnTinoFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -7 : 7), direction);
+        world.spawnTinoFireball(getX(), getY(), (direction == 0 ? -7 : 7), direction);
         m_tinofire_cooldown = 5; // Cooldown for 30 frames
         tino_fire_motion = true; // Set Tino Fireball motion flag
-        // eventQueue.push_back(GameEvent::PLAYER_TINOFIRE);
+        world.pushEvent(GameEvent::PLAYER_TINOFIRE);
     }
 
     if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack
@@ -223,8 +228,7 @@ void Player::setState(PlayerState newState) {
 }
 
 void Player::dead(GameWorld& world) {
-    //stopAllSounds();
-    //eventQueue.push_back(PLAYER_DIE)
+    world.pushEvent(GameEvent::PLAYER_DIE);
     setVx(0);
     setVy(0);
     setDead(true);
@@ -391,11 +395,11 @@ void Player::tinoAttack(GameWorld& world) {
     for (auto& monster : world.getMonsters()) {
         if (!monster->isAlive()) continue;
 
-        int monsterScreenX = monster->getX() - world.getCameraX();
+        int monsterScreenX = monster->getX();
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
             monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
-            world.playSound("kick");
+            world.pushEvent(GameEvent::KICK);
 
             // Handle Bowser specific logic
             Bowser* bowserMonster = dynamic_cast<Bowser*>(monster.get());
