@@ -17,12 +17,6 @@
     <ClCompile Include="monsters\Bowser.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
-    <ClCompile Include="projectiles\Fireball.cpp">
-      <Filter>Particles</Filter>
-    </ClCompile>
-    <ClCompile Include="projectiles\PlayerFireball.cpp">
-      <Filter>Particles</Filter>
-    </ClCompile>
     <ClCompile Include="monsters\BlueGoomba.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
@@ -39,16 +33,10 @@
       <Filter>Monster</Filter>
     </ClCompile>
     <ClCompile Include="Sound.cpp" />
-    <ClCompile Include="Monster.cpp">
-      <Filter>Monster</Filter>
-    </ClCompile>
     <ClCompile Include="items\Tino.cpp">
       <Filter>Item</Filter>
     </ClCompile>
     <ClCompile Include="items\UpMushroom.cpp">
-      <Filter>Item</Filter>
-    </ClCompile>
-    <ClCompile Include="Item.cpp">
       <Filter>Item</Filter>
     </ClCompile>
     <ClCompile Include="items\Star.cpp">
@@ -57,19 +45,31 @@
     <ClCompile Include="items\Flower.cpp">
       <Filter>Item</Filter>
     </ClCompile>
-    <ClCompile Include="Particle.cpp">
-      <Filter>Particles</Filter>
-    </ClCompile>
-    <ClCompile Include="projectiles\TinoFireball.cpp">
-      <Filter>Particles</Filter>
-    </ClCompile>
-    <ClCompile Include="projectiles\TinoFireballEffect.cpp">
-      <Filter>Particles</Filter>
-    </ClCompile>
     <ClCompile Include="items\Mushroom.cpp">
       <Filter>Item</Filter>
     </ClCompile>
-    <ClCompile Include="NetworkManager.cpp">
+    <ClCompile Include="monsters\Monster.cpp">
+      <Filter>Monster</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Fireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Item.cpp">
+      <Filter>Item</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\PlayerFireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Particle.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireballEffect.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkManager\NetworkManager.cpp">
       <Filter>NetworkManager</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,12 +85,6 @@
     </ClInclude>
     <ClInclude Include="monsters\Bowser.h">
       <Filter>Monster</Filter>
-    </ClInclude>
-    <ClInclude Include="projectiles\Fireball.h">
-      <Filter>Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="projectiles\PlayerFireball.h">
-      <Filter>Particles</Filter>
     </ClInclude>
     <ClInclude Include="monsters\BlueGoomba.h">
       <Filter>Monster</Filter>
@@ -111,16 +105,10 @@
     <ClInclude Include="monsters\Turtle.h">
       <Filter>Monster</Filter>
     </ClInclude>
-    <ClInclude Include="Monster.h">
-      <Filter>Monster</Filter>
-    </ClInclude>
     <ClInclude Include="items\Tino.h">
       <Filter>Item</Filter>
     </ClInclude>
     <ClInclude Include="items\UpMushroom.h">
-      <Filter>Item</Filter>
-    </ClInclude>
-    <ClInclude Include="Item.h">
       <Filter>Item</Filter>
     </ClInclude>
     <ClInclude Include="items\Star.h">
@@ -129,31 +117,43 @@
     <ClInclude Include="items\Flower.h">
       <Filter>Item</Filter>
     </ClInclude>
-    <ClInclude Include="projectiles\TinoFireball.h">
-      <Filter>Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="Particle.h">
-      <Filter>Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="projectiles\TinoFireballEffect.h">
-      <Filter>Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Resource_WINAPI</Filter>
-    </ClInclude>
-    <ClInclude Include="resource1.h">
-      <Filter>Resource_WINAPI</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Resource_WINAPI</Filter>
-    </ClInclude>
     <ClInclude Include="items\Mushroom.h">
       <Filter>Item</Filter>
     </ClInclude>
-    <ClInclude Include="NetworkManager.h">
+    <ClInclude Include="monsters\Monster.h">
+      <Filter>Monster</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Fireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource_WINAPI\resource.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource_WINAPI\resource1.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource_WINAPI\targetver.h">
+      <Filter>Resource_WINAPI</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\PlayerFireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Particle.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Item.h">
+      <Filter>Item</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireballEffect.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkManager\ThreadSafeQueue.h">
       <Filter>NetworkManager</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadSafeQueue.h">
+    <ClInclude Include="NetworkManager\NetworkManager.h">
       <Filter>NetworkManager</Filter>
     </ClInclude>
   </ItemGroup>
@@ -175,18 +175,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="mario.ico" />
-    <Image Include="small.ico">
+    <Image Include="Resource_WINAPI\mario.ico" />
+    <Image Include="Resource_WINAPI\small.ico">
       <Filter>Resource_WINAPI</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="mario.rc" />
-    <ResourceCompile Include="Resource.rc">
+    <ResourceCompile Include="Resource_WINAPI\mario.rc" />
+    <ResourceCompile Include="Resource_WINAPI\Resource.rc">
       <Filter>Resource_WINAPI</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="mario.aps" />
+    <None Include="Resource_WINAPI\mario.aps" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Player.h"
-#include "Monster.h"
-#include "Item.h"
-#include "Particle.h"
+#include "monsters/Monster.h"
+#include "items/Item.h"
+#include "Particles/Particle.h"
 #include "GameRender.h"
 #include "Sound.h"
 #include <vector>

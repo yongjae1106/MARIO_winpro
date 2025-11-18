@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Monster.h"
+#include "Monster.h"
 
 class Goomba : public Monster {
 public:

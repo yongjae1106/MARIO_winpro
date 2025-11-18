@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Item.h"
+#include "Item.h"
 
 class Mushroom : public Item {
 public:
