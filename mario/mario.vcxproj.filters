@@ -96,6 +96,7 @@
     <ClCompile Include="monsters\Monster.cpp">
       <Filter>Monster</Filter>
     </ClCompile>
+    <ClCompile Include="PacketManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
@@ -217,6 +218,7 @@
     <ClInclude Include="monsters\Monster.h">
       <Filter>Monster</Filter>
     </ClInclude>
+    <ClInclude Include="PacketInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Monster">
