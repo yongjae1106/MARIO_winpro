@@ -229,13 +229,19 @@ void Player::setState(PlayerState newState) {
     currentState = newState;
 }
 
-void Player::dead(GameWorld& world) {
+void Player::dead(GameWorld& world) 
+{
     world.pushEvent(GameEvent::PLAYER_DIE);
     setVx(0);
     setVy(0);
     setDead(true);
+    setdeadStartTime(GetTickCount());
     world.addLife(-1);
-    world.setdeadStartTime(GetTickCount());
+}
+
+void Player::setdeadStartTime(int time)
+{
+    deadStartTime = time;
 }
 
 bool Player::isDead() const {

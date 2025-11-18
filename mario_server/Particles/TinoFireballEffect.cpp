@@ -1,6 +1,5 @@
 #include "TinoFireballEffect.h"
 #include "../GamePhysics.h"
-#include <tchar.h>
 
 TinoFireballEffect::TinoFireballEffect(int x, int y, int vx, int direction)
     : Particle(ParticleType::TinoFireballEffect, x, y)
@@ -19,7 +18,6 @@ void TinoFireballEffect::update(GameWorld& world) {
     timer++;
     if (timer >= 15) { // Lasts for 15 frames
         setActive(false);
-        OutputDebugString(_T("TinoFireballEffect: setActive(false) called.\n"));
     }
 }
 

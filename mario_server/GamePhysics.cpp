@@ -36,7 +36,6 @@ GameWorld::GameWorld() {
     m_global_animation_frame_counter = 0; // Initialize new counter
     currentMap = map1;
 
-    deadStartTime = 0;
     victoryStart = 0;
     clearStart = 0;
     godstart = 0;

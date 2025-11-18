@@ -109,6 +109,8 @@ private:
     PlayerState currentState;
     GameState_Trans m_state_trans;
     DWORD m_transformStartTime;
+    void setdeadStartTime(int time);
+    DWORD deadStartTime;
 
     bool _isStarGodModeActive;
     DWORD _starGodModeEndTime;

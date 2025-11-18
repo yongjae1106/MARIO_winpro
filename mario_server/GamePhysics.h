@@ -102,7 +102,6 @@ public:
     void setGameState(GameState state);
     void setStage_time(int time);
     void setGameOverTitleDead(bool gameover);
-    void setdeadStartTime(int time);
 
     // BGM & Event System
     BGM_Type getCurrentBGM() const;
@@ -164,7 +163,6 @@ private:
 
     GameState gameState;
 
-    DWORD deadStartTime;
     DWORD victoryStart;
     DWORD clearStart;
     DWORD godstart; // Missing member variable added
