@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "GameWorld.h"
 #include "GameRender.h"
-#include "resource1.h"
+#include "Resource_WINAPI/resource1.h"
 
 // Global variables
 GameWorld gameWorld;

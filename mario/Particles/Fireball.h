@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Item.h"
+#include "Particle.h"
 
-class Fireball : public Item {
+class Fireball : public Particle {
 public:
     Fireball(int x, int y, int vx);
 
