@@ -1,49 +1,50 @@
 #include "Common.h"
-#include <mutex> // µ¿±âÈ­ °´Ã¼
-#include <thread> // std::thread »ç¿ë (Wrapper ÇÔ¼ö ´ëÃ¼)
+#include <mutex> // È­ Ã¼
+#include <thread> // std::thread  (Wrapper Ô¼ Ã¼)
+#include "GamePhysics.h" // GameWorld ì‹±ê¸€í„´ ì‚¬ìš©ì„ ìœ„í•´ ì¶”ê°€
 
-// NetworkManager Å¬·¡½º ¼±¾ğ (¼øÈ¯ ÂüÁ¶ ¹æÁö)
+// NetworkManager Å¬  (È¯  )
 class NetworkManager;
 
-// »ó¼ö Á¤ÀÇ
+//  
 #define MAX_PLAYERS 3
 
-// Å¬¶óÀÌ¾ğÆ® ¿¬°á Á¤º¸¸¦ ´ã´Â ±¸Á¶Ã¼
+// Å¬Ì¾Æ®    Ã¼
 struct ClientInfo {
     int playerID = -1;
     SOCKET clientSock = INVALID_SOCKET;
     bool is_active = false;
-    // std::thread »ç¿ë ½Ã HANDLE ´ë½Å std::thread::id ¶Ç´Â std::thread °´Ã¼ »ç¿ë °¡´É
-    std::thread client_thread; // Å¬¶óÀÌ¾ğÆ® ·çÇÁ ½º·¹µå °´Ã¼
+    // std::thread   HANDLE  std::thread::id Ç´ std::thread Ã¼  
+    std::thread client_thread; // Å¬Ì¾Æ®   Ã¼
 };
 
 class ThreadManager {
 private:
-    // **µ¿±âÈ­ ÀÚ¿ø**
+    // **È­ Ú¿**
     ClientInfo m_clients[MAX_PLAYERS];
     std::mutex m_mtx;
 
-    // ¿ÜºÎ Å¬·¡½º ÂüÁ¶
+    // Üº Å¬ 
     NetworkManager* m_network_manager;
 
 public:
-    // »ı¼ºÀÚ
+    // 
     ThreadManager(NetworkManager* nm) : m_network_manager(nm) {}
 
-    // **¿äÃ»µÈ 5°¡Áö Public ¸â¹ö ÇÔ¼ö**
+    // **Ã» 5 Public  Ô¼**
 
-    // 1. ¼­¹öÀÇ ¸ŞÀÎ °ÔÀÓ ·çÇÁ (Main Thread)
+    // 1.     (Main Thread)
     void GameLoop();
 
-    // 2. »õ·Î¿î Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ¿äÃ» Ã³¸® (Accept ThreadÀÇ ½ÇÁ¦ ·ÎÁ÷)
+    // 2. Î¿ Å¬Ì¾Æ®  Ã» Ã³ (Accept Thread  )
     void AcceptLoop();
 
-    // 3. Å¬¶óÀÌ¾ğÆ® ¼ÒÄÏ ¹× playerID ÇÒ´ç ÈÄ ClientLoop ½º·¹µå »ı¼º (std::thread »ç¿ë)
+    // 3. Å¬Ì¾Æ®   playerID Ò´  ClientLoop   (std::thread )
     int AddNewClient(SOCKET clientSock);
 
-    // 4. ÇÒ´çµÈ ´ÜÀÏ Å¬¶óÀÌ¾ğÆ®¿ÍÀÇ ³×Æ®¿öÅ© I/O Àü´ã (Client ThreadÀÇ ½ÇÁ¦ ·ÎÁ÷)
+    // 4. Ò´  Å¬Ì¾Æ® Æ®Å© I/O  (Client Thread  )
     void ClientLoop(int playerID, SOCKET clientSock);
 
-    // 5. »óÅÂ µ¿±âÈ­ ÇÔ¼ö
+    // 5.  È­ Ô¼
     void BroadcastState();
 };

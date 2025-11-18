@@ -1,47 +1,50 @@
 #include "ThreadManager.h"
-#include "NetworkManager.h" // NetworkManager Å¬·¡½º »ç¿ëÀ» À§ÇØ Æ÷ÇÔ
+#include "NetworkManager.h" // NetworkManager Å¬   
 #include "Common.h"
+#include "GamePhysics.h" // GameWorld ì‹±ê¸€í„´ ì‚¬ìš©ì„ ìœ„í•´ ì¶”ê°€
+#include "PacketInfo.h" // ServerPacket ì‚¬ìš©ì„ ìœ„í•´ ì¶”ê°€
 
 //--------------------------------------------------------------------------------------------------
 // 1. ThreadManager::GameLoop() (Main Thread)
-// AcceptLoop¸¦ std::thread¸¦ »ç¿ëÇÏ¿© º°µµÀÇ ½º·¹µå·Î ½ÇÇà
+// AcceptLoop std::thread  Ï¿   
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::GameLoop()
 {
-    printf("[Main Thread] GameLoop ½ÃÀÛ\n");
+    printf("[Main Thread] GameLoop \n");
 
-    // 1. AcceptLoop¸¦ º°µµÀÇ std::thread·Î »ı¼º
-    // std::thread::join() È£ÃâÀ» À§ÇØ °´Ã¼¸¦ ÀúÀå
+    // 1. AcceptLoop std::thread  
+    // std::thread::join() È£  Ã¼ 
     std::thread hAcceptThread([this] { AcceptLoop(); });
 
-    printf("[Main Thread] AcceptLoop ½º·¹µå ÇÒ´ç ¿Ï·á.\n");
+    printf("[Main Thread] AcceptLoop  Ò´ Ï·.\n");
 
     while (true)
     {
-        // 1. ProcessInputQueue() (ÆĞÅ¶ Ã³¸®)
-        // [ÇØ¾ß ÇÒ °Í: ÆĞÅ¶ Å¥ Á¢±Ù ½Ã m_mtx lock/unlock ÇÊ¿ä]
+        // 1. ProcessInputQueue() (Å¶ Ã³)
+        // [Ø¾  : Å¶ Å¥   m_mtx lock/unlock Ê¿]
 
-        // 2. CalculateGamePhysics() (·ÎÁ÷ °è»ê)
+        // 2. CalculateGamePhysics() ( )
+        GameWorld::getInstance().update();
 
-        // 3. BroadcastState() (»óÅÂ ÀüÆÄ)
+        // 3. BroadcastState() ( )
         BroadcastState();
 
-        // °ÔÀÓ Æ½ Á¦¾î (Common.h¿¡ ÀÇÇØ Sleep »ç¿ë °¡´É)
-        Sleep(16); // 60 fps Æ½ Á¦ÇÑ
+        //  Æ½  (Common.h  Sleep  )
+        Sleep(16); // 60 fps Æ½ 
     }
 
-    // ¼­¹ö Á¾·á ½Ã
+    //   
     if (hAcceptThread.joinable()) {
         hAcceptThread.join();
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-// 2. ThreadManager::AcceptLoop() (Accept Thread ·ÎÁ÷)
+// 2. ThreadManager::AcceptLoop() (Accept Thread )
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::AcceptLoop()
 {
-    printf("[Accept Thread] AcceptLoop ½ÃÀÛ: Å¬¶óÀÌ¾ğÆ® ¿¬°á ´ë±â.\n");
+    printf("[Accept Thread] AcceptLoop : Å¬Ì¾Æ®  .\n");
 
     while (true)
     {
@@ -49,11 +52,11 @@ void ThreadManager::AcceptLoop()
 
         if (new_client_sock != INVALID_SOCKET)
         {
-            // AddNewClient È£Ãâ
+            // AddNewClient È£
             int player_id = AddNewClient(new_client_sock);
 
             if (player_id == -1) {
-                printf("[Accept Thread] Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ¼ö¶ô ½ÇÆĞ: ÃÖ´ë ÇÃ·¹ÀÌ¾î ¼ö(%d) ÃÊ°ú.\n", MAX_PLAYERS);
+                printf("[Accept Thread] Å¬Ì¾Æ®   : Ö´ Ã·Ì¾ (%d) Ê°.\n", MAX_PLAYERS);
                 closesocket(new_client_sock);
             }
         }
@@ -62,13 +65,13 @@ void ThreadManager::AcceptLoop()
 
 //--------------------------------------------------------------------------------------------------
 // 3. ThreadManager::AddNewClient()
-// ClientLoop ½º·¹µå »ı¼º ·ÎÁ÷À» Æ÷ÇÔ
+// ClientLoop    
 //--------------------------------------------------------------------------------------------------
 int ThreadManager::AddNewClient(SOCKET clientSock)
 {
-    std::lock_guard<std::mutex> lock(m_mtx); // °øÀ¯ ÀÚ¿ø(m_clients) Á¢±Ù º¸È£
+    std::lock_guard<std::mutex> lock(m_mtx); //  Ú¿(m_clients)  È£
 
-    // 1. ºó playerID (½½·Ô) Ã£±â
+    // 1.  playerID () Ã£
     int new_id = -1;
     for (int i = 0; i < MAX_PLAYERS; ++i) {
         if (!m_clients[i].is_active) {
@@ -78,84 +81,84 @@ int ThreadManager::AddNewClient(SOCKET clientSock)
     }
 
     if (new_id == -1) {
-        return -1; // ÃÖ´ë ÇÃ·¹ÀÌ¾î ¼ö ÃÊ°ú
+        return -1; // Ö´ Ã·Ì¾  Ê°
     }
 
-    // 2. ClientInfo ±¸Á¶Ã¼ ¼³Á¤
+    // 2. ClientInfo Ã¼ 
     m_clients[new_id].playerID = new_id;
     m_clients[new_id].clientSock = clientSock;
     m_clients[new_id].is_active = true;
 
-    // 3. ClientLoop ½º·¹µå »ı¼º ¹× °´Ã¼ ÀúÀå (std::thread »ç¿ë)
-    // ¶÷´Ù Ä¸Ã³ [this, new_id, clientSock]¸¦ ÅëÇØ ºñÁ¤Àû ¸â¹ö ÇÔ¼ö ClientLoop È£Ãâ
+    // 3. ClientLoop    Ã¼  (std::thread )
+    //  Ä¸Ã³ [this, new_id, clientSock]    Ô¼ ClientLoop È£
     try {
         m_clients[new_id].client_thread = std::thread(
             &ThreadManager::ClientLoop, this, new_id, clientSock);
-        m_clients[new_id].client_thread.detach(); // ½º·¹µå¸¦ ºĞ¸®ÇÏ¿© ThreadManager°¡ ¸í½ÃÀûÀ¸·Î °ü¸®ÇÏÁö ¾ÊÀ½
+        m_clients[new_id].client_thread.detach(); // å¸¦ Ğ¸Ï¿ ThreadManager   
     }
     catch (const std::system_error& e) {
-        printf("[Thread Manager] ClientLoop ½º·¹µå »ı¼º ½ÇÆĞ: %s\n", e.what());
+        printf("[Thread Manager] ClientLoop   : %s\n", e.what());
         m_clients[new_id].is_active = false;
         return -1;
     }
 
-    printf("[Thread Manager] »õ ÇÃ·¹ÀÌ¾î (%d) µî·Ï ¿Ï·á. ClientLoop ½º·¹µå »ı¼ºµÊ.\n", new_id);
+    printf("[Thread Manager]  Ã·Ì¾ (%d)  Ï·. ClientLoop  .\n", new_id);
     return new_id;
 }
 
 //--------------------------------------------------------------------------------------------------
-// 4. ThreadManager::ClientLoop() (Client Thread ·ÎÁ÷)
+// 4. ThreadManager::ClientLoop() (Client Thread )
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 {
-    printf("[Client Thread %d] ½ÃÀÛ. ³×Æ®¿öÅ© I/O Àü´ã.\n", playerID);
+    printf("[Client Thread %d] . Æ®Å© I/O .\n", playerID);
 
     char buf[512];
     int retval;
 
     while (true)
     {
-        // 1. recv()¸¦ ÅëÇØ ÆĞÅ¶ ¼ö½Å ½Ãµµ (ºí·ÎÅ· ¸ğµå)
+        // 1. recv()  Å¶  Ãµ (Å· )
         retval = recv(clientSock, buf, sizeof(buf), 0);
 
         if (retval == SOCKET_ERROR) {
-            err_display("recv ½ÇÆĞ");
+            err_display("recv ");
             break;
         }
         if (retval == 0) {
-            // Å¬¶óÀÌ¾ğÆ® Á¤»ó Á¾·á
-            printf("[Client Thread %d] Å¬¶óÀÌ¾ğÆ® ¿¬°á Á¾·á °¨Áö.\n", playerID);
+            // Å¬Ì¾Æ®  
+            printf("[Client Thread %d] Å¬Ì¾Æ®   .\n", playerID);
             break;
         }
 
-        // 2. ÆĞÅ¶ ¼ö½Å Ã³¸®
-        // [ÇØ¾ß ÇÒ °Í]
+        // 2. Å¶  Ã³
+        // [Ø¾  ]
 
-        // 3. ÆĞÅ¶ Å¥¿¡ »ğÀÔ
-        // [ÇØ¾ß ÇÒ °Í: ÆĞÅ¶ Å¥ »ğÀÔ ½Ã m_mtx lock/unlock ÇÊ¿ä]
+        // 3. Å¶ Å¥ 
+        // [Ø¾  : Å¶ Å¥   m_mtx lock/unlock Ê¿]
 
-        printf("[Client Thread %d] %d ¹ÙÀÌÆ® µ¥ÀÌÅÍ ¼ö½Å ¿Ï·á.\n", playerID, retval);
+        printf("[Client Thread %d] %d Æ®   Ï·.\n", playerID, retval);
     }
 
-    // **4. ½º·¹µå Á¾·á Àü Á¤¸® ÀÛ¾÷**
-    m_mtx.lock(); // °øÀ¯ ÀÚ¿ø(m_clients) Á¢±Ù º¸È£ (¼öµ¿ lock/unlock)
+    // **4.     Û¾**
+    m_mtx.lock(); //  Ú¿(m_clients)  È£ ( lock/unlock)
     if (playerID >= 0 && playerID < MAX_PLAYERS && m_clients[playerID].is_active) {
-        printf("[Thread Manager] PlayerID %d ¿¬°á ÇØÁ¦ Ã³¸® ½ÃÀÛ.\n", playerID);
+        printf("[Thread Manager] PlayerID %d   Ã³ .\n", playerID);
 
-        // ¼ÒÄÏ ´İ±â
+        //  İ±
         closesocket(m_clients[playerID].clientSock);
 
-        // »óÅÂ ÃÊ±âÈ­
+        //  Ê±È­
         m_clients[playerID].playerID = -1;
         m_clients[playerID].clientSock = INVALID_SOCKET;
         m_clients[playerID].is_active = false;
-        // std::thread °´Ã¼´Â detach µÇ¾úÀ¸¹Ç·Î ¸í½ÃÀûÀÎ CloseHandleÀÌ ÇÊ¿ä ¾øÀ½
+        // std::thread Ã¼ detach Ç¾Ç·  CloseHandle Ê¿ 
 
-        printf("[Thread Manager] PlayerID %d ½½·Ô ÇØÁ¦ ¿Ï·á ¹× Á¤¸®.\n", playerID);
+        printf("[Thread Manager] PlayerID %d   Ï·  .\n", playerID);
     }
     m_mtx.unlock();
 
-    printf("[Client Thread %d] Á¾·á.\n", playerID);
+    printf("[Client Thread %d] .\n", playerID);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -163,16 +166,18 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::BroadcastState()
 {
-    std::lock_guard<std::mutex> lock(m_mtx); // °øÀ¯ ÀÚ¿ø(m_clients) Á¢±Ù º¸È£
+    std::lock_guard<std::mutex> lock(m_mtx); //  Ú¿(m_clients)  È£
 
-    // [ÇØ¾ß ÇÒ °Í: ºê·ÎµåÄ³½ºÆ®ÇÒ »óÅÂ µ¥ÀÌÅÍ »ı¼º ·ÎÁ÷]
-    char broadcast_data[1024] = "SERVER_STATE_UPDATE";
-    int data_len = (int)strlen(broadcast_data) + 1;
+    ServerPacket packet;
+    packet.packet_type = SERVER_STATE_UPDATE;
+    packet.currentBGM = GameWorld::getInstance().getCurrentBGM();
+    packet.events = GameWorld::getInstance().getEventQueue();
+    // Other packet data (player positions, monster states, etc.) would go here
 
-    // ¸ğµç È°¼º Å¬¶óÀÌ¾ğÆ®¿¡°Ô µ¥ÀÌÅÍ Àü¼Û
+    //  È° Å¬Ì¾Æ®  
     for (int i = 0; i < MAX_PLAYERS; ++i) {
         if (m_clients[i].is_active) {
-            send(m_clients[i].clientSock, broadcast_data, data_len, 0);
+            send(m_clients[i].clientSock, (char*)&packet, sizeof(ServerPacket), 0);
         }
     }
 }
