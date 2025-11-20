@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 enum PacketType : char
 {
@@ -6,6 +7,17 @@ enum PacketType : char
     PKT_ATTACK = 2,
     PKT_HIT = 3,
     PKT_BLOCK_ATTACK = 4
+};
+
+enum class GameEvent
+{
+    NO_EVENT = 0,
+    PLAYER_JUMP,
+    STOMP_ENEMY,
+    GET_COIN,
+    GET_GROW,
+    GET_SHRINK,
+    PLAYER_DIE
 };
 
 // 클라 → 서버
@@ -42,4 +54,6 @@ struct PacketInfo_ServerToClient
     int blockID;
     int block_x;
     int block_y;
+
+    std::vector<GameEvent> events;
 };
