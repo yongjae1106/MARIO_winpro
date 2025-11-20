@@ -35,7 +35,9 @@ void AngelTurtle::takeDamage(GameWorld& world, int damage) {
         // Transform into a GreenTurtle
         // This is a simplified approach. A better approach would be to have GameWorld handle the transformation.
         setAlive(false);
-        world.spawnMonster(std::make_unique<GreenTurtle>(getX(), getY()));
+        // TODO: Monster transformations (like this one) should be handled by the server.
+        // The client should send a damage event to the server, and the server will send back
+        // an update to spawn a new monster or change an existing one's state.
     } else {
         Turtle::takeDamage(world, damage);
     }

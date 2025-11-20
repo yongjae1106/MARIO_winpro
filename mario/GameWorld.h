@@ -9,7 +9,10 @@
 #include <vector>
 #include <memory>
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include "NetworkManager/NetworkManager.h" // Add this include
+#include "NetworkManager/PacketManager.h"   // Add this include
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 640
@@ -56,6 +59,7 @@ public:
 
 
     void updateAnimations();
+    void update();
     void render(HDC hdc);
 
     void handleKeyDown(WPARAM wParam);
@@ -121,6 +125,8 @@ private:
     GameWorld(); // Private constructor for Singleton pattern
     ~GameWorld(); // Private destructor for Singleton pattern
     GameRender m_gameRender;
+    NetworkManager m_networkManager;
+    PacketManager m_packetManager;
     Sound m_sound;
 
 
@@ -154,7 +160,6 @@ private:
 
     int (*currentMap)[MAP_WIDTH];
     int stage;
-    int stage_time;
 
     bool keyState[256];
     int m_global_animation_frame_counter;

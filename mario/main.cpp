@@ -3,9 +3,7 @@
 #include "GameRender.h"
 #include "Resource_WINAPI/resource1.h"
 
-// Global variables
-GameWorld gameWorld;
-GameRender gameRender;
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -17,31 +15,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
         case WM_TIMER: {
             switch(wParam) {
-                case(1):
-                    gameWorld.update();
+                case 1:
+                    GameWorld::getInstance().update();
                     InvalidateRect(hWnd, NULL, FALSE);
                     break;
-                case(2):
-                    gameWorld.updateAnimations();
+                case 2:
+                    GameWorld::getInstance().updateAnimations();
                     break;
-                case(3):
-                    gameWorld.getPlayer().updateCooldown();
+                case 3:
+                    GameWorld::getInstance().getPlayer().updateCooldown();
                     break;
             }
             break;
         }
         case WM_KEYDOWN: {
-            gameWorld.handleKeyDown(wParam);
+            GameWorld::getInstance().handleKeyDown(wParam);
             break;
         }
         case WM_KEYUP: {
-            gameWorld.handleKeyUp(wParam);
+            GameWorld::getInstance().handleKeyUp(wParam);
             break;
         }
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            gameRender.render(hdc, gameWorld);
+            GameWorld::getInstance().getGameRender().render(hdc, GameWorld::getInstance());
             EndPaint(hWnd, &ps);
             break;
         }
@@ -69,10 +67,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 640,
         NULL, NULL, hInstance, NULL);
 
-    gameWorld.sound_init(hWnd);
+    GameWorld::getInstance().sound_init(hWnd);
 
-    gameWorld.init();
-    gameRender.init();
+    GameWorld::getInstance().init();
+    GameWorld::getInstance().getGameRender().init();
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);

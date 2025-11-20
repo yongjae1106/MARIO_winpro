@@ -736,7 +736,7 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     _stprintf_s(stage_print2, _T("%d"), world.getStage());
     _stprintf_s(clear_text_1, _T("THANK YOU MARIO!"));
     _stprintf_s(clear_text_2, _T("YOUR QUEST IS OVER.!"));
-    _stprintf_s(cooldown_z, _T("Z (fire): %d"), world.getPlayer().getTinoCooldownTinoFireball());
+    _stprintf_s(cooldown_z, _T("Z (fire): %d"), world.getPlayer().getFireMotionTimer());
     _stprintf_s(cooldown_space, _T("SPACE (bite): %d"), world.getPlayer().getTinoCooldownSpace());
 
     graphics.DrawString(life_print, -1, m_font.get(), PointF(80, 20), &stringFormat, &brush);

@@ -21,23 +21,23 @@
 #include <tchar.h> // Added for _stprintf_s and OutputDebugString
 
 // Private constructor for Singleton pattern
-GameWorld::GameWorld() 
+GameWorld::GameWorld()
 {
     gameState = GameState::GAME_TITLE;
-    gameState_trans = GameState_Trans::GAME_NONE; // Restored
+    gameState_trans = GameState_Trans::GAME_NONE;
     cameraX = 0;
     stage = 1;
-    stage_time = 0; // Restored
+    stage_time = 0;
     memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0;
     currentMap = map1;
-    transformStartTime = 0; // Restored
-    deadStartTime = 0; // Restored
-    victoryStart = 0; // Restored
-    clearStart = 0; // Restored
-    godstart = 0; // Restored
-    gameover_TitleDead = false; // Restored
-    gameClearText = false; // Restored
+    transformStartTime = 0;
+    deadStartTime = 0;
+    victoryStart = 0;
+    clearStart = 0;
+    godstart = 0;
+    gameover_TitleDead = false;
+    gameClearText = false;
 }
 
 // Private destructor for Singleton pattern
@@ -57,6 +57,9 @@ void GameWorld::sound_init(HWND hwnd) {
 
 void GameWorld::init() {
     m_gameRender.init();
+    m_networkManager.Init(); // NetworkManager 초기화 (WSAStartup 등)
+    m_networkManager.Connect("127.0.0.1", 12345); // 임시 IP 및 포트
+    m_networkManager.Start(); // 네트워크 수신/송신 스레드 시작
     m_sound.loadAllSounds();
 }
 
@@ -73,26 +76,54 @@ void GameWorld::updateAnimations() {
     m_global_animation_frame_counter++; // Increment global animation frame counter
 }
 
-void GameWorld::cameraUpdate() 
+void GameWorld::update() {
+    // This is the main update function for GameWorld
+    // It should orchestrate all game logic updates
+    // For now, let's just ensure camera updates here
+    cameraUpdate();
+
+    // Process incoming network packets
+    std::string receivedPacket;
+    while (m_networkManager.TryGetReceivedData(receivedPacket)) {
+        processServerUpdate(receivedPacket);
+    }
+
+    // Other update logic can be added here later (e.g., monster updates, item updates)
+}
+
+void GameWorld::cameraUpdate()
 {
-    // Camera update logic remains client-side for smooth rendering
-    // It should follow the player's position as received from the server
-    // For now, keep existing logic, but understand player.getX() and player.getVx()
-    // will be based on server-provided data.
-    if (gameState_trans == GameState_Trans::GAME_NONE) // Keep this for client-side visual pause during transformation
+    // cameraX is a GameWorld member, no need to re-declare
+    // maxCameraX is only used in this function, declare it here
+    double maxCameraX;
+
+    if (gameState_trans == GameState_Trans::GAME_NONE)
     {
-        int playerX = player.getX();
-        if (playerX > SCREEN_WIDTH / 2) {
-            cameraX += player.getVx();
-            player.setX(SCREEN_WIDTH / 2);
-        } else if (playerX < SCREEN_WIDTH / 2 && cameraX > 0) {
-            cameraX += player.getVx();
-            if (cameraX < 0) cameraX = 0;
-            player.setX(SCREEN_WIDTH / 2);
+        double playerWorldX = player.getX();
+
+        // Camera does not scroll until player passes half screen
+        if (playerWorldX < SCREEN_WIDTH / 2.0) {
+            cameraX = 0;
+        } else {
+            // Once player passes center, camera tries to center on player.
+            cameraX = playerWorldX - (SCREEN_WIDTH / 2.0);
         }
-        if (cameraX < 0) cameraX = 0;
-        if (cameraX > MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH)
-            cameraX = MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+
+        // Clamp camera to the rightmost boundary of the map.
+        maxCameraX = (double)MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
+        if (maxCameraX < 0) { // Handle cases where map is smaller than screen
+            maxCameraX = 0;
+            cameraX = 0; // If map is smaller, camera should probably just stay at 0
+        }
+
+        if (cameraX > maxCameraX) {
+            cameraX = maxCameraX;
+        }
+
+        // Clamp camera to prevent negative values (defensive)
+        if (cameraX < 0) {
+            cameraX = 0;
+        }
     }
 }
 
@@ -138,6 +169,7 @@ void GameWorld::loadStage(int newStage) {
     // spawnMonsters(); // Removed, server-side
 }
 
+// These getters are declared in GameWorld.h and defined here.
 const Player& GameWorld::getPlayer() const { return player; }
 Player& GameWorld::getPlayer() { return player; }
 const int(*GameWorld::getCurrentMap() const)[MAP_WIDTH] { return currentMap; }
@@ -147,22 +179,13 @@ const std::vector<std::unique_ptr<Monster>>& GameWorld::getMonsters() const { re
 const std::vector<std::unique_ptr<Item>>& GameWorld::getItems() const { return items; }
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const { return particles; }
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getNewParticles() const { return newParticles; }
-int GameWorld::getLife() const { return player.getLife(); }
-int GameWorld::getCoin() const { return player.getCoin(); }
-int GameWorld::getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
-int GameWorld::getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
-const bool* GameWorld::getKeyState() const { return keyState; }
-GameState GameWorld::getGameState() const { return gameState; }
-GameState_Trans GameWorld::getGameState_trans() const { return gameState_trans; } // Restored
-int GameWorld::getStageTime() const { return stage_time; } // Restored
-bool GameWorld::getGameClearText() const { return gameClearText; } // Restored
-bool GameWorld::getGameoverTitleDead() const { return gameover_TitleDead; } // Restored
 
+// The following setters are declared in GameWorld.h and defined here.
 void GameWorld::setGameState(GameState state) { gameState = state; }
-void GameWorld::setGameState_trans(GameState_Trans state_trans) { gameState_trans = state_trans; } // Restored
-void GameWorld::setStage_time(int time) { stage_time = time; } // Restored
-void GameWorld::setGameOverTitleDead(bool gameover) { gameover_TitleDead = gameover; } // Restored
-void GameWorld::setdeadStartTime(int time) { deadStartTime = time; } // Restored
+void GameWorld::setGameState_trans(GameState_Trans state_trans) { gameState_trans = state_trans; }
+void GameWorld::setStage_time(int time) { stage_time = time; }
+void GameWorld::setGameOverTitleDead(bool gameover) { gameover_TitleDead = gameover; }
+void GameWorld::setdeadStartTime(int time) { deadStartTime = time; }
 
 void GameWorld::newParticles_insertTo_Particles() {
     if (!newParticles.empty()) {
