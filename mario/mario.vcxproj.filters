@@ -158,6 +158,7 @@
       <Filter>Monster</Filter>
     </ClInclude>
     <ClInclude Include="PacketInfo.h" />
+    <ClInclude Include="PacketManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Monster">
