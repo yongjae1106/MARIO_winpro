@@ -1,13 +1,15 @@
 #pragma once
 #include "PacketInfo.h"
-#include <queue>
+#include <vector>
 
 class PacketManager
 {
 public:
-	std::queue<PacketInfo_ClientToServer> m_packetQueue;
+    int TryParse(const std::vector<char>& buffer, unsigned int socketID);
+    void HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID);
 
-	bool ParsePacket(const char* buffer, int size);
-	int SerializePacket(char* buffer, const PacketInfo_ServerToClient& pkt);
-	void HandlePacket();
+    // 서버 → 클라 직렬화
+    unsigned int Serialize_MOVE(char* buffer, const Packet_MOVE_S2C& move);
+    unsigned int Serialize_HIT(char* buffer, const Packet_HIT_S2C& hit);
+    unsigned int Serialize_BLOCK(char* buffer, const Packet_BLOCK_S2C& blk);
 };
