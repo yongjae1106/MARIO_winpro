@@ -19,10 +19,12 @@
 #include "monsters/Turtle.h"
 #include <memory>
 #include <tchar.h> // Added for _stprintf_s and OutputDebugString
+#include <cstring> // For memcpy
 
 // Private constructor for Singleton pattern
 GameWorld::GameWorld()
 {
+    m_localPlayerId = -1; // Initialize local player ID
     gameState = GameState::GAME_TITLE;
     gameState_trans = GameState_Trans::GAME_NONE;
     cameraX = 0;
@@ -72,23 +74,82 @@ void GameWorld::stopAllSounds() {
 }
 
 void GameWorld::updateAnimations() {
-    player.updateAnimation();
+    // Loop through all players and update their animations
+    for (auto& pair : m_players) {
+        pair.second.updateAnimation();
+    }
     m_global_animation_frame_counter++; // Increment global animation frame counter
 }
 
 void GameWorld::update() {
     // This is the main update function for GameWorld
     // It should orchestrate all game logic updates
-    // For now, let's just ensure camera updates here
     cameraUpdate();
 
-    // Process incoming network packets
-    std::string receivedPacket;
-    while (m_networkManager.TryGetReceivedData(receivedPacket)) {
-        processServerUpdate(receivedPacket);
+    // 1. Process incoming network packets from PacketManager
+    PacketData packet;
+    while (PacketManager::GetInstance()->TryGetPacket(packet)) {
+        switch (packet.type) {
+            case PKT_PLAYER_STATE: { 
+                PlayerDataPacket player_data;
+                if (packet.data.size() == sizeof(PlayerDataPacket)) {
+                    memcpy(&player_data, packet.data.data(), sizeof(PlayerDataPacket));
+                    auto& playerToUpdate = m_players[player_data.playerID]; 
+                    playerToUpdate.updateStateFromServer(player_data);
+                }
+                break;
+            }
+            case PKT_MONSTER_STATE: {
+                MonsterDataPacket monster_data;
+                if (packet.data.size() == sizeof(MonsterDataPacket)) {
+                    memcpy(&monster_data, packet.data.data(), sizeof(MonsterDataPacket));
+                    
+                    auto it = m_monsters.find(monster_data.monsterID);
+                    if (it != m_monsters.end()) {
+                        // Existing monster, update its state
+                        it->second->updateStateFromServer(monster_data);
+                    } else {
+                        // New monster. We need a way to create the correct monster type.
+                        // This requires a "factory" pattern.
+                        // TODO: Implement a MonsterFactory to create different monster types based on 'monster_data.type'.
+                        // For now, we will just log that a new monster needs to be created.
+                        // m_monsters[monster_data.monsterID] = createMonsterFromPacket(monster_data);
+                    }
+                }
+                break;
+            }
+            // TODO: Add cases for other packet types (item state, etc.)
+            default:
+                // printf("[Client] Unknown packet type received: %u\n", packet.type);
+                break;
+        }
     }
 
-    // Other update logic can be added here later (e.g., monster updates, item updates)
+    // 2. Handle local player input and send to server
+    Player* localPlayer = getLocalPlayer();
+    if (localPlayer) {
+        // TODO: Check keyState, decide on action (move, jump, attack).
+        // If an action occurs, create a C2S packet and send it.
+        // e.g., if (keyState[VK_LEFT]) { ... create and send CS_MOVE_PACKET ... }
+    }
+
+    // 3. Other update logic (e.g., local animations for all objects)
+    for (auto& pair : m_players) {
+        pair.second.update(); // This calls updateAnimation() for each player
+    }
+
+    // Update animations for Monsters, Items, and Particles
+    for (auto& pair : m_monsters) {
+        pair.second->update();
+    }
+    for (auto& item : items) {
+        item->update();
+    }
+    // TODO: Add an update() method to the Particle base class and uncomment the following lines.
+    // for (auto& particle : particles) {
+    //     particle->update();
+    // }
+    newParticles_insertTo_Particles();
 }
 
 void GameWorld::cameraUpdate()
@@ -99,7 +160,10 @@ void GameWorld::cameraUpdate()
 
     if (gameState_trans == GameState_Trans::GAME_NONE)
     {
-        double playerWorldX = player.getX();
+        const Player* localPlayer = getLocalPlayer();
+        if (!localPlayer) return; // Do nothing if there is no local player
+
+        double playerWorldX = localPlayer->getX();
 
         // Camera does not scroll until player passes half screen
         if (playerWorldX < SCREEN_WIDTH / 2.0) {
@@ -158,7 +222,7 @@ void GameWorld::handleKeyUp(WPARAM wParam) {
 
 void GameWorld::loadStage(int newStage) {
     stage = newStage;
-    monsters.clear();
+    m_monsters.clear();
     items.clear();
     particles.clear();
     // setStage_time(400); // Server will manage time
@@ -169,16 +233,68 @@ void GameWorld::loadStage(int newStage) {
     // spawnMonsters(); // Removed, server-side
 }
 
+// --- Player Management ---
+Player* GameWorld::getLocalPlayer()
+{
+    if (m_localPlayerId == -1) return nullptr;
+    auto it = m_players.find(m_localPlayerId);
+    if (it == m_players.end()) return nullptr;
+    return &it->second;
+}
+
+const Player* GameWorld::getLocalPlayer() const
+{
+    if (m_localPlayerId == -1) return nullptr;
+    auto it = m_players.find(m_localPlayerId);
+    if (it == m_players.end()) return nullptr;
+    return &it->second;
+}
+
+Player* GameWorld::getPlayerById(int id)
+{
+    auto it = m_players.find(id);
+    if (it == m_players.end()) return nullptr;
+    return &it->second;
+}
+
+const std::map<int, Player>& GameWorld::getPlayers() const
+{
+    return m_players;
+}
+
+void GameWorld::setLocalPlayerId(int id)
+{
+    m_localPlayerId = id;
+}
+// --- End Player Management ---
+
+
 // These getters are declared in GameWorld.h and defined here.
-const Player& GameWorld::getPlayer() const { return player; }
-Player& GameWorld::getPlayer() { return player; }
 const int(*GameWorld::getCurrentMap() const)[MAP_WIDTH] { return currentMap; }
 int GameWorld::getStage() const { return stage; }
 double GameWorld::getCameraX() const { return cameraX; }
-const std::vector<std::unique_ptr<Monster>>& GameWorld::getMonsters() const { return monsters; }
+const std::map<int, std::unique_ptr<Monster>>& GameWorld::getMonsters() const { return m_monsters; }
 const std::vector<std::unique_ptr<Item>>& GameWorld::getItems() const { return items; }
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const { return particles; }
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getNewParticles() const { return newParticles; }
+
+int GameWorld::getLife() const
+{
+    const Player* p = getLocalPlayer();
+    return p ? p->getLife() : 0;
+}
+
+int GameWorld::getCoin() const
+{
+    const Player* p = getLocalPlayer();
+    return p ? p->getCoin() : 0;
+}
+
+int GameWorld::getTinoCooldownSpace() const
+{
+    const Player* p = getLocalPlayer();
+    return p ? p->getTinoCooldownSpace() : 0;
+}
 
 // The following setters are declared in GameWorld.h and defined here.
 void GameWorld::setGameState(GameState state) { gameState = state; }
@@ -194,16 +310,7 @@ void GameWorld::newParticles_insertTo_Particles() {
     }
 }
 
-void GameWorld::processServerUpdate(const std::string& serializedData) {
-    // TODO: Implement deserialization of server data and update local player, monsters, items, particles, etc.
-    // This will involve parsing 'serializedData' and updating the member variables.
-    // Example:
-    // ServerStatePacket packet = deserialize(serializedData);
-    // player.updateStateFromServer(packet.playerData);
-    // updateMonstersFromServer(packet.monsterData);
-    // updateItemsFromServer(packet.itemData);
-    // ...
-}
+
 
 void GameWorld::setStageBGM() {
     if (stage == 1 || stage == 2) playSound("GroundTheme", true);

@@ -1,5 +1,6 @@
 #include "NetworkManager.h"
 #include "../PacketInfo.h" // PacketHeader 정의를 위해 추가
+#include "../PacketManager.h" // PacketManager 사용을 위해 추가
 #include <vector> // For std::vector in NetworkLoop
 
 NetworkManager::NetworkManager() : clientSocket(INVALID_SOCKET), isConnected(false), isRunning(false), m_internalRecvBufferSize(0) {
@@ -187,18 +188,6 @@ bool NetworkManager::IsConnected() const {
     return isConnected;
 }
 
-bool NetworkManager::TryGetReceivedRawData(std::vector<char>& outBuffer) {
-    // Note: This needs thread-safety if m_internalRecvBuffer can be accessed by NetworkLoop
-    // and TryGetReceivedRawData concurrently. For now, assuming PacketManager
-    // will call this from main thread after NetworkLoop has completed its cycle,
-    // or further synchronization (mutex) is added if multi-threaded access is simultaneous.
-    if (m_internalRecvBufferSize > 0) {
-        outBuffer = std::move(m_internalRecvBuffer); // Move contents
-        m_internalRecvBufferSize = 0; // Reset size
-        return true;
-    }
-    return false;
-}
 
 void NetworkManager::NetworkLoop() {
     std::cout << "NetworkLoop started." << std::endl;
@@ -239,8 +228,15 @@ void NetworkManager::NetworkLoop() {
             {
                 // 수신된 데이터를 내부 버퍼(m_internalRecvBuffer)에 추가
                 m_internalRecvBuffer.insert(m_internalRecvBuffer.end(), tempRecvBuffer, tempRecvBuffer + bytesReceived);
-                m_internalRecvBufferSize += bytesReceived;
-            } 
+                m_internalRecvBufferSize = m_internalRecvBuffer.size(); // 사이즈 업데이트
+
+                // PacketManager를 호출하여 버퍼의 데이터를 처리하도록 요청
+                // 이 함수는 내부에 패킷을 분리하고 큐에 넣는 로직을 포함해야 합니다.
+                PacketManager::GetInstance()->ProcessReceivedData(m_internalRecvBuffer);
+
+                // ProcessReceivedData가 처리하고 남은 데이터로 버퍼를 업데이트했을 수 있으므로 사이즈 재조정
+                m_internalRecvBufferSize = m_internalRecvBuffer.size();
+            }
             else if (bytesReceived == 0) 
             {
                 std::cout << "NetworkLoop: Server disconnected." << std::endl;

@@ -178,6 +178,9 @@
     <ClInclude Include="Player.h">
       <Filter>Game</Filter>
     </ClInclude>
+    <ClInclude Include="PacketManager.h">
+      <Filter>NetworkManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource_WINAPI\Resource.rc">

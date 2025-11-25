@@ -1,5 +1,8 @@
 #pragma once
 #include <windows.h>
+#include "PacketManager.h"
+#include "PacketInfo.h"
+
 
 enum class PlayerState {
     Small,
@@ -21,6 +24,7 @@ class GameWorld;
 
 // Placeholder for data received from server
 struct PlayerDataPacket {
+    int playerID; // The unique ID of the player
     int x, y;
     int vx, vy;
     int life;
@@ -52,6 +56,7 @@ public:
     // New method to update player state from server data
     void updateStateFromServer(const PlayerDataPacket& packet);
 
+    void update();
     void updateAnimation();
     void setStop();
 

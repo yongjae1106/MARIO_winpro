@@ -23,7 +23,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     GameWorld::getInstance().updateAnimations();
                     break;
                 case 3:
-                    GameWorld::getInstance().getPlayer().updateCooldown();
+                    // 서버에서 처리할 updatecooldown
                     break;
             }
             break;

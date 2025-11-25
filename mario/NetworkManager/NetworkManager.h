@@ -38,9 +38,6 @@ public:
 
     // 데이터 수신 (큐에서 트라이 팝)
     // bool TryGetReceivedData(std::string& outData); // receiveQueue 제거로 불필요
-    // PacketManager가 원시 데이터를 가져갈 수 있는 인터페이스
-    bool TryGetReceivedRawData(std::vector<char>& outBuffer);
-
     bool IsConnected() const;
 
 private:

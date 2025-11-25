@@ -8,6 +8,7 @@
 #include "Sound.h"
 #include <vector>
 #include <memory>
+#include <map> // For std::map
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -19,8 +20,6 @@
 #define MAP_WIDTH 200
 #define MAP_HEIGHT 15
 #define TILE_SIZE 40
-
-
 
 enum class GameState_Trans
 {
@@ -43,10 +42,7 @@ enum class GameState
 
 class GameWorld {
 public:
-    static GameWorld& getInstance() {
-        static GameWorld instance;
-        return instance;
-    }
+    static GameWorld& getInstance();
 
     // Delete copy constructor and assignment operator to prevent copying
     GameWorld(const GameWorld&) = delete;
@@ -57,7 +53,6 @@ public:
     void init();
     void sound_init(HWND hwnd);
 
-
     void updateAnimations();
     void update();
     void render(HDC hdc);
@@ -67,33 +62,35 @@ public:
 
     void loadStage(int stage);
 
-
     // Getter for the renderer to allow safe access from other classes
     GameRender& getGameRender() { return m_gameRender; }
 
-
     void cameraUpdate();
 
-    const Player& getPlayer() const;
-    Player& getPlayer();
+    // --- Player Management ---
+    Player* getLocalPlayer();
+    const Player* getLocalPlayer() const;
+    Player* getPlayerById(int id);
+    const std::map<int, Player>& getPlayers() const;
+    void setLocalPlayerId(int id);
+    // --- End Player Management ---
+
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;
     double getCameraX() const;
 
-    const std::vector<std::unique_ptr<Monster>>& getMonsters() const;
+    const std::map<int, std::unique_ptr<Monster>>& getMonsters() const;
     const std::vector<std::unique_ptr<Item>>& getItems() const;
     const std::vector<std::unique_ptr<Particle>>& getParticles() const;
     const std::vector<std::unique_ptr<Particle>>& getNewParticles() const;
 
     void newParticles_insertTo_Particles();
 
-    // New method to process server updates
-    void processServerUpdate(const std::string& serializedData);
+    // Getters that now refer to the local player
+    int getLife() const;
+    int getCoin() const;
+    int getTinoCooldownSpace() const;
 
-    int getLife() const { return player.getLife(); }
-    int getCoin() const { return player.getCoin(); }
-
-    int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
     int getStageTime() const { return stage_time; }
     bool getGameClearText() const { return gameClearText; }
     bool getGameoverTitleDead () const { return gameover_TitleDead; }
@@ -112,10 +109,6 @@ public:
 
     void setStageBGM();
 
-
-
-
-
     void playSound(const std::string& name, bool loop = false);
     void stopAllSounds();
 
@@ -124,21 +117,20 @@ public:
 private:
     GameWorld(); // Private constructor for Singleton pattern
     ~GameWorld(); // Private destructor for Singleton pattern
+
     GameRender m_gameRender;
     NetworkManager m_networkManager;
-    PacketManager m_packetManager;
     Sound m_sound;
 
+    // --- New Player Structure ---
+    std::map<int, Player> m_players;
+    int m_localPlayerId;
+    // --- End New Player Structure ---
 
-
-
-    Player player;
-    std::vector<std::unique_ptr<Monster>> monsters;
+    std::map<int, std::unique_ptr<Monster>> m_monsters;
     std::vector<std::unique_ptr<Item>> items;
     std::vector<std::unique_ptr<Particle>> particles;
     std::vector<std::unique_ptr<Particle>> newParticles;
-
-
 
     GameState gameState;
     GameState_Trans gameState_trans;
@@ -146,12 +138,11 @@ private:
     DWORD deadStartTime;
     DWORD victoryStart;
     DWORD clearStart;
-    DWORD godstart; // Missing member variable added
+    DWORD godstart;
 
     bool gameover_TitleDead;
     bool gameClearText;
     int stage_time;
-
 
     double cameraX;
     int map1[MAP_HEIGHT][MAP_WIDTH];
@@ -164,4 +155,3 @@ private:
     bool keyState[256];
     int m_global_animation_frame_counter;
 };
-
