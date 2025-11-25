@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 
-enum PacketType : char
+enum PacketType : unsigned int
 {
     PKT_MOVE = 1,
     PKT_ATTACK = 2,
@@ -9,51 +9,56 @@ enum PacketType : char
     PKT_BLOCK_ATTACK = 4
 };
 
-enum class GameEvent
+struct PacketHeader
 {
-    NO_EVENT = 0,
-    PLAYER_JUMP,
-    STOMP_ENEMY,
-    GET_COIN,
-    GET_GROW,
-    GET_SHRINK,
-    PLAYER_DIE
+    unsigned int totalLength;  // 전체 패킷 길이
+    unsigned int type;         // PacketType
 };
 
-// 클라 → 서버
-struct PacketInfo_ClientToServer
+// -------------------------------
+// MOVE 패킷 (클라 → 서버)
+// -------------------------------
+struct Packet_MOVE_C2S
 {
-    int playerID;
-    char type;
-
-    // MOVE
-    int x, y;
-    int vx, vy;
-    char state;
-
-    // ATTACK
-    int targetID;
-    int damage;
+    unsigned int x, y;
+    unsigned int vx, vy;
+    unsigned int state;
 };
 
-// 서버 → 클라
-struct PacketInfo_ServerToClient
+// -------------------------------
+// ATTACK 패킷 (클라 → 서버)
+// -------------------------------
+struct Packet_ATTACK_C2S
 {
-    int playerID;
-    char type;
+    unsigned int targetID;
+    unsigned int damage;
+};
 
-    // MOVE (다른 플레이어 정보 등)
-    int x, y;
-    int vx, vy;
-    char state;
+// -------------------------------
+// MOVE 패킷 (서버 → 클라)
+// -------------------------------
+struct Packet_MOVE_S2C
+{
+    unsigned int playerID;
+    unsigned int x, y;
+    unsigned int vx, vy;
+    unsigned int state;
+};
 
-    // HIT
-    int damage;
+// -------------------------------
+// HIT 패킷 (서버 → 클라)
+// -------------------------------
+struct Packet_HIT_S2C
+{
+    unsigned int damage;
+};
 
-    // BLOCK_ATTACK
-    int blockID;
-    int block_x;
-    int block_y;
-
-    std::vector<GameEvent> events;
+// -------------------------------
+// BLOCK_ATTACK 패킷 (서버 → 클라)
+// -------------------------------
+struct Packet_BLOCK_S2C
+{
+    unsigned int blockID;
+    unsigned int block_x;
+    unsigned int block_y;
 };
