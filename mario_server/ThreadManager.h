@@ -1,6 +1,10 @@
 #include "Common.h"
 #include <mutex> // 동기화 객체
 #include <thread> // std::thread 사용 (Wrapper 함수 대체)
+#include "PacketInfo.h"
+#include "PacketManager.h"
+#include <vector>
+#include <queue>
 
 // NetworkManager 클래스 선언 (순환 참조 방지)
 class NetworkManager;
