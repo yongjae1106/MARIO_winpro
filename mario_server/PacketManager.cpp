@@ -26,14 +26,15 @@ void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned i
     {
         Packet_MOVE_C2S pkt;
         memcpy(&pkt, data, sizeof(pkt));
-        std::cout << "[Server] Player moved\n";
+        std::cout << "[Server] Player " << pkt.playerID << " moved to (" << pkt.x << ", " << pkt.y << ")\n";
         break;
     }
     case PKT_ATTACK:
     {
         Packet_ATTACK_C2S pkt;
         memcpy(&pkt, data, sizeof(pkt));
-        std::cout << "[Server] Player attacked\n";
+        std::cout << "[Server] Player " << pkt.playerID << " attacked target " << pkt.targetID
+            << " with damage " << pkt.damage << "\n";
         break;
     }
     }
