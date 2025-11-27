@@ -20,6 +20,8 @@ void ThreadManager::GameLoop()
     {
         // 1. ProcessInputQueue() (패킷 처리)
         // [해야 할 것: 패킷 큐 접근 시 m_mtx lock/unlock 필요]
+        // 큐에 있는 모든 클라이언트 입력 패킷을 처리합니다.
+        ProcessInputQueue();
 
         // 2. CalculateGamePhysics() (로직 계산)
 
@@ -113,6 +115,9 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
     char buf[512];
     int retval;
 
+    // 수신 버퍼 참조 (이 스레드 전용 자원이므로 while 루프 외부에서 lock 없이 사용)
+    std::vector<char>& client_buffer = m_clients[playerID].recv_buffer;
+
     while (true)
     {
         // 1. recv()를 통해 패킷 수신 시도 (블로킹 모드)
@@ -129,12 +134,49 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
         }
 
         // 2. 패킷 수신 처리
-        // [해야 할 것]
+        // 수신된 데이터를 클라이언트의 수신 버퍼에 추가
+        if (retval > 0)
+        {
+            client_buffer.insert(client_buffer.end(), buf, buf + retval);
+        }
 
         // 3. 패킷 큐에 삽입
         // [해야 할 것: 패킷 큐 삽입 시 m_mtx lock/unlock 필요]
+        // 버퍼에서 완전한 패킷 추출 및 큐에 삽입 (패킷 조립)
+        while (client_buffer.size() >= sizeof(PacketHeader))
+        {
+            // 패킷 헤더 정보 확인 (바이트 오더링 문제 주의 필요)
+            const PacketHeader* header = (const PacketHeader*)client_buffer.data();
+            unsigned int packet_length = header->totalLength;
+            unsigned int packet_type = header->type;
 
-        printf("[Client Thread %d] %d 바이트 데이터 수신 완료.\n", playerID, retval);
+            // 불완전한 패킷: 다음 recv를 기다림
+            if (client_buffer.size() < packet_length)
+                break;
+
+            // 완전한 패킷 발견 -> QueuedPacket 생성 및 Payload 추출
+            QueuedPacket q_pkt;
+            q_pkt.socketID = playerID;
+            q_pkt.type = packet_type;
+
+            // 헤더(PacketHeader)를 제외한 순수 Payload만 복사
+            q_pkt.data.assign(
+                client_buffer.begin() + sizeof(PacketHeader),
+                client_buffer.begin() + packet_length
+            );
+
+            // 큐에 삽입 (메인 스레드와 공유하는 자원이므로 lock)
+            {
+                std::lock_guard<std::mutex> lock(m_mtx);
+                m_input_queue.push(std::move(q_pkt));
+            }
+
+            printf("[Client Thread %d] Packet Type %u, Size %u 수신 및 큐 삽입 완료.\\n",
+                playerID, packet_type, packet_length);
+
+            // 버퍼에서 처리된 패킷 제거
+            client_buffer.erase(client_buffer.begin(), client_buffer.begin() + packet_length);
+        }
     }
 
     // **4. 스레드 종료 전 정리 작업**
@@ -174,5 +216,28 @@ void ThreadManager::BroadcastState()
         if (m_clients[i].is_active) {
             send(m_clients[i].clientSock, broadcast_data, data_len, 0);
         }
+    }
+}
+
+
+// [새로 추가된 함수] ThreadManager::ProcessInputQueue()
+void ThreadManager::ProcessInputQueue()
+{
+    // 큐 접근 보호 (자동 unlock)
+    std::lock_guard<std::mutex> lock(m_mtx);
+
+    while (!m_input_queue.empty())
+    {
+        QueuedPacket pkt = m_input_queue.front();
+        m_input_queue.pop();
+
+        // Main Thread에서 HandlePacket 호출
+        // pkt.data.data()는 Payload의 시작 주소, pkt.data.size()는 Payload의 크기
+        m_packet_manager.HandlePacket(
+            pkt.type,
+            pkt.data.data(),
+            (unsigned int)pkt.data.size(),
+            pkt.socketID
+        );
     }
 }
