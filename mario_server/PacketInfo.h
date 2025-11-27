@@ -23,8 +23,8 @@ struct PacketHeader
 // -------- 데이터 구조 --------
 
 // C2S
-struct Packet_MOVE_C2S { unsigned int x, y, vx, vy, state; };
-struct Packet_ATTACK_C2S { unsigned int targetID, damage; };
+struct Packet_MOVE_C2S { unsigned int playerID, x, y, vx, vy, state; };
+struct Packet_ATTACK_C2S { unsigned int playerID, targetID, damage; };
 
 // S2C
 struct Packet_MOVE_S2C { unsigned int playerID, x, y, vx, vy, state; };
