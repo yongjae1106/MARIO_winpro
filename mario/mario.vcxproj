@@ -143,6 +143,7 @@
     <ClCompile Include="monsters\RedGoomba.cpp" />
     <ClCompile Include="monsters\Turtle.cpp" />
     <ClCompile Include="NetworkManager\NetworkManager.cpp" />
+    <ClCompile Include="PacketManager.cpp" />
     <ClCompile Include="Particles\Particle.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="items\Flower.cpp" />
@@ -171,6 +172,8 @@
     <ClInclude Include="monsters\RedGoomba.h" />
     <ClInclude Include="monsters\Turtle.h" />
     <ClInclude Include="NetworkManager\NetworkManager.h" />
+    <ClInclude Include="PacketInfo.h" />
+    <ClInclude Include="PacketManager.h" />
     <ClInclude Include="Particles\Particle.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="items\Flower.h" />

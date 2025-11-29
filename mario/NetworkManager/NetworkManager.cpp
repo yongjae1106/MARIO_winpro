@@ -12,7 +12,6 @@ NetworkManager::~NetworkManager()
     }
 }
 
-// À©¼Ó ÃÊ±âÈ­
 bool NetworkManager::Init() 
 {
     WSADATA wsaData;
@@ -25,7 +24,7 @@ bool NetworkManager::Init()
     return true;
 }
 
-// ³×Æ®¿öÅ©½º·¹µå »ı¼º
+// ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œ ì‹œì‘
 void NetworkManager::Start() {
     if (!isRunning) 
     {
@@ -35,22 +34,22 @@ void NetworkManager::Start() {
     }
 }
 
-// 
+// ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œ ì¤‘ì§€
 void NetworkManager::Stop() {
     if (isRunning) 
     {
         isRunning = false;
-        // ³×Æ®¿öÅ© ½º·¹µå¿¡ ¿¬°áµÇÀÖ´Ù¸é
+        // ë„¤íŠ¸ì›Œí¬ ìŠ¤ë ˆë“œê°€ ì¡°ì¸ ê°€ëŠ¥í•˜ë‹¤ë©´
         if (networkThread.joinable()) 
         {
-            // NetworkLoop()°¡ Á¾·áµÉ ¶§±îÁö ±â´Ù¸° ÈÄ ³×Æ®¿öÅ© ½º·¹µå ºí·ÎÅ·
+            // NetworkLoop()ê°€ ì™„ì „íˆ ì¢…ë£Œë  ë•Œê¹Œì§€ í˜„ì¬ ìŠ¤ë ˆë“œ ëŒ€ê¸°
             networkThread.join();
         }
         std::cout << "Network thread stopped." << std::endl;
     }
 }
 
-// ³íºí·ÎÅ·¸ğµå·Î º¯°æ
+// ì†Œì¼“ì„ ë…¼ë¸”ë¡œí‚¹ ëª¨ë“œë¡œ ì„¤ì •
 bool NetworkManager::SetSocketNonBlocking(SOCKET sock) {
     u_long mode = 1; // 1 to enable non-blocking mode
     if (ioctlsocket(sock, FIONBIO, &mode) != 0) {
@@ -72,7 +71,7 @@ bool NetworkManager::Connect(const std::string& ipAddress, int port)
         Disconnect();
     }
 
-    // ¼ÒÄÏ »ı¼º
+    // ì†Œì¼“ ìƒì„±
     clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (clientSocket == INVALID_SOCKET) 
     {
@@ -82,7 +81,7 @@ bool NetworkManager::Connect(const std::string& ipAddress, int port)
     }
     std::cout << "Client socket created successfully." << std::endl;
 
-    // ¼ÒÄÏ ºí·ÎÅ· ¸ğµå·Î ¼³Á¤
+    // ì†Œì¼“ ë…¼ë¸”ë¡œí‚¹ ëª¨ë“œ ì„¤ì •
     if (!SetSocketNonBlocking(clientSocket)) 
     {
         closesocket(clientSocket);
@@ -95,27 +94,27 @@ bool NetworkManager::Connect(const std::string& ipAddress, int port)
     serverAddr.sin_port = htons(port);
     inet_pton(AF_INET, ipAddress.c_str(), &serverAddr.sin_addr);
 
-    // 5ÃÊ°£ ¿¬°á¿Ï·á¸¦ ±â´Ù¸®´Â ¹İºí·ÎÅ· ÇüÅÂÀÇ connecting
+    // 5ì´ˆê°„ ì—°ê²°ì‹œë„ë¥¼ ê¸°ë‹¤ë¦¬ëŠ” ë¹„ë™ê¸° connecting
     int result = connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr));
     if (result == SOCKET_ERROR)
     {
-        // connect()°¡ ¹Ù·Î ½ÇÆĞÇßÀ» ¶§, WSAEWOULDBLOCKÀº "¾ÆÁ÷ ÁøÇà Áß"À» ÀÇ¹ÌÇÔ
+        // connect()ê°€ ë°”ë¡œ ì„±ê³µí•˜ì§€ ì•Šê³ , WSAEWOULDBLOCKì€ "ì§„í–‰ ì¤‘"ì„ ì˜ë¯¸
         if (WSAGetLastError() == WSAEWOULDBLOCK)
         {
-            // ¿¬°áÀÌ ¾ÆÁ÷ ¿Ï·áµÇÁö ¾Ê¾ÒÀ¸¹Ç·Î, select()·Î ¿¬°á ¿Ï·á ¿©ºÎ¸¦ ±â´Ù¸²
-            fd_set writeSet;                        // ¾²±â °¡´ÉÇÑ ¼ÒÄÏÀ» °¨½ÃÇÒ fd_set
-            FD_ZERO(&writeSet);                     // fd_set ÃÊ±âÈ­
-            FD_SET(clientSocket, &writeSet);        // °¨½Ã ´ë»ó ¼ÒÄÏ µî·Ï
+            // ì—°ê²°ì´ ì™„ë£Œë  ë•Œê¹Œì§€ ê¸°ë‹¤ë¦¬ê¸° ìœ„í•´ select() ì‚¬ìš©
+            fd_set writeSet;                        // ì“°ê¸° ê°€ëŠ¥ ìƒíƒœë¥¼ í™•ì¸í•  fd_set
+            FD_ZERO(&writeSet);                     // fd_set ì´ˆê¸°í™”
+            FD_SET(clientSocket, &writeSet);        // í´ë¼ì´ì–¸íŠ¸ ì†Œì¼“ ë“±ë¡
 
             timeval timeout;
-            timeout.tv_sec = 5;                     // ÃÖ´ë 5ÃÊ µ¿¾È ±â´Ù¸²
+            timeout.tv_sec = 5;                     // ìµœëŒ€ 5ì´ˆ ë™ì•ˆ ëŒ€ê¸°
             timeout.tv_usec = 0;
 
-            // select() È£Ãâ: ¾²±â °¡´ÉÇÑ ¼ÒÄÏÀ» ±â´Ù¸²
+            // select() í˜¸ì¶œ: ì†Œì¼“ì´ ì“°ê¸° ê°€ëŠ¥í•´ì§ˆ ë•Œê¹Œì§€ ëŒ€ê¸°
             result = select(0, NULL, &writeSet, NULL, &timeout);
             if (result == 0)
             {
-                // 5ÃÊ°£ ¿¬°á x, Å¸ÀÓ¾Æ¿ô
+                // 5ì´ˆê°„ ì—°ê²° x, íƒ€ì„ì•„ì›ƒ
                 std::cerr << "Connection timed out." << std::endl;
                 closesocket(clientSocket);
                 WSACleanup();
@@ -130,8 +129,7 @@ bool NetworkManager::Connect(const std::string& ipAddress, int port)
             }
             else
             {
-                // select()°¡ ¼º°øÀûÀ¸·Î ¹İÈ¯µÊ ¡æ ¼ÒÄÏÀÌ ¾²±â °¡´É »óÅÂÀÏ ¼ö ÀÖÀ½
-                // ÇÏÁö¸¸ ½ÇÁ¦·Î ¿¬°áÀÌ ¿Ï·áµÇ¾ú´ÂÁö getsockopt()·Î ´Ù½Ã È®ÀÎÇØ¾ß ÇÔ
+                // select()ê°€ ì„±ê³µì ìœ¼ë¡œ ë°˜í™˜ëœ í›„ ì—°ê²° ì„±ê³µ ì—¬ë¶€ë¥¼ ë‹¤ì‹œ í™•ì¸
                 int optval;
                 int optlen = sizeof(optval);
                 if (getsockopt(clientSocket, SOL_SOCKET, SO_ERROR, (char*)&optval, &optlen) == SOCKET_ERROR || optval != 0)
@@ -145,7 +143,7 @@ bool NetworkManager::Connect(const std::string& ipAddress, int port)
         }
         else
         {
-            // WSAEWOULDBLOCK ÀÌ¿ÜÀÇ ¿À·ù ¡æ Áï½Ã ½ÇÆĞ
+            // WSAEWOULDBLOCK ì´ì™¸ì˜ ë‹¤ë¥¸ ì˜¤ë¥˜ ë°œìƒ
             std::cerr << "Connection to server failed: " << WSAGetLastError() << std::endl;
             closesocket(clientSocket);
             WSACleanup();
