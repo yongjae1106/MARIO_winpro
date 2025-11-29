@@ -8,7 +8,7 @@
 //#include "Sound.h"
 #include <vector>
 #include <memory>
-
+#include <map> // map 헤더 필요
 #include <windows.h>
 
 #define SCREEN_WIDTH 800
@@ -111,6 +111,30 @@ public:
 
     int title_select;
 
+    // 추가: 접속한 클라이언트(Peer)의 상태를 업데이트하는 함수
+    void UpdatePeerState(int peerID, int x, int y, int vx, int vy, int state)
+    {
+        // 맵에 없으면 새로 생성, 있으면 업데이트
+        // Player 클래스의 세터 함수들을 이용해 동기화
+        m_peerPlayers[peerID].setX(x);
+        m_peerPlayers[peerID].setY(y);
+        m_peerPlayers[peerID].setVx(vx);
+        m_peerPlayers[peerID].setVy(vy);
+        // m_peerPlayers[peerID].setState((PlayerState)state); // 필요 시 state 변환 로직 추가
+    }
+
+    // 추가: 특정 플레이어 제거 (연결 끊김 시)
+    void RemovePeer(int peerID)
+    {
+        m_peerPlayers.erase(peerID);
+    }
+
+    // 추가: 모든 접속자 정보 반환 (Broadcast용)
+    const std::map<int, Player>& GetPeerPlayers() const
+    {
+        return m_peerPlayers;
+    }
+
 private:
     //GameRender m_gameRender;
     //Sound m_sound;
@@ -179,5 +203,8 @@ private:
 
     bool keyState[256];
     int m_global_animation_frame_counter;
+
+    // 추가: 접속된 플레이어들을 관리하는 컨테이너 (Key: SocketID, Value: Player 객체)
+    std::map<int, Player> m_peerPlayers;
 };
 
