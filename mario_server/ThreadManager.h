@@ -9,6 +9,9 @@
 // NetworkManager 클래스 선언 (순환 참조 방지)
 class NetworkManager;
 
+// 마찬가지로 GameWorld 클래스도 선언 (순환 참조 방지)
+class GameWorld;
+
 // 상수 정의
 #define MAX_PLAYERS 3
 
@@ -45,9 +48,11 @@ private:
     // 외부 클래스 참조
     NetworkManager* m_network_manager;
 
+    GameWorld* m_gameWorld;
+
 public:
     // 생성자
-    ThreadManager(NetworkManager* nm) : m_network_manager(nm) {}
+    ThreadManager(NetworkManager* netMgr, GameWorld* world);
 
     // **요청된 5가지 Public 멤버 함수**
 
