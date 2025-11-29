@@ -1,23 +1,23 @@
 #include "PacketManager.h"
+#include "GameWorld.h" // GameWorld 멤버 함수 호출을 위해 include
 #include <cstring>
 #include <cstdio>
 
-int PacketManager::TryParse(const std::vector<char>& buffer, unsigned int socketID)
+int PacketManager::TryParse(const std::vector<char>& buffer, unsigned int socketID, GameWorld* world)
 {
-    if (buffer.size() < sizeof(PacketHeader))
-        return 0;
+    if (buffer.size() < sizeof(PacketHeader)) return 0;
 
     const PacketHeader* header = (const PacketHeader*)buffer.data();
 
-    if (buffer.size() < header->totalLength)
-        return 0;
+    if (buffer.size() < header->totalLength) return 0;
 
-    HandlePacket(header->type, buffer.data() + sizeof(PacketHeader), header->totalLength, socketID);
+    // HandlePacket에 world 전달
+    HandlePacket(header->type, buffer.data() + sizeof(PacketHeader), header->totalLength, socketID, world);
 
     return header->totalLength;
 }
 
-void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID)
+void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID, GameWorld* world) 
 {
     switch (type)
     {
@@ -25,15 +25,17 @@ void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned i
     {
         Packet_MOVE_C2S pkt;
         memcpy(&pkt, data, sizeof(pkt));
-        printf("[Server] Socket %u → MOVE (%u,%u)\n", socketID, pkt.x, pkt.y);
+        //printf("[Server] Socket %u → MOVE (%u,%u)\n", socketID, pkt.x, pkt.y);
+        if (world) { // 추가: GameWorld에 접속자 상태 업데이트
+            world->UpdatePeerState(socketID, pkt.x, pkt.y, pkt.vx, pkt.vy, pkt.state);
+        }
         break;
     }
     case PKT_ATTACK:
     {
         Packet_ATTACK_C2S pkt;
         memcpy(&pkt, data, sizeof(pkt));
-        printf("[Server] Socket %u → ATTACK target=%u dmg=%u\n",
-            socketID, pkt.targetID, pkt.damage);
+        //printf("[Server] Socket %u → ATTACK target=%u dmg=%u\n",socketID, pkt.targetID, pkt.damage);
         break;
     }
     }

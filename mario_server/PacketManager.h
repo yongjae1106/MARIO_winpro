@@ -2,11 +2,15 @@
 #include "PacketInfo.h"
 #include <vector>
 
+// 추가: GameWorld 전방 선언 (헤더 순환 참조 방지)
+class GameWorld;
+
 class PacketManager
 {
 public:
-    int TryParse(const std::vector<char>& buffer, unsigned int socketID);
-    void HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID);
+    // 수정: 인자에 GameWorld* world 추가
+    int TryParse(const std::vector<char>& buffer, unsigned int socketID, GameWorld* world);
+    void HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID, GameWorld* world);
 
     // 서버 → 클라 직렬화
     unsigned int Serialize_MOVE(char* buffer, const Packet_MOVE_S2C& move);
