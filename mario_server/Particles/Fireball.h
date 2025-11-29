@@ -1,6 +1,6 @@
 #pragma once
 
-#include "items/Item.h"
+#include "../items/Item.h"
 
 class Fireball : public Item {
 public:

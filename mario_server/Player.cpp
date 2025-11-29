@@ -1,7 +1,7 @@
 #include "Player.h"
 #include "GameWorld.h"
 #include "monsters/Bowser.h"
-#include "Monster.h"
+#include "monsters/Monster.h"
 #include <Gdiplus.h>
 #include <tchar.h>
 #include <format>
@@ -187,11 +187,12 @@ void Player::move(GameWorld& world)
         {
             case (PlayerState::Small):
             {
-                world.playSound("jump-small");
+                //world.playSound("jump-small");
                 break;
             }
-            default:
-                world.playSound("jump-super");
+            default: {
+                //world.playSound("jump-super");
+            }
         }
         setVy(-20);
         setJumping(true);
@@ -207,7 +208,7 @@ void Player::move(GameWorld& world)
     if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
         world.spawnTinoFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -7 : 7), direction);
         m_tinofire_cooldown = 5; // Cooldown for 30 frames
-        world.playSound("tino_fire_shoot");
+        //world.playSound("tino_fire_shoot");
         tino_fire_motion = true; // Set Tino Fireball motion flag
         m_tino_fire_motion_timer = 10; // Set motion timer
     }
@@ -418,7 +419,7 @@ void Player::shrink() {
 void Player::gainStar(GameWorld& world) {
     setStarGodMode(true);
     world.stopAllSounds();
-    world.playSound("InvincibilityTheme", true);
+    //world.playSound("InvincibilityTheme", true);
     // Implement star power-up effects (e.g., temporary invincibility)
 }
 
@@ -536,7 +537,7 @@ void Player::tinoAttack(GameWorld& world) {
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
                         monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
-            world.playSound("kick");
+            //world.playSound("kick");
 
             // Handle Bowser specific logic
             Bowser* bowserMonster = dynamic_cast<Bowser*>(monster.get());
