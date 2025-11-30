@@ -266,7 +266,13 @@ void NetworkManager::NetworkLoop() {
     }
     std::cout << "NetworkLoop stopped." << std::endl;
     // If loop breaks due to disconnection, ensure Disconnect is called to clean up
-    if (!isConnected) {
+    /*if (!isConnected) {
         Disconnect();
+    }*/
+    // 스레드 내부에서 Disconnect()를 호출하면 자기 자신을 join()하게 되어 abort 에러가 발생합니다.
+    if (clientSocket != INVALID_SOCKET) {
+        closesocket(clientSocket);
+        clientSocket = INVALID_SOCKET;
     }
+    isConnected = false;
 }
