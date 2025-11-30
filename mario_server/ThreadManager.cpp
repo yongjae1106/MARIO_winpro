@@ -254,7 +254,11 @@ void ThreadManager::BroadcastState()
             if (m_clients[i].is_active) {
                 // send() 함수는 에러 체크를 하는 것이 좋지만, 
                 // Broadcast 특성상 실패해도 다음 틱에 다시 보내므로 일단 단순 호출
-                send(m_clients[i].clientSock, sendBuffer, len, 0);
+                //send(m_clients[i].clientSock, sendBuffer, len, 0);
+				//-> pid와 i가 같아도 보내니까 잔상(작은 마리오가 위에 그려지는 현상)이 생김
+                if (i != pID) { // 수정: 패킷의 주인(pID)과 받는 사람(i)이 같으면 보내지 않음
+                    send(m_clients[i].clientSock, sendBuffer, len, 0);
+                }
             }
         }
     }
