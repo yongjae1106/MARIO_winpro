@@ -8,7 +8,7 @@
 #include "Sound.h"
 #include <vector>
 #include <memory>
-
+#include <map> // 필수 추가
 #include <windows.h>
 
 #define SCREEN_WIDTH 800
@@ -111,11 +111,18 @@ public:
 
     int title_select;
 
+    // 추가: 다른 플레이어 목록을 반환하는 함수 (GameRender에서 사용)
+    const std::map<int, Player>& GetRemotePlayers() const {
+        return m_remotePlayers;
+    }
+
 private:
     GameRender m_gameRender;
     Sound m_sound;
 
 private:
+    void ProcessPackets(); // 추가: 패킷 처리를 위한 내부 함수
+
     void updatePlayer();
     void updateMonsters();
     void updateItems();
@@ -179,5 +186,10 @@ private:
 
     bool keyState[256];
     int m_global_animation_frame_counter;
+
+    // 추가: 다른 플레이어들을 관리하는 맵 (Key: PlayerID, Value: Player 객체)
+    std::map<int, Player> m_remotePlayers;
+    // 추가: TCP 데이터 스트림을 임시 보관할 버퍼
+    std::vector<char> m_recvBuffer;
 };
 
