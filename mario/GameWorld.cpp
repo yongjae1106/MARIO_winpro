@@ -1,3 +1,5 @@
+#include "NetworkManager/NetworkManager.h"
+#include "PacketManager.h"
 #include "GameWorld.h"
 #include "monsters/NormalGoomba.h"
 #include "monsters/RedGoomba.h"
@@ -19,6 +21,9 @@
 #include "monsters/Turtle.h"
 #include <memory>
 #include <tchar.h> // Added for _stprintf_s and OutputDebugString
+
+// 필수: main.cpp에 있는 전역 변수를 쓰겠다고 선언
+extern NetworkManager networkManager;
 
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
     return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
@@ -70,6 +75,8 @@ void GameWorld::update()
     TCHAR debugMessage[256];
     _stprintf_s(debugMessage, _T("GameWorld::update() - Current GameState: %d, Stage: %d\n"), (int)gameState, stage);
     OutputDebugString(debugMessage);
+
+    ProcessPackets(); // 추가: 네트워크 패킷 처리 (위치 동기화)
 
     switch (gameState) 
     {
@@ -1415,4 +1422,60 @@ void GameWorld::initMap2() {
 void GameWorld::initMap3()
 {
     // ... (existing code) ...
+}
+
+
+
+
+void GameWorld::ProcessPackets()
+{
+    // NetworkManager에 쌓인 데이터를 가져와 버퍼에 넣기
+    std::string tempStr;
+
+    // 큐에 있는 모든 데이터를 긁어옵니다.
+    while (networkManager.TryGetReceivedData(tempStr))
+    {
+        // 문자열(string)을 바이트 배열(vector<char>) 뒤에 붙입니다.
+        m_recvBuffer.insert(m_recvBuffer.end(), tempStr.begin(), tempStr.end());
+    }
+
+    // 버퍼에 있는 데이터를 PacketManager에게 줘서 패킷으로 조립(Parsing)
+    PacketManager::GetInstance()->ProcessReceivedData(m_recvBuffer);
+
+    PacketData pkt;
+    // 패킷 매니저 큐에 쌓인 모든 패킷을 꺼내서 처리
+    while (PacketManager::GetInstance()->TryGetPacket(pkt))
+    {
+        switch (pkt.type)
+        {
+        case PKT_MOVE:
+        {
+            if (pkt.data.size() < sizeof(Packet_MOVE_S2C)) break;
+
+            Packet_MOVE_S2C* pMove = (Packet_MOVE_S2C*)pkt.data.data();
+
+            // 내 캐릭터(NetworkManager가 관리하는 소켓 등)와 
+            // ID가 같다면 무시하는 로직이 필요할 수 있으나, 
+            // 현재는 그냥 다 그립니다. (서버가 나한테도 보내주므로)
+
+            // 맵에 해당 ID가 없으면 새로 생성, 있으면 위치 업데이트
+            Player& remoteP = m_remotePlayers[pMove->playerID];
+
+            // 위치 동기화
+            remoteP.setX(pMove->x);
+            remoteP.setY(pMove->y);
+            remoteP.setVx(pMove->vx);
+            remoteP.setVy(pMove->vy);
+            remoteP.setState((PlayerState)pMove->state);
+
+            // [중요] 원격 플레이어는 걷는 애니메이션을 위해 강제로 걷는 상태로 둠 (vx가 있을 때)
+            if (pMove->vx != 0) remoteP.setWalking(true);
+            else remoteP.setWalking(false);
+
+            remoteP.updateAnimation(); // 애니메이션 갱신
+            break;
+        }
+        // 공격, 피격 등 다른 패킷 처리도 여기에 추가
+        }
+    }
 }
