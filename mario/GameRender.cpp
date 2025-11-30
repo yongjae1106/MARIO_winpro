@@ -88,6 +88,20 @@ void GameRender::render(HDC hdc, const GameWorld& world) {
         drawParticles(graphics, world);
         drawMonsters(graphics, world);
         drawPlayer(graphics, world, world.getPlayer());
+
+        const auto& remotePlayers = world.GetRemotePlayers();
+
+        for (const auto& pair : remotePlayers)
+        {
+            // pair.first는 플레이어 ID, pair.second는 Player 객체입니다.
+            const Player& remoteP = pair.second;
+
+            // 내 캐릭터를 그리는 함수(drawPlayer)를 재활용하여 똑같이 그립니다.
+            // (만약 친구 캐릭터 위에 아이디나 색상을 다르게 표시하고 싶다면, 
+            //  별도의 drawRemotePlayer 함수를 만들어야 합니다.)
+            drawPlayer(graphics, world, remoteP);
+        }
+
         drawUI(graphics, world);
     }
 
@@ -461,8 +475,22 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
 {
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
-    int drawX = player.getX();
+    //int drawX = player.getX();
+    //int drawY = player.getY();
+
+    int drawX = 0;
     int drawY = player.getY();
+
+    if (&player == &world.getPlayer())
+    {
+        drawX = player.getX();
+    }
+
+    else
+    {
+        drawX = player.getX() - (int)world.getCameraX();
+    }
+
     Gdiplus::Image* imageToDraw = mario_stop;
 
     if (player.isDead()) {
