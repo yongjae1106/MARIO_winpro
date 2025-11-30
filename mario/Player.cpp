@@ -1,3 +1,7 @@
+// 네트워크 통신을 위한 헤더 추가
+// 순서 변경해야 함. 네트워크 헤더를 가장 먼저 포함해야 Winsock2가 먼저 로딩되어 충돌을 막습니다.
+#include "NetworkManager/NetworkManager.h"
+#include "PacketManager.h"
 #include "Player.h"
 #include "GameWorld.h"
 #include "monsters/Bowser.h"
@@ -6,6 +10,10 @@
 #include <tchar.h>
 #include <format>
 #include <string>
+
+
+// main.cpp에 선언된 전역 변수 networkManager를 참조한다고 알림
+extern NetworkManager networkManager;
 
 using namespace Gdiplus;
 
@@ -18,6 +26,10 @@ Player::Player() {
     m_tinofire_cooldown = 0;
     tino_attack_motion = false; // Initialize new member variable
     m_tino_attack_motion_timer = 0; // Initialize new member variable
+
+    // 추가: 중요합니다. 변수 초기화를 위해 reset()을 반드시 호출해야 합니다.
+    // 이게 없으면 쓰레기 값 때문에 캐릭터가 투명해지거나 맵 밖으로 날아갑니다.
+    reset();
 }
 
 void Player::reset() {
@@ -224,6 +236,23 @@ void Player::move(GameWorld& world)
     // 디버그: 입력 처리 후 Vx 값 출력
     _stprintf_s(debugMessage, _T("Player::move - After logic: Vx: %d\n"), getVx());
     OutputDebugString(debugMessage);
+
+    // 서버로 내 위치 정보 전송 (동기화)
+    Packet_MOVE_C2S pkt;
+    //pkt.x = getX();
+    pkt.x = getX() + (int)world.getCameraX();
+    pkt.y = getY();
+    pkt.vx = getVx();
+    pkt.vy = getVy();
+    pkt.state = (unsigned int)getState(); // 상태값 (Small, Big 등)
+
+    // 직렬화 (PacketManager 이용)
+    char sendBuffer[1024];
+    unsigned int len = PacketManager::GetInstance()->Serialize_MOVE(sendBuffer, pkt);
+
+    // 전송 (NetworkManager 이용)
+    // char 배열을 std::string으로 변환하여 큐에 넣음
+    networkManager.Send(std::string(sendBuffer, len));
 }
 
 void Player::updateAnimation() {
