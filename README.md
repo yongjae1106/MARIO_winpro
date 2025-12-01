@@ -27,7 +27,6 @@
 
 ## 3. 실행 예시 (Demo)
 
-![실행 화면]
-
+[실행 화면]
 https://github.com/user-attachments/assets/876ade56-8415-458e-9a67-022468a32db5
 
