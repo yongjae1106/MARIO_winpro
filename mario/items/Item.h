@@ -12,8 +12,16 @@ public:
     Item(ItemType type, int x, int y);
     virtual ~Item() = default;
 
-    virtual void update(GameWorld& world) = 0;
+    // --- Client-side update ---
+    virtual void update();
+    virtual void updateAnimation();
+    // --------------------------
+
     virtual void render(HDC hdc, int cameraX) = 0;
+
+    // --- Server-side logic (kept for reference) ---
+    virtual void updateServerLogic(GameWorld& world) = 0;
+    // ---------------------------------------------
 
     ItemType getType() const { return type; }
     int getX() const { return x; }
@@ -21,9 +29,9 @@ public:
     int getWidth() const { return width; }
     int getHeight() const { return height; }
     bool isActive() const { return active; }
-    bool isMotion() const { return active; }
+    bool isMotion() const { return motion; } // Note: This might be the same as active
     void setActive(bool isActive) { active = isActive; }
-    void setMotion(bool isMotion) { active = isMotion; }
+    void setMotion(bool isMotion) { motion = isMotion; }
 
     virtual void setX(int newX) { x = newX; }
     virtual void setY(int newY) { y = newY; }
@@ -35,6 +43,7 @@ public:
     virtual void setWidth(int newWidth) { width = newWidth; }
     virtual void setHeight(int newHeight) { height = newHeight; }
 
+    int getAnimationframe() const { return animation_frame; }
 
 
 protected:
@@ -46,4 +55,5 @@ protected:
     bool isFalling;
     int spawn_motion;
     bool motion;
+    int animation_frame; // For client-side animation
 };

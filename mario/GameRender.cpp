@@ -21,7 +21,8 @@
 
 using namespace Gdiplus;
 
-GameRender::GameRender() : gdiplusToken(0) {
+GameRender::GameRender() : gdiplusToken(0) 
+{
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
@@ -75,10 +76,14 @@ void GameRender::render(HDC hdc, const GameWorld& world) {
     {
         drawTitleScreen(graphics, world);
     } 
-    else if (world.getGameState() == GameState::GAME_OVER && world.getPlayer().isDead())
+    else if (world.getGameState() == GameState::GAME_OVER)
     {
-        drawTitleDead(graphics, world);
-        drawUI(graphics, world);
+        const Player* localPlayer = world.getLocalPlayer();
+        if (localPlayer && localPlayer->isDead())
+        {
+            drawTitleDead(graphics, world);
+            drawUI(graphics, world);
+        }
     }
     else 
     {
@@ -87,21 +92,10 @@ void GameRender::render(HDC hdc, const GameWorld& world) {
         drawMap(graphics, world);
         drawParticles(graphics, world);
         drawMonsters(graphics, world);
-        drawPlayer(graphics, world, world.getPlayer());
-
-        const auto& remotePlayers = world.GetRemotePlayers();
-
-        for (const auto& pair : remotePlayers)
-        {
-            // pair.first는 플레이어 ID, pair.second는 Player 객체입니다.
-            const Player& remoteP = pair.second;
-
-            // 내 캐릭터를 그리는 함수(drawPlayer)를 재활용하여 똑같이 그립니다.
-            // (만약 친구 캐릭터 위에 아이디나 색상을 다르게 표시하고 싶다면, 
-            //  별도의 drawRemotePlayer 함수를 만들어야 합니다.)
-            drawPlayer(graphics, world, remoteP);
+        // Draw all players
+        for (const auto& pair : world.getPlayers()) {
+            drawPlayer(graphics, world, pair.second);
         }
-
         drawUI(graphics, world);
     }
 
@@ -264,17 +258,17 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
     for (const auto& monster : world.getMonsters()) {
-        if (!monster->isAlive()) continue;
+        if (!monster.second->isAlive()) continue;
 
-        int screenX = monster->getX() - world.getCameraX();
-        int screenY = monster->getY();
+        int screenX = monster.second->getX() - world.getCameraX();
+        int screenY = monster.second->getY();
 
         Gdiplus::Image* imageToDraw = nullptr;
 
-        switch (monster->getType()) {
+        switch (monster.second->getType()) {
             case Monster::MonsterType::NormalGoomba:
             {
-                if ((monster->getX() / 20) % 2 == 0) {
+                if ((monster.second->getX() / 20) % 2 == 0) {
                     imageToDraw = getGoombaImage();
                 } else {
                     imageToDraw = getGoombaImage2();
@@ -283,9 +277,9 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
             }
             case Monster::MonsterType::GreenTurtle:
             {
-                const Turtle* turtle = static_cast<const Turtle*>(monster.get());
+                const Turtle* turtle = static_cast<const Turtle*>(monster.second.get());
                 if (turtle->getState() == Turtle::TurtleState::NORMAL) {
-                    if ((monster->getX() / 20) % 2 == 0) 
+                    if ((monster.second->getX() / 20) % 2 == 0) 
                     {
                         imageToDraw = getTurtleImage();
                     } 
@@ -302,7 +296,7 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
             }
             case Monster::MonsterType::Bowser:
             {
-                if ((monster->getX() / 40) % 2 == 0) {
+                if ((monster.second->getX() / 40) % 2 == 0) {
                     imageToDraw = getBowserImage1();
                 } else {
                     imageToDraw = getBowserImage2();
@@ -314,11 +308,12 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
 
         if (imageToDraw) 
         {
-            if (monster->getVx() > 0) {
+            bool flip = (monster.second->getDirection() == 0); 
+            if (flip) {
                 imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
             }
-            graphics.DrawImage(imageToDraw, (REAL)screenX, (REAL)screenY, (REAL)monster->getWidth(), (REAL)monster->getHeight());
-            if (monster->getVx() > 0) { // Flip back
+            graphics.DrawImage(imageToDraw, (REAL)screenX, (REAL)screenY, (REAL)monster.second->getWidth(), (REAL)monster.second->getHeight());
+            if (flip) { // Flip back to original orientation for next draw cycle
                 imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
             }
         }
@@ -475,22 +470,8 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
 {
     graphics.SetInterpolationMode(Gdiplus::InterpolationModeNearestNeighbor);
 
-    //int drawX = player.getX();
-    //int drawY = player.getY();
-
-    int drawX = 0;
+    int drawX = player.getX() - world.getCameraX();
     int drawY = player.getY();
-
-    if (&player == &world.getPlayer())
-    {
-        drawX = player.getX();
-    }
-
-    else
-    {
-        drawX = player.getX() - (int)world.getCameraX();
-    }
-
     Gdiplus::Image* imageToDraw = mario_stop;
 
     if (player.isDead()) {
@@ -741,6 +722,8 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
 
     int frame_motion = (world.getGlobalAnimationFrameCounter() / 8) % 7;
 
+    const Player* localPlayer = world.getLocalPlayer();
+
     //코인
     if (frame_motion < 4 || frame_motion > 5)
     {
@@ -756,16 +739,16 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     }
 
     _stprintf_s(life_print, _T("MARIO"));
-    _stprintf_s(life_print2, _T("%05d"), world.getPlayer().getLife());
+    _stprintf_s(life_print2, _T("%05d"), localPlayer ? localPlayer->getLife() : 0);
     _stprintf_s(time_print, _T("TIME"));
     _stprintf_s(time_print2, _T("%03d"), world.getStageTime());
-    _stprintf_s(coin_print, _T("%02d"), world.getPlayer().getCoin());
+    _stprintf_s(coin_print, _T("%02d"), localPlayer ? localPlayer->getCoin() : 0);
     _stprintf_s(stage_print, _T("WORLD"));
     _stprintf_s(stage_print2, _T("%d"), world.getStage());
     _stprintf_s(clear_text_1, _T("THANK YOU MARIO!"));
     _stprintf_s(clear_text_2, _T("YOUR QUEST IS OVER.!"));
-    _stprintf_s(cooldown_z, _T("Z (fire): %d"), world.getPlayer().getTinoCooldownTinoFireball());
-    _stprintf_s(cooldown_space, _T("SPACE (bite): %d"), world.getPlayer().getTinoCooldownSpace());
+    _stprintf_s(cooldown_z, _T("Z (fire): %d"), localPlayer ? localPlayer->getFireMotionTimer() : 0);
+    _stprintf_s(cooldown_space, _T("SPACE (bite): %d"), localPlayer ? localPlayer->getTinoCooldownSpace() : 0);
 
     graphics.DrawString(life_print, -1, m_font.get(), PointF(80, 20), &stringFormat, &brush);
     graphics.DrawString(life_print2, -1, m_font.get(), PointF(80, 40), &stringFormat, &brush);
@@ -778,7 +761,7 @@ void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
     graphics.DrawString(stage_print, -1, m_font.get(), PointF(440, 20), &stringFormat, &brush);
     graphics.DrawString(stage_print2, -1, m_font.get(), PointF(480, 40), &stringFormat, &brush);
 
-    if (world.getPlayer().isTino())
+    if (localPlayer && localPlayer->isTino())
     {
         graphics.DrawString(cooldown_z, -1, m_font.get(), PointF(80, 80), &stringFormat, &brush);
         graphics.DrawString(cooldown_space, -1, m_font.get(), PointF(80, 100), &stringFormat, &brush);

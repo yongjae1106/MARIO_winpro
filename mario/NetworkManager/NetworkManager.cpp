@@ -1,7 +1,9 @@
 #include "NetworkManager.h"
+#include "../PacketInfo.h" // PacketHeader 정의를 위해 추가
+#include "../PacketManager.h" // PacketManager 사용을 위해 추가
 #include <vector> // For std::vector in NetworkLoop
 
-NetworkManager::NetworkManager() : clientSocket(INVALID_SOCKET), isConnected(false), isRunning(false) {
+NetworkManager::NetworkManager() : clientSocket(INVALID_SOCKET), isConnected(false), isRunning(false), m_internalRecvBufferSize(0) {
 }
 
 NetworkManager::~NetworkManager() 
@@ -180,17 +182,16 @@ void NetworkManager::Send(const std::string& data) {
     }
 }
 
-bool NetworkManager::TryGetReceivedData(std::string& outData) {
-    return receiveQueue.try_pop(outData);
-}
+
 
 bool NetworkManager::IsConnected() const {
     return isConnected;
 }
 
+
 void NetworkManager::NetworkLoop() {
     std::cout << "NetworkLoop started." << std::endl;
-    char recvBuffer[4096];
+    char tempRecvBuffer[4096]; // recv를 위한 임시 버퍼 선언
 
     while (isRunning && isConnected) {
         fd_set readSet, writeSet;
@@ -220,19 +221,32 @@ void NetworkManager::NetworkLoop() {
         }
 
         // Handle incoming data
-        if (FD_ISSET(clientSocket, &readSet)) {
-            int bytesReceived = recv(clientSocket, recvBuffer, sizeof(recvBuffer) - 1, 0);
-            if (bytesReceived > 0) {
-                recvBuffer[bytesReceived] = '\0';
-                receiveQueue.push(std::string(recvBuffer, bytesReceived));
-                // std::cout << "NetworkLoop: Received " << bytesReceived << " bytes." << std::endl;
-            } else if (bytesReceived == 0) {
+        if (FD_ISSET(clientSocket, &readSet)) 
+        {
+            int bytesReceived = recv(clientSocket, tempRecvBuffer, sizeof(tempRecvBuffer), 0);
+            if (bytesReceived > 0) 
+            {
+                // 수신된 데이터를 내부 버퍼(m_internalRecvBuffer)에 추가
+                m_internalRecvBuffer.insert(m_internalRecvBuffer.end(), tempRecvBuffer, tempRecvBuffer + bytesReceived);
+                m_internalRecvBufferSize = m_internalRecvBuffer.size(); // 사이즈 업데이트
+
+                // PacketManager를 호출하여 버퍼의 데이터를 처리하도록 요청
+                // 이 함수는 내부에 패킷을 분리하고 큐에 넣는 로직을 포함해야 합니다.
+                PacketManager::GetInstance()->ProcessReceivedData(m_internalRecvBuffer);
+
+                // ProcessReceivedData가 처리하고 남은 데이터로 버퍼를 업데이트했을 수 있으므로 사이즈 재조정
+                m_internalRecvBufferSize = m_internalRecvBuffer.size();
+            }
+            else if (bytesReceived == 0) 
+            {
                 std::cout << "NetworkLoop: Server disconnected." << std::endl;
                 isConnected = false;
                 break;
-            } else {
+            } 
+            else 
+            {
                 int error = WSAGetLastError();
-                if (error != WSAEWOULDBLOCK) { // WSAEWOULDBLOCK is expected for non-blocking sockets
+                if (error != WSAEWOULDBLOCK) { // WSAEWOULDBLOCK은 논블로킹 소켓에서 데이터가 없을 때 예상되는 에러
                     std::cerr << "NetworkLoop: Recv error: " << error << std::endl;
                     isConnected = false;
                     break;
@@ -240,27 +254,28 @@ void NetworkManager::NetworkLoop() {
             }
         }
 
-        // Handle outgoing data
-        if (FD_ISSET(clientSocket, &writeSet)) {
-            std::string dataToSend;
-            while (sendQueue.try_pop(dataToSend)) {
-                int bytesSent = send(clientSocket, dataToSend.c_str(), dataToSend.length(), 0);
-                if (bytesSent == SOCKET_ERROR) {
-                    int error = WSAGetLastError();
-                    if (error != WSAEWOULDBLOCK) {
-                        std::cerr << "NetworkLoop: Send error: " << error << std::endl;
-                        isConnected = false;
-                        break; // Break from inner while and outer while
-                    } else {
-                        // Socket is temporarily not writable, push data back to queue and try again later
-                        sendQueue.push(dataToSend);
-                        break; // Break from inner while, try again next select loop
-                    }
-                } else {
-                    // std::cout << "NetworkLoop: Sent " << bytesSent << " bytes." << std::endl;
-                }
-            }
-        }
+        // send 틀
+        //// Handle outgoing data
+        //if (FD_ISSET(clientSocket, &writeSet)) {
+        //    std::string dataToSend;
+        //    while (sendQueue.try_pop(dataToSend)) {
+        //        int bytesSent = send(clientSocket, dataToSend.c_str(), dataToSend.length(), 0);
+        //        if (bytesSent == SOCKET_ERROR) {
+        //            int error = WSAGetLastError();
+        //            if (error != WSAEWOULDBLOCK) {
+        //                std::cerr << "NetworkLoop: Send error: " << error << std::endl;
+        //                isConnected = false;
+        //                break; // Break from inner while and outer while
+        //            } else {
+        //                // Socket is temporarily not writable, push data back to queue and try again later
+        //                sendQueue.push(dataToSend);
+        //                break; // Break from inner while, try again next select loop
+        //            }
+        //        } else {
+        //            // std::cout << "NetworkLoop: Sent " << bytesSent << " bytes." << std::endl;
+        //        }
+        //    }
+        //}
         // Small sleep to prevent busy-waiting if select returns immediately without activity
         // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
