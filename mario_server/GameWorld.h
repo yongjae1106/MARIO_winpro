@@ -4,11 +4,11 @@
 #include "monsters/Monster.h"
 #include "items/Item.h"
 #include "Particles/Particle.h"
-#include "GameRender.h"
-#include "Sound.h"
+//#include "GameRender.h"
+//#include "Sound.h"
 #include <vector>
 #include <memory>
-#include <map> // 필수 추가
+#include <map> // map 헤더 필요
 #include <windows.h>
 
 #define SCREEN_WIDTH 800
@@ -63,7 +63,7 @@ public:
     void resetForDeath();
 
     // Getter for the renderer to allow safe access from other classes
-    GameRender& getGameRender() { return m_gameRender; }
+    //GameRender& getGameRender() { return m_gameRender; }
 
     void transUpdate();
     void cameraUpdate();
@@ -86,7 +86,7 @@ public:
     int getStageTime() const { return stage_time; }
     int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
     bool getGameClearText() const { return gameClearText; }
-    bool getGameoverTitleDead () const { return gameover_TitleDead; }
+    bool getGameoverTitleDead() const { return gameover_TitleDead; }
     int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
 
     const bool* getKeyState() const;
@@ -106,23 +106,40 @@ public:
     void spawnTinoFireball(int x, int y, int vx, int direction);
     void spawnTinoFireballEffect(int x, int y, int vx, int direction);
 
-    void playSound(const std::string& name, bool loop = false);
+    //void playSound(const std::string& name, bool loop = false);
     void stopAllSounds();
 
     int title_select;
 
-    // 추가: 다른 플레이어 목록을 반환하는 함수 (GameRender에서 사용)
-    const std::map<int, Player>& GetRemotePlayers() const {
-        return m_remotePlayers;
+    // 추가: 접속한 클라이언트(Peer)의 상태를 업데이트하는 함수
+    void UpdatePeerState(int peerID, int x, int y, int vx, int vy, int state)
+    {
+        // 맵에 없으면 새로 생성, 있으면 업데이트
+        // Player 클래스의 세터 함수들을 이용해 동기화
+        m_peerPlayers[peerID].setX(x);
+        m_peerPlayers[peerID].setY(y);
+        m_peerPlayers[peerID].setVx(vx);
+        m_peerPlayers[peerID].setVy(vy);
+        // m_peerPlayers[peerID].setState((PlayerState)state); // 필요 시 state 변환 로직 추가
+    }
+
+    // 추가: 특정 플레이어 제거 (연결 끊김 시)
+    void RemovePeer(int peerID)
+    {
+        m_peerPlayers.erase(peerID);
+    }
+
+    // 추가: 모든 접속자 정보 반환 (Broadcast용)
+    const std::map<int, Player>& GetPeerPlayers() const
+    {
+        return m_peerPlayers;
     }
 
 private:
-    GameRender m_gameRender;
-    Sound m_sound;
+    //GameRender m_gameRender;
+    //Sound m_sound;
 
 private:
-    void ProcessPackets(); // 추가: 패킷 처리를 위한 내부 함수
-
     void updatePlayer();
     void updateMonsters();
     void updateItems();
@@ -139,7 +156,7 @@ private:
     void checkFlagCollision();
     void checkClearCollision();
     void spawnMonsters();
-    
+
     void applyplayertakedamage();
 
     void initMaps();
@@ -187,9 +204,7 @@ private:
     bool keyState[256];
     int m_global_animation_frame_counter;
 
-    // 추가: 다른 플레이어들을 관리하는 맵 (Key: PlayerID, Value: Player 객체)
-    std::map<int, Player> m_remotePlayers;
-    // 추가: TCP 데이터 스트림을 임시 보관할 버퍼
-    std::vector<char> m_recvBuffer;
+    // 추가: 접속된 플레이어들을 관리하는 컨테이너 (Key: SocketID, Value: Player 객체)
+    std::map<int, Player> m_peerPlayers;
 };
 

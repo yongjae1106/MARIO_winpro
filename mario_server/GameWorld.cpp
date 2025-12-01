@@ -1,5 +1,3 @@
-#include "NetworkManager/NetworkManager.h"
-#include "PacketManager.h"
 #include "GameWorld.h"
 #include "monsters/NormalGoomba.h"
 #include "monsters/RedGoomba.h"
@@ -21,9 +19,6 @@
 #include "monsters/Turtle.h"
 #include <memory>
 #include <tchar.h> // Added for _stprintf_s and OutputDebugString
-
-// 필수: main.cpp에 있는 전역 변수를 쓰겠다고 선언
-extern NetworkManager networkManager;
 
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2) {
     return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
@@ -53,32 +48,30 @@ bool GameWorld::isSolidTile(int tileValue) const {
     return !(tileValue == 0 || tileValue == 2 || tileValue == 7 || tileValue == 8);
 }
 
-void GameWorld::sound_init(HWND hwnd) {
-    m_sound.init(hwnd);
-}
+//void GameWorld::sound_init(HWND hwnd) {
+//    m_sound.init(hwnd);
+//}
 
-void GameWorld::init() {
-    m_gameRender.init();
-    m_sound.loadAllSounds();
-}
+//void GameWorld::init() {
+//    m_gameRender.init();
+//    m_sound.loadAllSounds();
+//}
 
-void GameWorld::playSound(const std::string& name, bool loop) {
-    m_sound.play(name, loop);
-}
+//void GameWorld::playSound(const std::string& name, bool loop) {
+//    m_sound.play(name, loop);
+//}
 
 void GameWorld::stopAllSounds() {
-    m_sound.stopAllSounds();
+    //m_sound.stopAllSounds();
 }
 
-void GameWorld::update() 
+void GameWorld::update()
 {
     TCHAR debugMessage[256];
     _stprintf_s(debugMessage, _T("GameWorld::update() - Current GameState: %d, Stage: %d\n"), (int)gameState, stage);
     OutputDebugString(debugMessage);
 
-    ProcessPackets(); // 추가: 네트워크 패킷 처리 (위치 동기화)
-
-    switch (gameState) 
+    switch (gameState)
     {
     case GameState::GAME_START:
     {
@@ -92,7 +85,7 @@ void GameWorld::update()
     {
         OutputDebugString(_T("GameWorld::update() - Case GAME_RUNNING\n"));
         DWORD now = GetTickCount();
-        if(gameState_trans == GameState_Trans::GAME_NONE)
+        if (gameState_trans == GameState_Trans::GAME_NONE)
         {
             updatePlayer();
         }
@@ -105,7 +98,7 @@ void GameWorld::update()
 
         if (player.getCoin() > 99)
         {
-            playSound("1-up");
+            //playSound("1-up");
             player.setLife(player.getLife() + 1);
             player.setCoin(0);
         }
@@ -203,7 +196,7 @@ void GameWorld::transUpdate()
 {
     switch (gameState_trans)
     {
-    // mushroom 변신 모션
+        // mushroom 변신 모션
     case GameState_Trans::GAME_BIG_TRANS:
     {
         DWORD now = GetTickCount();
@@ -211,7 +204,7 @@ void GameWorld::transUpdate()
         {
             if (!player.isBig())
             {
-                playSound("playerup");
+                //playSound("playerup");
                 player.grow();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
@@ -231,7 +224,7 @@ void GameWorld::transUpdate()
         {
             if (!player.isFlower()) // Powering up
             {
-                playSound("playerup");
+                //playSound("playerup");
                 player.gainFlower();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
@@ -251,7 +244,7 @@ void GameWorld::transUpdate()
         {
             if (!player.isTino()) // Powering up
             {
-                playSound("playerup");
+                //playSound("playerup");
                 player.gainTino();
                 gameState_trans = GameState_Trans::GAME_NONE;
             }
@@ -272,15 +265,15 @@ void GameWorld::transUpdate()
 
 }
 
-void GameWorld::render(HDC hdc) {
-    m_gameRender.render(hdc, *this);
-}
+//void GameWorld::render(HDC hdc) {
+//    m_gameRender.render(hdc, *this);
+//}
 
 
 // player.cpp의 move함수에서 역할을 수행함
-void GameWorld::handleKeyDown(WPARAM wParam) 
+void GameWorld::handleKeyDown(WPARAM wParam)
 {
-    if (wParam < 256) 
+    if (wParam < 256)
     {
         keyState[wParam] = true;
         // 디버그: 키 다운 이벤트 및 현재 키 상태 출력
@@ -325,7 +318,7 @@ void GameWorld::handleKeyDown(WPARAM wParam)
 
 }
 
-void GameWorld::handleKeyUp(WPARAM wParam) 
+void GameWorld::handleKeyUp(WPARAM wParam)
 {
     if (wParam < 256) {
         // 디버그: 키 업 이벤트 및 keyState[wParam] 변경 전 상태 출력
@@ -355,9 +348,11 @@ void GameWorld::loadStage(int newStage) {
     setStageBGM();
     if (stage == 1) {
         currentMap = map1;
-    } else if (stage == 2) {
+    }
+    else if (stage == 2) {
         currentMap = map2;
-    } else if (stage == 3) {
+    }
+    else if (stage == 3) {
         currentMap = map3;
     }
     spawnMonsters();
@@ -368,9 +363,11 @@ void GameWorld::spawnMonsters()
     const std::vector<MonsterSpawnInfo>* currentMonsterSpawns = nullptr;
     if (stage == 1) {
         currentMonsterSpawns = &stage1Monsters;
-    } else if (stage == 2) {
+    }
+    else if (stage == 2) {
         currentMonsterSpawns = &stage2Monsters;
-    } else if (stage == 3) {
+    }
+    else if (stage == 3) {
         currentMonsterSpawns = &stage3Monsters;
     }
 
@@ -379,27 +376,27 @@ void GameWorld::spawnMonsters()
             float x = spawnInfo.x * TILE_SIZE;
             float y = spawnInfo.y * TILE_SIZE;
             switch (spawnInfo.type) {
-                case Monster::MonsterType::NormalGoomba:
-                    monsters.push_back(std::make_unique<NormalGoomba>(x, y));
-                    break;
-                case Monster::MonsterType::RedGoomba:
-                    monsters.push_back(std::make_unique<RedGoomba>(x, y));
-                    break;
-                case Monster::MonsterType::BlueGoomba:
-                    monsters.push_back(std::make_unique<BlueGoomba>(x, y));
-                    break;
-                case Monster::MonsterType::GreenTurtle:
-                    monsters.push_back(std::make_unique<GreenTurtle>(x, y));
-                    break;
-                case Monster::MonsterType::BrownTurtle:
-                    monsters.push_back(std::make_unique<BrownTurtle>(x, y));
-                    break;
-                case Monster::MonsterType::AngelTurtle:
-                    monsters.push_back(std::make_unique<AngelTurtle>(x, y));
-                    break;
-                case Monster::MonsterType::Bowser:
-                    monsters.push_back(std::make_unique<Bowser>(x, y));
-                    break;
+            case Monster::MonsterType::NormalGoomba:
+                monsters.push_back(std::make_unique<NormalGoomba>(x, y));
+                break;
+            case Monster::MonsterType::RedGoomba:
+                monsters.push_back(std::make_unique<RedGoomba>(x, y));
+                break;
+            case Monster::MonsterType::BlueGoomba:
+                monsters.push_back(std::make_unique<BlueGoomba>(x, y));
+                break;
+            case Monster::MonsterType::GreenTurtle:
+                monsters.push_back(std::make_unique<GreenTurtle>(x, y));
+                break;
+            case Monster::MonsterType::BrownTurtle:
+                monsters.push_back(std::make_unique<BrownTurtle>(x, y));
+                break;
+            case Monster::MonsterType::AngelTurtle:
+                monsters.push_back(std::make_unique<AngelTurtle>(x, y));
+                break;
+            case Monster::MonsterType::Bowser:
+                monsters.push_back(std::make_unique<Bowser>(x, y));
+                break;
             }
         }
     }
@@ -484,8 +481,8 @@ void GameWorld::updateMonsters() {
     // Remove dead monsters
     monsters.erase(std::remove_if(monsters.begin(), monsters.end(), [](const std::unique_ptr<Monster>& monster) {
         return !monster->isAlive();
-    }),
-    monsters.end());
+        }),
+        monsters.end());
 
     // Update remaining monsters
     for (auto& monster : monsters) {
@@ -501,10 +498,10 @@ void GameWorld::updateItems() {
     // Remove inactive items
     items.erase(std::remove_if(items.begin(), items.end(), [](const std::unique_ptr<Item>& item) {
         return !item->isActive();
-    }), items.end());
+        }), items.end());
 }
 
-void GameWorld::updateParticles() 
+void GameWorld::updateParticles()
 {
     if (!newParticles.empty()) {
         for (auto& p : newParticles)
@@ -512,9 +509,9 @@ void GameWorld::updateParticles()
         newParticles.clear();
     }
 
-    for (auto& particle : particles) 
+    for (auto& particle : particles)
     {
-        if (!particle) 
+        if (!particle)
         {
             OutputDebugString(L"[WARN] nullptr particle skipped\n");
             continue;
@@ -545,7 +542,7 @@ void GameWorld::checkCollisions() {
 
 void GameWorld::dead() {
     stopAllSounds();
-    playSound("mariodie");
+    //playSound("mariodie");
     player.setVx(0);
     player.setVy(0);
     player.setDead(true);
@@ -598,24 +595,24 @@ void GameWorld::resetForDeath() {
 
 void GameWorld::spawnItem(Item::ItemType type, int x, int y) {
     switch (type) {
-        case Item::ItemType::Mushroom:
-            items.push_back(std::make_unique<Mushroom>(x, y));
-            break;
-        case Item::ItemType::Star:
-            items.push_back(std::make_unique<Star>(x, y));
-            break;
-        case Item::ItemType::Flower:
-            items.push_back(std::make_unique<Flower>(x, y));
-            break;
-        case Item::ItemType::Tino:
-            items.push_back(std::make_unique<Tino>(x, y));
-            break;
-        case Item::ItemType::UpMushroom:
-            items.push_back(std::make_unique<UpMushroom>(x, y));
-            break;
-        default:
-            // Handle unknown item type or log an error
-            break;
+    case Item::ItemType::Mushroom:
+        items.push_back(std::make_unique<Mushroom>(x, y));
+        break;
+    case Item::ItemType::Star:
+        items.push_back(std::make_unique<Star>(x, y));
+        break;
+    case Item::ItemType::Flower:
+        items.push_back(std::make_unique<Flower>(x, y));
+        break;
+    case Item::ItemType::Tino:
+        items.push_back(std::make_unique<Tino>(x, y));
+        break;
+    case Item::ItemType::UpMushroom:
+        items.push_back(std::make_unique<UpMushroom>(x, y));
+        break;
+    default:
+        // Handle unknown item type or log an error
+        break;
     }
 }
 
@@ -649,7 +646,7 @@ void GameWorld::applyplayertakedamage()
     case DamageResult::Shrunk:
         if (getPlayer().isBig())
         {
-            playSound("pipe");
+            //playSound("pipe");
             transformStartTime = GetTickCount(); // Set transform start time for all shrink cases
             if (getPlayer().isFlower())
             {
@@ -700,7 +697,7 @@ void GameWorld::checkParticleMonsterCollision() {
                 monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight()))
             {
                 if (particle->getType() == Particle::ParticleType::PlayerFireball) {
-                    playSound("kick");
+                    //playSound("kick");
                     monster->takeDamage(*this, 1);
                     PlayerFireball* fireball = dynamic_cast<PlayerFireball*>(particle.get());
                     if (fireball)
@@ -720,7 +717,7 @@ void GameWorld::checkParticleMonsterCollision() {
                     // 몬스터가 티노파이어에 대해 무적상태가 아닐 때만 피해를 줍니다.
                     if (!monster->isImmuneToTino())
                     {
-                        playSound("kick");
+                        //playSound("kick");
                         spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, 0); // Spawn effect
                         monster->takeDamage(*this, 1);
                         monster->setHitByTino(); // 몬스터를 무적 상태로 만듭니다.
@@ -744,8 +741,8 @@ void GameWorld::checkMonsterMonsterCollision() {
             }
 
             if (isColliding(monster1->getX(), monster1->getY(), monster1->getWidth(), monster1->getHeight(),
-                            monster2->getX(), monster2->getY(), monster2->getWidth(), monster2->getHeight())) {
-                
+                monster2->getX(), monster2->getY(), monster2->getWidth(), monster2->getHeight())) {
+
                 Turtle* turtle1 = dynamic_cast<Turtle*>(monster1);
                 Turtle* turtle2 = dynamic_cast<Turtle*>(monster2);
                 Monster* spinning_shell = nullptr;
@@ -754,13 +751,14 @@ void GameWorld::checkMonsterMonsterCollision() {
                 if (turtle1 && turtle1->getState() == Turtle::TurtleState::SPINNING) {
                     spinning_shell = turtle1;
                     other_monster = monster2;
-                } else if (turtle2 && turtle2->getState() == Turtle::TurtleState::SPINNING) {
+                }
+                else if (turtle2 && turtle2->getState() == Turtle::TurtleState::SPINNING) {
                     spinning_shell = turtle2;
                     other_monster = monster1;
                 }
 
                 if (spinning_shell && other_monster) {
-                    playSound("kick");
+                    //playSound("kick");
                     other_monster->setVy(-15);
                     other_monster->setFalling(true);
                 }
@@ -769,7 +767,7 @@ void GameWorld::checkMonsterMonsterCollision() {
     }
 }
 
-void GameWorld::checkPlayerMonsterCollision() 
+void GameWorld::checkPlayerMonsterCollision()
 {
     for (auto& monster : monsters)
     {
@@ -780,29 +778,29 @@ void GameWorld::checkPlayerMonsterCollision()
         if (!monster->isAlive() || monster->isFalling()) continue; // Skip dead monsters
 
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
-                        monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight() - TILE_SIZE/4)) 
+            monster->getX() - cameraX, monster->getY(), monster->getWidth(), monster->getHeight() - TILE_SIZE / 4))
         {
-            if (player.isStarGodMode()) 
+            if (player.isStarGodMode())
             { // Player is in Star mode
-                playSound("kick");
+                //playSound("kick");
                 monster->setVy(-15); // Make monster fly upwards
                 monster->setFalling(true);
             }
             // 밟았을 때
-            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY()) 
+            else if (player.getVy() > 0 && player.getY() + player.getHeight() - player.getVy() <= monster->getY())
             {
                 monster->takeDamage(*this, 1);
                 player.setVy(-10); // Player bounces up
-                playSound("stomp");
-            } 
-            else 
+                //playSound("stomp");
+            }
+            else
             { // Player collides with monster from side or bottom
                 Turtle* turtle = dynamic_cast<Turtle*>(monster.get());
-                if (turtle && turtle->getState() == Turtle::TurtleState::SHELL) 
+                if (turtle && turtle->getState() == Turtle::TurtleState::SHELL)
                 {
                     // It's a shell, kick it
                     turtle->takeDamage(*this, 1);
-                    playSound("kick");
+                    //playSound("kick");
                 }
                 else {
                     // It's a normal monster, player gets hurt
@@ -834,7 +832,7 @@ void GameWorld::checkPlayerMapCollision() {
         player.setVx(0); // 벽과 충돌 시 수평 속도를 0으로 설정
     }
     // Horizontal collision (right wall)
-    else if (!(player.getY() < 0) && player.getVx() > 0 && 
+    else if (!(player.getY() < 0) && player.getVx() > 0 &&
         (isSolidTile(currentMap[topTile][rightTile]) || isSolidTile(currentMap[middleTile][rightTile]))) {
         player.setX(rightTile * TILE_SIZE - cameraX - playerWidth);
         player.setVx(0); // 벽과 충돌 시 수평 속도를 0으로 설정
@@ -850,7 +848,7 @@ void GameWorld::checkPlayerMapCollision() {
     // Vertical collision (bottom - ground)
     if (!(player.getY() < 0) && player.getVy() > 0 && bottomTile < MAP_HEIGHT && bottomTile >= 0 &&
         (isSolidTile(currentMap[bottomTile][leftTile]) || isSolidTile(currentMap[bottomTile][rightTile]))) {
-        if ((currentMap[bottomTile][leftTile] == 17 || currentMap[bottomTile][rightTile] == 17) || 
+        if ((currentMap[bottomTile][leftTile] == 17 || currentMap[bottomTile][rightTile] == 17) ||
             (currentMap[bottomTile][leftTile] == 18 || currentMap[bottomTile][rightTile] == 18)) {
             player.setDead(true); // Assuming player has a dead() method
         }
@@ -862,44 +860,44 @@ void GameWorld::checkPlayerMapCollision() {
     }
     // Vertical collision (top - hitting block from below)
     else if (!(player.getY() < 0) && player.getVy() < 0 && topTile >= 0 && topTile < MAP_HEIGHT &&
-             (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[topTile][rightTile]))) {
-        
+        (isSolidTile(currentMap[topTile][leftTile]) || isSolidTile(currentMap[topTile][rightTile]))) {
+
         int hitBlockX = static_cast<int>((playerX + playerWidth / 2 + cameraX) / TILE_SIZE);
         int hitBlockY = topTile;
 
         if (currentMap[hitBlockY][hitBlockX] == 6) { // mushroom Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::Mushroom, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         // Add other item block types (60-65) here as needed
         else if (currentMap[hitBlockY][hitBlockX] == 65) { // Star Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::Star, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 60) { // Star Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::Star, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 61) { // Flower Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::Flower, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 62) { // Tino Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::Tino, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 63) { // Up Mushroom Box
-            playSound("powerup_appears");
+            //playSound("powerup_appears");
             spawnItem(Item::ItemType::UpMushroom, hitBlockX * TILE_SIZE, hitBlockY * TILE_SIZE);
             currentMap[hitBlockY][hitBlockX] = 16;
         }
         else if (currentMap[hitBlockY][hitBlockX] == 64) { // Coin Box
-            playSound("coin");
+            //playSound("coin");
             currentMap[hitBlockY][hitBlockX] = 16;
             player.addCoin(1);
         }
@@ -922,7 +920,7 @@ void GameWorld::checkPlayerMapCollision() {
     }
 }
 
-void GameWorld::checkPlayerItemCollision() 
+void GameWorld::checkPlayerItemCollision()
 {
     if (player.isDead()) return; // 플레이어가 죽었을경우
 
@@ -934,37 +932,37 @@ void GameWorld::checkPlayerItemCollision()
             continue;
         }
         if (isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(),
-                        item->getX() - cameraX, item->getY(), item->getWidth(), item->getHeight())) 
+            item->getX() - cameraX, item->getY(), item->getWidth(), item->getHeight()))
         {
             // Collision detected
-            switch (item->getType()) 
+            switch (item->getType())
             {
-                case Item::ItemType::Mushroom:
-                    playSound("powerup");
-                    transformStartTime = GetTickCount();
-                    if (!getPlayer().isBig()) setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
-                    break;
-                case Item::ItemType::Star:
-                    playSound("powerup");
-                    player.gainStar(*this); // Assuming player has a gainStar method
-                    break;
-                case Item::ItemType::Flower:
-                    playSound("powerup");
-                    transformStartTime = GetTickCount();
-                    setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
-                    break;
-                case Item::ItemType::Tino:
-                    transformStartTime = GetTickCount();
-                    setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
-                    break;
-                case Item::ItemType::UpMushroom:
-                    playSound("1-up");
-                    player.addLife(1); // Assuming player has an addLife method
-                    break;
+            case Item::ItemType::Mushroom:
+                //playSound("powerup");
+                transformStartTime = GetTickCount();
+                if (!getPlayer().isBig()) setGameState_trans(GameState_Trans::GAME_BIG_TRANS);
+                break;
+            case Item::ItemType::Star:
+                //playSound("powerup");
+                player.gainStar(*this); // Assuming player has a gainStar method
+                break;
+            case Item::ItemType::Flower:
+                //playSound("powerup");
+                transformStartTime = GetTickCount();
+                setGameState_trans(GameState_Trans::GAME_FLOWER_TRANS);
+                break;
+            case Item::ItemType::Tino:
+                transformStartTime = GetTickCount();
+                setGameState_trans(GameState_Trans::GAME_TINO_TRANS);
+                break;
+            case Item::ItemType::UpMushroom:
+                //playSound("1-up");
+                player.addLife(1); // Assuming player has an addLife method
+                break;
             }
             it = items.erase(it); // Remove item after collision
-        } 
-        else 
+        }
+        else
         {
             ++it;
         }
@@ -988,7 +986,7 @@ void GameWorld::checkFlagCollision() {
             {
                 OutputDebugString(_T("GameWorld::checkFlagCollision() - Flag collision detected! Setting GameState to GAME_VICTORY\n"));
                 stopAllSounds();
-                playSound("stage_clear");
+                //playSound("stage_clear");
                 gameState = GameState::GAME_VICTORY;
                 victoryStart = GetTickCount();
             }
@@ -1008,7 +1006,7 @@ void GameWorld::checkClearCollision() {
             if (j == 139 && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 40, 40))
             {
                 stopAllSounds();
-                playSound("world_clear");
+                //playSound("world_clear");
                 gameState = GameState::GAME_CLEAR;
                 clearStart = GetTickCount();
             }
@@ -1053,7 +1051,8 @@ void GameWorld::checkItemMapCollision() {
                 item->setX((leftTile + 1) * TILE_SIZE);
                 item->setVx(-item->getVx());
             }
-        } else if (item->getVx() > 0) { // Moving right
+        }
+        else if (item->getVx() > 0) { // Moving right
             if (rightTile < MAP_WIDTH && rightTile >= 0 && isSolidTile(currentMap[middleTile][rightTile])) {
                 item->setX(rightTile * TILE_SIZE - item->getWidth());
                 item->setVx(-item->getVx());
@@ -1066,7 +1065,8 @@ void GameWorld::checkItemMapCollision() {
             item->setY(bottomTile * TILE_SIZE - item->getHeight());
             if (item->getType() == Item::ItemType::Star) {
                 item->setVy(-10);
-            } else {
+            }
+            else {
                 item->setVy(0);
             }
         }
@@ -1083,7 +1083,7 @@ void GameWorld::checkPlayerCoinCollision()
             int screenY = i * TILE_SIZE;
             if (currentMap[i][j] == 2 && isColliding(player.getX(), player.getY(), player.getWidth(), player.getHeight(), screenX, screenY, 30, 30))
             {
-                playSound("coin");
+                //playSound("coin");
                 currentMap[i][j] = 0;
                 player.addCoin(1);
             }
@@ -1096,14 +1096,14 @@ void GameWorld::checkPlayerCoinCollision()
 
 void GameWorld::setStageBGM()
 {
-    if (stage == 1 || stage == 2)
+    /*if (stage == 1 || stage == 2)
     {
         playSound("GroundTheme", true);
     }
     else if (stage == 3)
     {
         playSound("CastleTheme", true);
-    }
+    }*/
 }
 
 void GameWorld::initMaps() {
@@ -1414,7 +1414,7 @@ void GameWorld::initMap2() {
     }
     // 8. 깃발 꼭짓점
     map2[2][115] = 8;
-    
+
     // 9. 성
     map2[12][121] = 9;
 }
@@ -1422,60 +1422,4 @@ void GameWorld::initMap2() {
 void GameWorld::initMap3()
 {
     // ... (existing code) ...
-}
-
-
-
-
-void GameWorld::ProcessPackets()
-{
-    // NetworkManager에 쌓인 데이터를 가져와 버퍼에 넣기
-    std::string tempStr;
-
-    // 큐에 있는 모든 데이터를 긁어옵니다.
-    while (networkManager.TryGetReceivedData(tempStr))
-    {
-        // 문자열(string)을 바이트 배열(vector<char>) 뒤에 붙입니다.
-        m_recvBuffer.insert(m_recvBuffer.end(), tempStr.begin(), tempStr.end());
-    }
-
-    // 버퍼에 있는 데이터를 PacketManager에게 줘서 패킷으로 조립(Parsing)
-    PacketManager::GetInstance()->ProcessReceivedData(m_recvBuffer);
-
-    PacketData pkt;
-    // 패킷 매니저 큐에 쌓인 모든 패킷을 꺼내서 처리
-    while (PacketManager::GetInstance()->TryGetPacket(pkt))
-    {
-        switch (pkt.type)
-        {
-        case PKT_MOVE:
-        {
-            if (pkt.data.size() < sizeof(Packet_MOVE_S2C)) break;
-
-            Packet_MOVE_S2C* pMove = (Packet_MOVE_S2C*)pkt.data.data();
-
-            // 내 캐릭터(NetworkManager가 관리하는 소켓 등)와 
-            // ID가 같다면 무시하는 로직이 필요할 수 있으나, 
-            // 현재는 그냥 다 그립니다. (서버가 나한테도 보내주므로)
-
-            // 맵에 해당 ID가 없으면 새로 생성, 있으면 위치 업데이트
-            Player& remoteP = m_remotePlayers[pMove->playerID];
-
-            // 위치 동기화
-            remoteP.setX(pMove->x);
-            remoteP.setY(pMove->y);
-            remoteP.setVx(pMove->vx);
-            remoteP.setVy(pMove->vy);
-            remoteP.setState((PlayerState)pMove->state);
-
-            // [중요] 원격 플레이어는 걷는 애니메이션을 위해 강제로 걷는 상태로 둠 (vx가 있을 때)
-            if (pMove->vx != 0) remoteP.setWalking(true);
-            else remoteP.setWalking(false);
-
-            remoteP.updateAnimation(); // 애니메이션 갱신
-            break;
-        }
-        // 공격, 피격 등 다른 패킷 처리도 여기에 추가
-        }
-    }
 }
