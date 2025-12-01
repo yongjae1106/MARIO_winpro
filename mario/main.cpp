@@ -1,9 +1,12 @@
-#include <windows.h>
+#define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
+
 #include "GameWorld.h"
 #include "GameRender.h"
 #include "Resource_WINAPI/resource1.h"
 
-
+// Global variables
+GameWorld gameWorld;
+GameRender gameRender;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -23,7 +26,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     GameWorld::getInstance().updateAnimations();
                     break;
                 case 3:
-                    // 서버에서 처리할 updatecooldown
                     break;
             }
             break;
