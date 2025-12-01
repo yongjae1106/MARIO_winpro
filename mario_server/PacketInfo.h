@@ -1,45 +1,32 @@
 #pragma once
+#include <vector>
 
-enum PacketType : char
+enum PacketType : unsigned int
 {
     PKT_MOVE = 1,
     PKT_ATTACK = 2,
-    PKT_HIT = 3,
-    PKT_BLOCK_ATTACK = 4
+
+    PKT_PLAYER_STATE = 100,
+    PKT_MONSTER_STATE,
+    PKT_HIT,
+    PKT_BLOCK_ATTACK,
+    PKT_PLAYER_JOIN,
+    PKT_PLAYER_LEAVE
 };
 
-// 클라 → 서버
-struct PacketInfo_ClientToServer
+struct PacketHeader
 {
-    int playerID;
-    char type;
-
-    // MOVE
-    int x, y;
-    int vx, vy;
-    char state;
-
-    // ATTACK
-    int targetID;
-    int damage;
+    unsigned int totalLength;
+    unsigned int type;
 };
 
-// 서버 → 클라
-struct PacketInfo_ServerToClient
-{
-    int playerID;
-    char type;
+// -------- 데이터 구조 --------
 
-    // MOVE (다른 플레이어 정보 등)
-    int x, y;
-    int vx, vy;
-    char state;
+// C2S
+struct Packet_MOVE_C2S { unsigned int playerID, x, y, vx, vy, state; };
+struct Packet_ATTACK_C2S { unsigned int playerID, targetID, damage; };
 
-    // HIT
-    int damage;
-
-    // BLOCK_ATTACK
-    int blockID;
-    int block_x;
-    int block_y;
-};
+// S2C
+struct Packet_MOVE_S2C { unsigned int playerID, x, y, vx, vy, state; };
+struct Packet_HIT_S2C { unsigned int damage; };
+struct Packet_BLOCK_S2C { unsigned int blockID, block_x, block_y; };

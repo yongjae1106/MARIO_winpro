@@ -4,6 +4,21 @@
 
 class GameWorld;
 
+// Data structure to hold monster state received from the server
+struct MonsterDataPacket {
+    int monsterID;
+    int type; // Should correspond to Monster::MonsterType enum
+    int x, y;
+    bool isAlive;
+    int walk_motion;
+    int direction; // 0 for left, 1 for right
+
+    // Specific states for derived classes (client-side relevant only)
+    int turtleState; // Corresponds to Turtle::TurtleState enum (for Turtles)
+    bool isFiring;   // For Bowser
+    // Add any other specific state that needs to be communicated
+};
+
 class Monster {
 public:
     enum class MonsterType { NormalGoomba, RedGoomba, BlueGoomba, GreenTurtle, BrownTurtle, AngelTurtle, Bowser };
@@ -11,46 +26,27 @@ public:
     Monster(MonsterType type, int x, int y, int width, int height);
     virtual ~Monster() = default;
 
-    virtual void checkMonsterMapCollision(GameWorld& world);
+    // --- Client-side methods ---
+    virtual void update();
+    virtual void updateAnimation();
+    virtual void updateStateFromServer(const MonsterDataPacket& packet); // Now virtual
+    // --------------------------
 
-    virtual void monster_logic(GameWorld& world) = 0;
-
-    // Common getters and setters
-
+    // --- Common getters ---
     MonsterType getType() const;
     int getX() const;
-    void setX(int x);
     int getY() const;
-    void setY(int y);
     int getWidth() const;
     int getHeight() const;
-    int getVx() const;
-    void setVx(int vx);
-    int getVy() const;
-    void setVy(int vy);
     bool isAlive() const;
-    void setAlive(bool isAlive);
-    bool isDead() const;
-    bool isFalling() const;
-    void setFalling(bool isFalling);
-    void checkFallDeath();
-    void gravity();
-    void update(GameWorld& world);
-    virtual void takeDamage(GameWorld& world, int damage);
-
-    // TinoFireball immunity
-    bool isImmuneToTino() const;
-    void setHitByTino();
+    int getWalkMotion() const;
+    int getDirection() const;
 
 protected:
     MonsterType type;
     int x, y;
-    int vx, vy;
     int width, height;
     bool alive;
-    bool falling;
-
-    // TinoFireball immunity
-    DWORD lastHitByTinoTime;
-    static const DWORD tinoHitCooldown = 500; // 0.5초 무적
+    int walk_motion;
+    int direction; // 0 for left, 1 for right
 };

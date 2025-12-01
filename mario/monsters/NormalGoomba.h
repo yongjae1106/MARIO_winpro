@@ -6,5 +6,5 @@ class NormalGoomba : public Goomba {
 public:
     NormalGoomba(int x, int y);
 
-    void monster_logic(GameWorld& world) override;
+    // Client-side NormalGoomba has no specific logic, it inherits from Goomba.
 };

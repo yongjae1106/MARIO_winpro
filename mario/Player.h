@@ -1,5 +1,8 @@
 #pragma once
 #include <windows.h>
+#include "PacketManager.h"
+#include "PacketInfo.h"
+
 
 enum class PlayerState {
     Small,
@@ -14,16 +17,47 @@ enum class DamageResult {
     Died
 };
 
-class GameWorld; // Forward declaration
+// Forward declaration for GameWorld is still needed if Player has GameWorld members or methods that take GameWorld as argument
+// However, since Player will only receive state from server, direct GameWorld dependency might be reduced.
+// For now, keep it as a forward declaration.
+class GameWorld; 
+
+// Placeholder for data received from server
+struct PlayerDataPacket {
+    int playerID; // The unique ID of the player
+    int x, y;
+    int vx, vy;
+    int life;
+    int coin;
+    int width, height;
+    int direction;
+    int walk_motion;
+    bool m_isJumping;
+    bool m_isFlying;
+    bool m_isWalking;
+    bool m_dead;
+    bool m_gameOver;
+    bool fire_motion;
+    bool tino_fire_motion;
+    bool tino_attack_motion;
+    PlayerState currentState;
+    bool _isStarGodModeActive;
+    bool _isSuperGodModeActive;
+    int tino_cooldown_space; // If displayed on UI
+    int fire_motion_timer; // For client-side animation
+    int tino_attack_motion_timer; // For client-side animation
+    // Add other relevant state variables from server
+};
 
 class Player {
 public:
     Player();
 
-    void update(GameWorld& world);
-    void reset();
-    void updateCooldown();
+    // New method to update player state from server data
+    void updateStateFromServer(const PlayerDataPacket& packet);
 
+    void update();
+    void updateAnimation();
     void setStop();
 
     int getX() const;
@@ -40,27 +74,12 @@ public:
 
     int getCoin() const;
     void setCoin(int coin);
-    void addCoin(int count);
-
-    void grow();
-    void shrink();
-    void gainStar(GameWorld& world);
-    void gainFlower();
-    void gainTino();
-    void addLife(int count);
-    void tinoAttack(GameWorld& world);
-    DamageResult calculateDamageResult(int damage) const;
+    // addCoin is game logic, will be removed from Player.cpp
 
     bool isBig() const;
     bool isFlower() const;
     bool isTino() const;
-    void setStarGodMode(bool godMode);
-    void updateAnimation();
-    bool isStarGodMode() const;
-
-    void setSuperGodMode(bool godMode);
-    bool isSuperGodMode() const;
-
+    
     PlayerState getState() const;
     void setState(PlayerState state);
 
@@ -78,7 +97,7 @@ public:
     bool isWalking() const;
     void setWalking(bool walking);
 
-    bool isFiring() const;
+    bool isFiring() const; // For rendering fire animation
 
     int getWalkMotion() const;
     int getDirection() const;
@@ -86,15 +105,17 @@ public:
     void setWidth(int width);
     int getHeight() const;
     void setHeight(int height);
-    int getTinoCooldownTinoFireball() const;
-    int getTinoCooldownSpace() const;
-    int getFireMotionTimer() const; // New getter
-    int getTinoAttackMotionTimer() const; // New getter
-    bool isTinoFireMotion() const; // New getter
-    bool isTinoAttackMotion() const; // New getter
+    int getTinoCooldownSpace() const; // For UI display
+    int getFireMotionTimer() const; // For rendering fire animation
+    int getTinoAttackMotionTimer() const; // For rendering Tino attack animation
+    bool isTinoFireMotion() const; // For rendering Tino fire animation
+    bool isTinoAttackMotion() const; // For rendering Tino attack animation
+
+    // Client-side flags for visual effects, set by server data
+    bool isStarGodMode() const { return _isStarGodModeActive; }
+    bool isSuperGodMode() const { return _isSuperGodModeActive; }
 
 private:
-    void move(GameWorld& world);
     int x, y;
     int vx, vy;
     int life;
@@ -102,32 +123,23 @@ private:
     int width, height;
     int direction;      // 0: left, 1: right
     int walk_motion;
-    int motion_timer;
-    int m_walk_motion_timer;
-    int tino_cooldown_space;
-    int m_fire_motion_timer;
-    int m_tino_fire_motion_timer;
-
+    
     bool m_isJumping;
     bool m_isFlying;
     bool m_isWalking;
     bool m_dead;
     bool m_gameOver;
-    bool fire_motion;
-    bool tino_motion;
-    bool tino_fire_motion;
-    bool tino_attack_motion; // New member variable for Tino attack motion
-    int m_fire_cooldown;
-    int m_tinofire_cooldown;
-    DWORD m_god_timer;
-    int m_tino_attack_motion_timer; // New member variable for Tino attack motion timer
+    bool fire_motion; // For rendering fire animation
+    bool tino_fire_motion; // For rendering Tino fire animation
+    bool tino_attack_motion; // For rendering Tino attack animation
 
-    bool _isStarGodModeActive;
-    DWORD _starGodModeEndTime;
+    // Client-side timers for visual effects, updated by server data
+    int m_fire_motion_timer;
+    int m_tino_attack_motion_timer;
+    int tino_cooldown_space; // For UI display
 
-    bool _isSuperGodModeActive;
-    DWORD _superGodModeEndTime;
+    bool _isStarGodModeActive; // Set by server data
+    bool _isSuperGodModeActive; // Set by server data
 
     PlayerState currentState;
-
 };

@@ -1,6 +1,16 @@
 #include "ThreadManager.h"
 #include "NetworkManager.h" // NetworkManager 클래스 사용을 위해 포함
 #include "Common.h"
+#include "GameWorld.h"
+#include "Player.h"
+
+
+// 생성자
+ThreadManager::ThreadManager(NetworkManager* netMgr, GameWorld* world)
+    : m_network_manager(netMgr), m_gameWorld(world)
+{
+    printf("ThreadManager 객체 생성 완료.\n");
+}
 
 //--------------------------------------------------------------------------------------------------
 // 1. ThreadManager::GameLoop() (Main Thread)
@@ -20,6 +30,8 @@ void ThreadManager::GameLoop()
     {
         // 1. ProcessInputQueue() (패킷 처리)
         // [해야 할 것: 패킷 큐 접근 시 m_mtx lock/unlock 필요]
+        // 큐에 있는 모든 클라이언트 입력 패킷을 처리합니다.
+        ProcessInputQueue();
 
         // 2. CalculateGamePhysics() (로직 계산)
 
@@ -113,13 +125,27 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
     char buf[512];
     int retval;
 
+    // 수신 버퍼 참조 (이 스레드 전용 자원이므로 while 루프 외부에서 lock 없이 사용)
+    std::vector<char>& client_buffer = m_clients[playerID].recv_buffer;
+
     while (true)
     {
         // 1. recv()를 통해 패킷 수신 시도 (블로킹 모드)
         retval = recv(clientSock, buf, sizeof(buf), 0);
 
         if (retval == SOCKET_ERROR) {
-            err_display("recv 실패");
+            // 에러 코드 수정
+            int err_code = WSAGetLastError();
+
+            // WSAEWOULDBLOCK은 "아직 데이터가 도착하지 않음"이므로 에러가 아님 -> 무시하고 계속
+            if (err_code == WSAEWOULDBLOCK) {
+                // CPU 폭주 방지를 위해 살짝 대기 (필요 시 Sleep(0) 또는 Sleep(1))
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            // 진짜 에러인 경우에만 종료
+            err_display(err_code);
             break;
         }
         if (retval == 0) {
@@ -129,12 +155,49 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
         }
 
         // 2. 패킷 수신 처리
-        // [해야 할 것]
+        // 수신된 데이터를 클라이언트의 수신 버퍼에 추가
+        if (retval > 0)
+        {
+            client_buffer.insert(client_buffer.end(), buf, buf + retval);
+        }
 
         // 3. 패킷 큐에 삽입
         // [해야 할 것: 패킷 큐 삽입 시 m_mtx lock/unlock 필요]
+        // 버퍼에서 완전한 패킷 추출 및 큐에 삽입 (패킷 조립)
+        while (client_buffer.size() >= sizeof(PacketHeader))
+        {
+            // 패킷 헤더 정보 확인 (바이트 오더링 문제 주의 필요)
+            const PacketHeader* header = (const PacketHeader*)client_buffer.data();
+            unsigned int packet_length = header->totalLength;
+            unsigned int packet_type = header->type;
 
-        printf("[Client Thread %d] %d 바이트 데이터 수신 완료.\n", playerID, retval);
+            // 불완전한 패킷: 다음 recv를 기다림
+            if (client_buffer.size() < packet_length)
+                break;
+
+            // 완전한 패킷 발견 -> QueuedPacket 생성 및 Payload 추출
+            QueuedPacket q_pkt;
+            q_pkt.socketID = playerID;
+            q_pkt.type = packet_type;
+
+            // 헤더(PacketHeader)를 제외한 순수 Payload만 복사
+            q_pkt.data.assign(
+                client_buffer.begin() + sizeof(PacketHeader),
+                client_buffer.begin() + packet_length
+            );
+
+            // 큐에 삽입 (메인 스레드와 공유하는 자원이므로 lock)
+            {
+                std::lock_guard<std::mutex> lock(m_mtx);
+                m_input_queue.push(std::move(q_pkt));
+            }
+
+            //printf("[Client Thread %d] Packet Type %u, Size %u 수신 및 큐 삽입 완료.\\n",playerID, packet_type, packet_length);
+			// 이놈이 서버 콘솔창에 너무 많이 찍혀서 주석 처리함.
+
+            // 버퍼에서 처리된 패킷 제거
+            client_buffer.erase(client_buffer.begin(), client_buffer.begin() + packet_length);
+        }
     }
 
     // **4. 스레드 종료 전 정리 작업**
@@ -163,16 +226,63 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::BroadcastState()
 {
-    std::lock_guard<std::mutex> lock(m_mtx); // 공유 자원(m_clients) 접근 보호
+    std::lock_guard<std::mutex> lock(m_mtx);
 
-    // [해야 할 것: 브로드캐스트할 상태 데이터 생성 로직]
-    char broadcast_data[1024] = "SERVER_STATE_UPDATE";
-    int data_len = (int)strlen(broadcast_data) + 1;
+    // 1. 현재 접속한 모든 플레이어들의 정보를 가져옵니다.
+    const auto& players = m_gameWorld->GetPeerPlayers();
 
-    // 모든 활성 클라이언트에게 데이터 전송
-    for (int i = 0; i < MAX_PLAYERS; ++i) {
-        if (m_clients[i].is_active) {
-            send(m_clients[i].clientSock, broadcast_data, data_len, 0);
+    // 2. 각 플레이어의 정보를 패킷으로 만들어 모든 클라이언트에게 전송합니다.
+    for (const auto& pair : players) {
+        int pID = pair.first;          // 플레이어 ID (Socket ID)
+        const Player& p = pair.second; // 플레이어 객체
+
+        // 패킷 생성 (Server -> Client)
+        Packet_MOVE_S2C pkt;
+        pkt.playerID = pID;
+        pkt.x = p.getX();
+        pkt.y = p.getY();
+        pkt.vx = p.getVx();
+        pkt.vy = p.getVy();
+        pkt.state = (unsigned int)p.getState();
+
+        // 직렬화
+        char sendBuffer[1024];
+        unsigned int len = m_packet_manager.Serialize_MOVE(sendBuffer, pkt);
+
+        // 3. 모든 활성 클라이언트에게 전송 (Broadcasting)
+        for (int i = 0; i < MAX_PLAYERS; ++i) {
+            if (m_clients[i].is_active) {
+                // send() 함수는 에러 체크를 하는 것이 좋지만, 
+                // Broadcast 특성상 실패해도 다음 틱에 다시 보내므로 일단 단순 호출
+                //send(m_clients[i].clientSock, sendBuffer, len, 0);
+				//-> pid와 i가 같아도 보내니까 잔상(작은 마리오가 위에 그려지는 현상)이 생김
+                if (i != pID) { // 수정: 패킷의 주인(pID)과 받는 사람(i)이 같으면 보내지 않음
+                    send(m_clients[i].clientSock, sendBuffer, len, 0);
+                }
+            }
         }
+    }
+}
+
+
+// [새로 추가된 함수] ThreadManager::ProcessInputQueue()
+void ThreadManager::ProcessInputQueue()
+{
+    std::lock_guard<std::mutex> lock(m_mtx);
+
+    while (!m_input_queue.empty())
+    {
+        QueuedPacket pkt = m_input_queue.front();
+        m_input_queue.pop();
+
+        // 수정: HandlePacket 호출 시 m_gameWorld 전달
+        // Main Thread에서 실행되므로 GameWorld 접근 안전함
+        m_packet_manager.HandlePacket(
+            pkt.type,
+            pkt.data.data(),
+            (unsigned int)pkt.data.size(),
+            pkt.socketID,
+            m_gameWorld // <--- 추가됨
+        );
     }
 }

@@ -1,45 +1,65 @@
 #pragma once
+#include <vector>
 
-enum PacketType : char
+enum PacketType : unsigned int
 {
+    // C2S (Client to Server)
     PKT_MOVE = 1,
     PKT_ATTACK = 2,
-    PKT_HIT = 3,
-    PKT_BLOCK_ATTACK = 4
+
+    // S2C (Server to Client)
+    PKT_PLAYER_STATE = 100, // ê°œë³„ í”Œë ˆì´ì–´ì˜ ì „ì²´ ìƒíƒœ ì •ë³´
+    PKT_MONSTER_STATE = 101, // ëª¬ìŠ¤í„°ì˜ ìƒíƒœ ì •ë³´
+    PKT_HIT = 102,
+    PKT_BLOCK_ATTACK = 103,
+    PKT_PLAYER_JOIN = 104, // ìƒˆë¡œìš´ í”Œë ˆì´ì–´ ì ‘ì†
+    PKT_PLAYER_LEAVE = 105, // í”Œë ˆì´ì–´ ì ‘ì† ì¢…ë£Œ
 };
 
-// Å¬¶ó ¡æ ¼­¹ö
-struct PacketInfo_ClientToServer
+struct PacketHeader
 {
-    int playerID;
-    char type;
-
-    // MOVE
-    int x, y;
-    int vx, vy;
-    char state;
-
-    // ATTACK
-    int targetID;
-    int damage;
+    unsigned int totalLength;
+    unsigned int type;         // PacketType
 };
 
-// ¼­¹ö ¡æ Å¬¶ó
-struct PacketInfo_ServerToClient
+
+struct Packet_MOVE_C2S
 {
-    int playerID;
-    char type;
+    unsigned int x, y;
+    unsigned int vx, vy;
+    unsigned int state;
+};
 
-    // MOVE (´Ù¸¥ ÇÃ·¹ÀÌ¾î Á¤º¸ µî)
-    int x, y;
-    int vx, vy;
-    char state;
 
-    // HIT
-    int damage;
+struct Packet_ATTACK_C2S
+{
+    unsigned int targetID;
+    unsigned int damage;
+};
 
-    // BLOCK_ATTACK
-    int blockID;
-    int block_x;
-    int block_y;
+
+struct Packet_MOVE_S2C
+{
+    unsigned int playerID;
+    unsigned int x, y;
+    unsigned int vx, vy;
+    unsigned int state;
+};
+
+// -------------------------------
+// HIT ï¿½ï¿½Å¶ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å¬ï¿½ï¿½)
+// -------------------------------
+struct Packet_HIT_S2C
+{
+    unsigned int damage;
+};
+
+// -------------------------------
+// BLOCK_ATTACK ï¿½ï¿½Å¶ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å¬ï¿½ï¿½)
+// -------------------------------
+struct Packet_BLOCK_S2C
+{
+    unsigned int blockID;
+    unsigned int block_x;
+    unsigned int block_y;
 };

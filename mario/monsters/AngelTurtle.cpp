@@ -1,42 +1,15 @@
 #include "AngelTurtle.h"
 #include "../GameWorld.h"
-#include "GreenTurtle.h"
+// #include "GreenTurtle.h" // Might not be needed if GreenTurtle isn't directly used here.
 
 AngelTurtle::AngelTurtle(int x, int y)
-    : Turtle(MonsterType::AngelTurtle, x, y, 40, 50), m_topY(y - 30), m_bottomY(y + 30), m_goingUp(false) {
-    setVy(1);
+    : Turtle(MonsterType::AngelTurtle, x, y, 40, 50) {
+    // Constructor for client-side AngelTurtle.
+    // Its state, including movement pattern, is driven by the server via updateStateFromServer.
 }
 
-void AngelTurtle::monster_logic(GameWorld& world)
-{
-    if (!isAlive() || isFalling()) return;
-
-    if (m_state == TurtleState::ANGEL) 
-    {
-        if (m_goingUp)
-            setY(getY() - getVy());
-        else
-            setY(getY() + getVy());
-
-        if (getY() <= m_topY)
-            m_goingUp = false;
-        else if (getY() >= m_bottomY)
-            m_goingUp = true;
-    } 
-    else 
-    {
-        // After being stomped, it behaves like a normal turtle shell
-        Turtle::update(world);
-    }
-}
-
-void AngelTurtle::takeDamage(GameWorld& world, int damage) {
-    if (m_state == TurtleState::NORMAL) {
-        // Transform into a GreenTurtle
-        // This is a simplified approach. A better approach would be to have GameWorld handle the transformation.
-        setAlive(false);
-        world.spawnMonster(std::make_unique<GreenTurtle>(getX(), getY()));
-    } else {
-        Turtle::takeDamage(world, damage);
-    }
-}
+// Client-side AngelTurtle inherits updateStateFromServer from the base Turtle class.
+// If AngelTurtle has specific client-side state not covered by Turtle's updateStateFromServer,
+// this function should be overridden here. For now, it doesn't seem to have unique client-side
+// fields that need direct packet parsing beyond what MonsterDataPacket already provides or
+// what Turtle handles.

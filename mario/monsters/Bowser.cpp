@@ -1,80 +1,23 @@
 #include "Bowser.h"
-#include "Monster.h"
-#include "../GameWorld.h"
-#include <Gdiplus.h>
+#include "../GameWorld.h" // For GameWorld::getInstance() if needed, but not directly for Bowser logic
+#include <Gdiplus.h> // For rendering, if Bowser has unique rendering
+
 using namespace Gdiplus;
 
 Bowser::Bowser(int x, int y)
-    : Monster(MonsterType::Bowser, x, y, 120, 120), hp(100), m_isJumping(false), m_isFiring(false), fireTimer(0), jumpTimer(0), jumpInterval(0), fireInterval(0), fireDuration(0), startX(x), moveDistance(0), maxDistance(40 * 10) {
-    // Initialize Bowser-specific properties
-    setVy(0);
-    direction = 1; // Assuming 1 for right, -1 for left
+    : Monster(MonsterType::Bowser, x, y, 120, 120), m_isFiring(false) {
+    // Constructor for client-side Bowser.
+    // Initial state, including 'isFiring', is set by the server via updateStateFromServer.
 }
 
-void Bowser::monster_logic(GameWorld& world) {
-    if (!isAlive()) return;
+void Bowser::updateStateFromServer(const MonsterDataPacket& packet) {
+    // Call base class implementation first to update common fields
+    Monster::updateStateFromServer(packet);
 
-    // === Movement ===
-    int moveSpeed = 2;
-    x = getX() + moveSpeed * direction;
-    moveDistance += moveSpeed;
-
-    if (moveDistance >= maxDistance)
-    {
-        // Change direction
-        direction *= -1;
-        moveDistance = 0;
-    }
-
-    // === Jumping ===
-    if (!m_isJumping) {
-        jumpTimer++;
-        if (jumpTimer > jumpInterval) {
-            setVy(-18);
-            m_isJumping = true;
-            jumpTimer = 0;
-            jumpInterval = 60 + rand() % 121;
-        }
-    }
-
-    // === Firing ===
-    fireTimer++;
-    if (fireTimer > fireInterval) 
-    {
-        int dir = (world.getPlayer().getX() < getX()) ? -1 : 1;
-        //world.spawnFireball(getX() + getWidth() / 2, getY() + getHeight() / 2, 6 * dir);
-
-        fireTimer = 0;
-        fireInterval = 120 + rand() % 120;
-    }
-
-    // Firing duration
-    if (m_isFiring)
-    {
-        fireDuration--;
-        if (fireDuration <= 0)
-            m_isFiring = false;
-    }
-
-    if (hp <= 0)
-    {
-        // PlaySoundBuffer(bowserfalls_Sound);
-        setFalling(true);
-    }
-    // Off screen
-    if (getY() > 640)
-    {
-        // PlaySoundBuffer(bowserdead_Sound);
-        setAlive(false);
-        // Remove koopa blocks
-    }
+    // Update Bowser-specific state
+    m_isFiring = packet.isFiring;
+    // No other client-side specific state for Bowser currently.
 }
 
-void Bowser::takeDamage(GameWorld& world, int damage) {
-    if (ignore_tinofire) return; // Bowser is temporarily immune to Tino's fire
-
-    hp -= damage;
-    if (hp <= 0) {
-        setAlive(false);
-    }
-}
+// Monster base class handles getters for x, y, width, height, alive, walk_motion, direction
+// The m_isFiring getter is in Bowser.h

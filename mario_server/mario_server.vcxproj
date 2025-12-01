@@ -133,6 +133,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="PacketInfo.h" />
+    <ClInclude Include="PacketManager.h" />
     <ClInclude Include="ThreadManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
