@@ -1,6 +1,5 @@
 #include "Bowser.h"
 #include "../GameWorld.h" // For GameWorld::getInstance() if needed, but not directly for Bowser logic
-#include <Gdiplus.h> // For rendering, if Bowser has unique rendering
 
 using namespace Gdiplus;
 

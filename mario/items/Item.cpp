@@ -1,6 +1,5 @@
 #include "Item.h"
 #include "../GameWorld.h"
-#include <Gdiplus.h>
 
 using namespace Gdiplus;
 

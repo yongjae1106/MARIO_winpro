@@ -1,7 +1,5 @@
 #pragma once
 
-#include <windows.h>
-
 class GameWorld;
 
 // Data structure to hold monster state received from the server
@@ -15,7 +13,7 @@ struct MonsterDataPacket {
 
     // Specific states for derived classes (client-side relevant only)
     int turtleState; // Corresponds to Turtle::TurtleState enum (for Turtles)
-    bool isFiring;   // For Bowser
+    bool isFirin¤Ðg;   // For Bowser
     // Add any other specific state that needs to be communicated
 };
 

@@ -32,7 +32,6 @@ GameWorld::GameWorld() {
     m_life = 5;
     m_coin = 0;
     m_currentBGM = BGM_Type::NONE;
-    memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0; // Initialize new counter
     currentMap = map1;
 
@@ -91,19 +90,21 @@ void GameWorld::update()
     }
 }
 
-void GameWorld::handleKeyDown(WPARAM wParam)
+void GameWorld::handleKeyDown(int playerID, WPARAM wParam)
 {
-    if (wParam < 256)
+    Player* player = getPlayer(playerID);
+    if (player && wParam < 256)
     {
-        keyState[wParam] = true;
+        player->setKeyState(wParam, true);
     }
 }
 
-void GameWorld::handleKeyUp(WPARAM wParam)
+void GameWorld::handleKeyUp(int playerID, WPARAM wParam)
 {
-    if (wParam < 256) 
+    Player* player = getPlayer(playerID);
+    if (player && wParam < 256)
     {
-        keyState[wParam] = false;
+        player->setKeyState(wParam, false);
     }
 }
 
@@ -206,11 +207,7 @@ const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const {
 }
 
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getNewParticles() const {
-    return newParticles;
-}
-
-const bool* GameWorld::getKeyState() const {
-    return keyState;
+    return particles;
 }
 
 GameState GameWorld::getGameState() const {

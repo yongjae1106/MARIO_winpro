@@ -1,19 +1,14 @@
 #pragma once
 
+#include "NetworkManager/NetworkManager.h"
 #include "Player.h"
 #include "monsters/Monster.h"
 #include "items/Item.h"
 #include "Particles/Particle.h"
-#include "GameRender.h"
 #include "Sound.h"
 #include <vector>
 #include <memory>
-#include <map> // For std::map
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include "NetworkManager/NetworkManager.h" // Add this include
-#include "NetworkManager/PacketManager.h"   // Add this include
+#include "GameRender.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 640
@@ -133,8 +128,6 @@ private:
     std::vector<std::unique_ptr<Particle>> newParticles;
 
     GameState gameState;
-    GameState_Trans gameState_trans;
-    DWORD transformStartTime;
     DWORD deadStartTime;
     DWORD victoryStart;
     DWORD clearStart;

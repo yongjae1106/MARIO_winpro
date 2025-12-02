@@ -1,18 +1,26 @@
 #include "ThreadManager.h"
 #include "NetworkManager.h" // NetworkManager Ŭ   
 #include "Common.h"
-#include "GamePhysics.h" // GameWorld 싱글턴 사용을 위해 추가
-#include "PacketInfo.h" // ServerPacket 사용을 위해 추가
+#include "GameWorld.h"
+#include "Player.h"
+
+
+// 
+ThreadManager::ThreadManager(NetworkManager* netMgr, GameWorld* world)
+    : m_network_manager(netMgr), m_gameWorld(world)
+{
+    printf("ThreadManager ü  Ϸ.\n");
+}
 
 //--------------------------------------------------------------------------------------------------
 // 1. ThreadManager::GameLoop() (Main Thread)
-// AcceptLoop std::thread  Ͽ   
+// AcceptLoop std::thread Ͽ   
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::GameLoop()
 {
     printf("[Main Thread] GameLoop \n");
 
-    // 1. AcceptLoop std::thread  
+    // 1. AcceptLoop  std::thread 
     // std::thread::join() ȣ  ü 
     std::thread hAcceptThread([this] { AcceptLoop(); });
 
@@ -22,11 +30,13 @@ void ThreadManager::GameLoop()
     {
         // 1. ProcessInputQueue() (Ŷ ó)
         // [ؾ  : Ŷ ť   m_mtx lock/unlock ʿ]
+        // ť ִ  Ŭ̾Ʈ Է Ŷ óմϴ.
+        ProcessInputQueue();
 
-        // 2. CalculateGamePhysics() ( )
-        GameWorld::getInstance().update();
+        // 2. CalculateGamePhysics() ( ) 
+        m_gameWorld->update();
 
-        // 3. BroadcastState() ( )
+        // 3. BroadcastState() ( ) 
         BroadcastState();
 
         //  ƽ  (Common.h  Sleep  )
@@ -40,7 +50,7 @@ void ThreadManager::GameLoop()
 }
 
 //--------------------------------------------------------------------------------------------------
-// 2. ThreadManager::AcceptLoop() (Accept Thread )
+// 2. ThreadManager::AcceptLoop() (Accept Thread ) 
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::AcceptLoop()
 {
@@ -89,6 +99,8 @@ int ThreadManager::AddNewClient(SOCKET clientSock)
     m_clients[new_id].clientSock = clientSock;
     m_clients[new_id].is_active = true;
 
+    m_gameWorld->addPlayer(new_id); // Add player to gameworld
+
     // 3. ClientLoop    ü  (std::thread )
     //  ĸó [this, new_id, clientSock]    Լ ClientLoop ȣ
     try {
@@ -107,7 +119,7 @@ int ThreadManager::AddNewClient(SOCKET clientSock)
 }
 
 //--------------------------------------------------------------------------------------------------
-// 4. ThreadManager::ClientLoop() (Client Thread )
+// 4. ThreadManager::ClientLoop() (Client Thread ) 
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 {
@@ -116,13 +128,27 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
     char buf[512];
     int retval;
 
+    //    (   ڿ̹Ƿ while  ܺο lock  )
+    std::vector<char>& client_buffer = m_clients[playerID].recv_buffer;
+
     while (true)
     {
         // 1. recv()  Ŷ  õ (ŷ )
         retval = recv(clientSock, buf, sizeof(buf), 0);
 
         if (retval == SOCKET_ERROR) {
-            err_display("recv ");
+            //  ڵ 
+            int err_code = WSAGetLastError();
+
+            // WSAEWOULDBLOCK " Ͱ  "̹Ƿ  ƴ -> ϰ 
+            if (err_code == WSAEWOULDBLOCK) {
+                // CPU    ¦  (ʿ  Sleep(0) Ǵ Sleep(1))
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
+            // ¥  쿡 
+            err_display(err_code);
             break;
         }
         if (retval == 0) {
@@ -132,18 +158,57 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
         }
 
         // 2. Ŷ  ó
-        // [ؾ  ]
+        // ŵ ͸ Ŭ̾Ʈ  ۿ ߰
+        if (retval > 0)
+        {
+            client_buffer.insert(client_buffer.end(), buf, buf + retval);
+        }
 
         // 3. Ŷ ť 
         // [ؾ  : Ŷ ť   m_mtx lock/unlock ʿ]
+        // ۿ  Ŷ   ť  (Ŷ )
+        while (client_buffer.size() >= sizeof(PacketHeader))
+        {
+            // Ŷ   Ȯ (Ʈ    ʿ)
+            const PacketHeader* header = (const PacketHeader*)client_buffer.data();
+            unsigned int packet_length = header->totalLength;
+            unsigned int packet_type = header->type;
 
-        printf("[Client Thread %d] %d Ʈ   Ϸ.\n", playerID, retval);
+            // ҿ Ŷ:  recv ٸ
+            if (client_buffer.size() < packet_length)
+                break;
+
+            //  Ŷ ߰ -> QueuedPacket   Payload 
+            QueuedPacket q_pkt;
+            q_pkt.socketID = playerID;
+            q_pkt.type = packet_type;
+
+            // (PacketHeader)   Payload 
+            q_pkt.data.assign(
+                client_buffer.begin() + sizeof(PacketHeader),
+                client_buffer.begin() + packet_length
+            );
+
+            // ť  (  ϴ ڿ̹Ƿ lock)
+            {
+                std::lock_guard<std::mutex> lock(m_mtx);
+                m_input_queue.push(std::move(q_pkt));
+            }
+
+            //printf("[Client Thread %d] Packet Type %u, Size %u   ť  Ϸ.\n",playerID, packet_type, packet_length);
+			// ̳  ܼâ ʹ   ּ ó.
+
+            // ۿ ó Ŷ 
+            client_buffer.erase(client_buffer.begin(), client_buffer.begin() + packet_length);
+        }
     }
 
     // **4.     ۾**
     m_mtx.lock(); //  ڿ(m_clients)  ȣ ( lock/unlock)
     if (playerID >= 0 && playerID < MAX_PLAYERS && m_clients[playerID].is_active) {
         printf("[Thread Manager] PlayerID %d   ó .\n", playerID);
+
+        m_gameWorld->removePlayer(playerID); // Remove player from gameworld
 
         //  ݱ
         closesocket(m_clients[playerID].clientSock);
@@ -166,18 +231,72 @@ void ThreadManager::ClientLoop(int playerID, SOCKET clientSock)
 //--------------------------------------------------------------------------------------------------
 void ThreadManager::BroadcastState()
 {
-    std::lock_guard<std::mutex> lock(m_mtx); //  ڿ(m_clients)  ȣ
+    std::lock_guard<std::mutex> lock(m_mtx);
 
-    ServerPacket packet;
-    packet.packet_type = SERVER_STATE_UPDATE;
-    packet.currentBGM = GameWorld::getInstance().getCurrentBGM();
-    packet.events = GameWorld::getInstance().getEventQueue();
-    // Other packet data (player positions, monster states, etc.) would go here
+    const auto& players = m_gameWorld->getPlayers(); 
 
-    //  Ȱ Ŭ̾Ʈ  
-    for (int i = 0; i < MAX_PLAYERS; ++i) {
-        if (m_clients[i].is_active) {
-            send(m_clients[i].clientSock, (char*)&packet, sizeof(ServerPacket), 0);
+    for (const auto& pair : players) {
+        int pID = pair.first;
+        const Player& p = pair.second;
+
+        Packet_PLAYER_STATE_S2C pkt;
+        pkt.playerID = pID;
+        pkt.x = p.getX();
+        pkt.y = p.getY();
+        pkt.vx = p.getVx();
+        pkt.vy = p.getVy();
+        pkt.life = m_gameWorld->getLife();
+        pkt.coin = m_gameWorld->getCoin();
+        pkt.width = p.getWidth();
+        pkt.height = p.getHeight();
+        pkt.direction = p.getDirection();
+        pkt.walk_motion = p.getWalkMotion();
+        pkt.m_isJumping = p.isJumping();
+        pkt.m_isFlying = p.isFlying();
+        pkt.m_isWalking = p.isWalking();
+        pkt.m_dead = p.isDead();
+        pkt.m_gameOver = p.isGameOver();
+        pkt.fire_motion = p.isFiring();
+        pkt.tino_fire_motion = p.isTinoFireMotion(); 
+        pkt.tino_attack_motion = p.isTinoAttackMotion();
+        pkt.currentState = p.getState();
+        pkt.state_trans = p.getGameState_trans();
+        pkt.transformStartTime = p.getTransformStartTime();
+        pkt._isStarGodModeActive = p.isStarGodMode();
+        pkt._isSuperGodModeActive = p.isSuperGodMode();
+        pkt.tino_cooldown_space = p.getTinoCooldownSpace();
+        pkt.fire_motion_timer = p.getFireMotionTimer();
+        pkt.tino_attack_motion_timer = 0; // Not available in player class
+
+        char sendBuffer[2048]; // Increased buffer size
+        unsigned int len = m_packet_manager.Serialize_PLAYER_STATE(sendBuffer, pkt); 
+        
+        for (int i = 0; i < MAX_PLAYERS; ++i) {
+            if (m_clients[i].is_active) {
+                send(m_clients[i].clientSock, sendBuffer, len, 0);
+            }
         }
+    }
+}
+
+
+// [ ߰ Լ] ThreadManager::ProcessInputQueue() 
+void ThreadManager::ProcessInputQueue()
+{
+    std::lock_guard<std::mutex> lock(m_mtx);
+
+    while (!m_input_queue.empty()) {
+        QueuedPacket pkt = m_input_queue.front();
+        m_input_queue.pop();
+
+        // : HandlePacket ȣ  m_gameWorld 
+        // Main Thread ǹǷ GameWorld  
+        m_packet_manager.HandlePacket(
+            pkt.type,
+            pkt.data.data(),
+            (unsigned int)pkt.data.size(),
+            pkt.socketID,
+            m_gameWorld // <--- ߰
+        );
     }
 }

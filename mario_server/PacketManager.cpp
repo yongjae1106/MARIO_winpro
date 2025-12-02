@@ -1,97 +1,86 @@
-#include "PacketInfo.h"
-#include <queue>
+#include "PacketManager.h"
+#include "GameWorld.h" // GameWorld  獨 호  include
 #include <cstring>
 #include <cstdio>
 
-class PacketManager_Server
+int PacketManager::TryParse(const std::vector<char>& buffer, unsigned int socketID, GameWorld* world)
 {
-public:
-    std::queue<PacketInfo_ClientToServer> m_packetQueue;
+    if (buffer.size() < sizeof(PacketHeader)) return 0;
 
-    // ==============================================================
-    // 클라 → 서버 파싱 (입력만 받음)
-    // ==============================================================
-    bool ParsePacket(const char* buffer, int size)
+    const PacketHeader* header = (const PacketHeader*)buffer.data();
+
+    if (buffer.size() < header->totalLength) return 0;
+
+    // HandlePacket world 
+    HandlePacket(header->type, buffer.data() + sizeof(PacketHeader), header->totalLength - sizeof(PacketHeader), socketID, world);
+
+    return header->totalLength;
+}
+
+void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID, GameWorld* world) 
+{
+    switch (type)
     {
-        PacketInfo_ClientToServer pkt;
-        int offset = 0;
-
-        memcpy(&pkt.playerID, buffer + offset, sizeof(int)); offset += sizeof(int);
-        memcpy(&pkt.type, buffer + offset, sizeof(char)); offset += sizeof(char);
-
-        if (pkt.type == PKT_MOVE)
-        {
-            memcpy(&pkt.x, buffer + offset, sizeof(int)); offset += sizeof(int);
-            memcpy(&pkt.y, buffer + offset, sizeof(int)); offset += sizeof(int);
-            memcpy(&pkt.vx, buffer + offset, sizeof(int)); offset += sizeof(int);
-            memcpy(&pkt.vy, buffer + offset, sizeof(int)); offset += sizeof(int);
-            memcpy(&pkt.state, buffer + offset, sizeof(char)); offset += sizeof(char);
-        }
-        else if (pkt.type == PKT_ATTACK)
-        {
-            memcpy(&pkt.targetID, buffer + offset, sizeof(int)); offset += sizeof(int);
-            memcpy(&pkt.damage, buffer + offset, sizeof(int)); offset += sizeof(int);
-        }
-
-        m_packetQueue.push(pkt);
-        return true;
-    }
-
-    // ==============================================================
-    // 서버 → 클라 Serialize (브로드캐스트용)
-    // ==============================================================
-    int SerializePacket(char* buffer, const PacketInfo_ServerToClient& pkt)
+    case PKT_KEY_DOWN:
     {
-        int offset = 0;
-
-        memcpy(buffer + offset, &pkt.playerID, sizeof(int)); offset += sizeof(int);
-        memcpy(buffer + offset, &pkt.type, sizeof(char)); offset += sizeof(char);
-
-        if (pkt.type == PKT_MOVE)
-        {
-            memcpy(buffer + offset, &pkt.x, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.y, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.vx, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.vy, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.state, sizeof(char)); offset += sizeof(char);
-        }
-        else if (pkt.type == PKT_HIT)
-        {
-            memcpy(buffer + offset, &pkt.damage, sizeof(int)); offset += sizeof(int);
-        }
-        else if (pkt.type == PKT_BLOCK_ATTACK)
-        {
-            memcpy(buffer + offset, &pkt.blockID, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.block_x, sizeof(int)); offset += sizeof(int);
-            memcpy(buffer + offset, &pkt.block_y, sizeof(int)); offset += sizeof(int);
-        }
-
-        return offset;
-    }
-
-    // ==============================================================
-    // 서버 HandlePacket ? 게임 로직 처리
-    // ==============================================================
-    void HandlePacket()
-    {
-        while (!m_packetQueue.empty())
-        {
-            PacketInfo_ClientToServer pkt = m_packetQueue.front();
-            m_packetQueue.pop();
-
-            switch (pkt.type)
-            {
-            case PKT_MOVE:
-                printf("[SERVER] Player %d 이동 처리\n", pkt.playerID);
-                // TODO: GameWorld에서 좌표 갱신
-                break;
-
-            case PKT_ATTACK:
-                printf("[SERVER] Player %d이 target %d에게 공격\n",
-                    pkt.playerID, pkt.targetID);
-                // TODO: 충돌 판정 및 데미지 계산
-                break;
+        Packet_KEY_EVENT_C2S pkt;
+        if (length == sizeof(pkt)) {
+            memcpy(&pkt, data, sizeof(pkt));
+            if (world) {
+                world->handleKeyDown(socketID, pkt.keyCode);
             }
         }
+        break;
     }
-};
+    case PKT_KEY_UP:
+    {
+        Packet_KEY_EVENT_C2S pkt;
+        if (length == sizeof(pkt)) {
+            memcpy(&pkt, data, sizeof(pkt));
+            if (world) {
+                world->handleKeyUp(socketID, pkt.keyCode);
+            }
+        }
+        break;
+    }
+    }
+}
+
+// =============================
+//   클 화
+// =============================
+unsigned int PacketManager::Serialize_PLAYER_STATE(char* buffer, const Packet_PLAYER_STATE_S2C& state)
+{
+    PacketHeader header;
+    header.type = PKT_PLAYER_STATE;
+    header.totalLength = sizeof(PacketHeader) + sizeof(state);
+
+    memcpy(buffer, &header, sizeof(header));
+    memcpy(buffer + sizeof(header), &state, sizeof(state));
+
+    return header.totalLength;
+}
+
+unsigned int PacketManager::Serialize_HIT(char* buffer, const Packet_HIT_S2C& hit)
+{
+    PacketHeader header;
+    header.type = PKT_HIT;
+    header.totalLength = sizeof(PacketHeader) + sizeof(hit);
+
+    memcpy(buffer, &header, sizeof(header));
+    memcpy(buffer + sizeof(header), &hit, sizeof(hit));
+
+    return header.totalLength;
+}
+
+unsigned int PacketManager::Serialize_BLOCK(char* buffer, const Packet_BLOCK_S2C& blk)
+{
+    PacketHeader header;
+    header.type = PKT_BLOCK_ATTACK;
+    header.totalLength = sizeof(PacketHeader) + sizeof(blk);
+
+    memcpy(buffer, &header, sizeof(header));
+    memcpy(buffer + sizeof(header), &blk, sizeof(blk));
+
+    return header.totalLength;
+}

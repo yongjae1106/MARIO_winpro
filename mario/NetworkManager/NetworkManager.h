@@ -1,18 +1,15 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCKAPI_ // Prevent windows.h from including winsock.h (if it's ever included before this)
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 #include <iostream>
 #include <string>
-#include <thread> // For std::thread
-#include <atomic> // For std::atomic<bool>
-#include "ThreadSafeQueue.h" // For ThreadSafeQueue
+#include <thread>
+#include <atomic>
+#include "ThreadSafeQueue.h"
 
 #pragma comment(lib, "ws2_32.lib")
-
-
 
 class NetworkManager {
 public:

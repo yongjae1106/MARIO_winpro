@@ -20,6 +20,7 @@ Player::Player(int id) : playerID(id)
     tino_attack_motion = false; // Initialize new member variable
     m_state_trans = GameState_Trans::GAME_TRANS_NONE; // New
     m_transformStartTime = 0; // New
+    memset(m_keyState, 0, sizeof(m_keyState)); // Initialize m_keyState
     reset();
 }
 
@@ -113,24 +114,24 @@ void Player::updateCooldown()
 void Player::move(GameWorld& world)
 {
     if (this->isDead()) return;
-    const bool* keyState = world.getKeyState();
+    // const bool* keyState = world.getKeyState(); // REMOVED
     // : move Լ   Ű    vx 
     TCHAR debugMessage[256];
-    _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), keyState[VK_LEFT], keyState[VK_RIGHT], getVx());
+    _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), getKeyState(VK_LEFT), getKeyState(VK_RIGHT), getVx()); // Modified
     OutputDebugString(debugMessage);
-    if (keyState[VK_LEFT] && !keyState[VK_RIGHT])
+    if (getKeyState(VK_LEFT) && !getKeyState(VK_RIGHT)) // Modified
     {
         setVx(-5);
         direction = 0;
         setWalking(true);
     }
-    else if (keyState[VK_RIGHT] && !keyState[VK_LEFT])
+    else if (getKeyState(VK_RIGHT) && !getKeyState(VK_LEFT)) // Modified
     {
         setVx(5);
         direction = 1;
         setWalking(true);
     }
-    else if (keyState[VK_LEFT] && keyState[VK_RIGHT])
+    else if (getKeyState(VK_LEFT) && getKeyState(VK_RIGHT)) // Modified
     {
         //       
         setVx((getDirection() == 0 ? -5 : 5));
@@ -142,7 +143,7 @@ void Player::move(GameWorld& world)
         setVx(0); // This is the deceleration
     }
 
-    if (keyState[VK_UP] && !isJumping())
+    if (getKeyState(VK_UP) && !isJumping()) // Modified
     {
         switch (currentState)
         {
@@ -158,7 +159,7 @@ void Player::move(GameWorld& world)
         setJumping(true);
     }
 
-    if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
+    if (getKeyState('Z') && isFlower() && m_fire_cooldown == 0) { // Modified
         world.spawnPlayerFireball(getX(), getY(), (direction == 0 ? -10 : 10));
         m_fire_cooldown = 2; // Cooldown for 20 frames
         fire_motion = true;
@@ -166,14 +167,14 @@ void Player::move(GameWorld& world)
         world.pushEvent(GameEvent::PLAYER_FIRE);
     }
 
-    if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
+    if (getKeyState('Z') && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball // Modified
         world.spawnTinoFireball(getX(), getY(), (direction == 0 ? -7 : 7), direction);
         m_tinofire_cooldown = 5; // Cooldown for 30 frames
         tino_fire_motion = true; // Set Tino Fireball motion flag
         world.pushEvent(GameEvent::PLAYER_TINOFIRE);
     }
 
-    if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack
+    if (getKeyState(VK_SPACE) && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack // Modified
         tinoAttack(world);
         tino_cooldown_space = 15; // Cooldown for 30 frames
         tino_attack_motion = true; // Set Tino Attack motion flag
@@ -427,6 +428,20 @@ void Player::tinoAttack(GameWorld& world) {
         }
     }
 }
+
+void Player::setKeyState(WPARAM key, bool isPressed) {
+    if (key < 256) {
+        m_keyState[key] = isPressed;
+    }
+}
+
+bool Player::getKeyState(WPARAM key) const {
+    if (key < 256) {
+        return m_keyState[key];
+    }
+    return false;
+}
+
 
 GameState_Trans Player::getGameState_trans() const {
     return m_state_trans;

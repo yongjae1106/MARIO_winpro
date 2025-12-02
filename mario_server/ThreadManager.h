@@ -1,50 +1,76 @@
 #include "Common.h"
-#include <mutex> // È­ Ã¼
-#include <thread> // std::thread  (Wrapper Ô¼ Ã¼)
-#include "GamePhysics.h" // GameWorld ì‹±ê¸€í„´ ì‚¬ìš©ì„ ìœ„í•´ ì¶”ê°€
+#include <mutex> // µ¿±âÈ­ °´Ã¼
+#include <thread> // std::thread »ç¿ë (Wrapper ÇÔ¼ö ´ëÃ¼)
+#include "PacketInfo.h"
+#include "PacketManager.h"
+#include <vector>
+#include <queue>
 
-// NetworkManager Å¬  (È¯  )
+// NetworkManager Å¬·¡½º ¼±¾ğ (¼øÈ¯ ÂüÁ¶ ¹æÁö)
 class NetworkManager;
 
-//  
+// ¸¶Âù°¡Áö·Î GameWorld Å¬·¡½ºµµ ¼±¾ğ (¼øÈ¯ ÂüÁ¶ ¹æÁö)
+class GameWorld;
+
+// »ó¼ö Á¤ÀÇ
 #define MAX_PLAYERS 3
 
-// Å¬Ì¾Æ®    Ã¼
+// (Ãß°¡µÈ ±¸Á¶Ã¼)Å¬¶óÀÌ¾ğÆ® ½º·¹µå¿¡¼­ ¸ŞÀÎ ½º·¹µå·Î Àü´ŞÇÒ ÆĞÅ¶ Á¤º¸
+struct QueuedPacket {
+    unsigned int socketID;
+    unsigned int type;
+    std::vector<char> data; // PacketHeader¸¦ Á¦¿ÜÇÑ ¼ø¼ö ÆäÀÌ·Îµå
+};
+
+// Å¬¶óÀÌ¾ğÆ® ¿¬°á Á¤º¸¸¦ ´ã´Â ±¸Á¶Ã¼
 struct ClientInfo {
     int playerID = -1;
     SOCKET clientSock = INVALID_SOCKET;
     bool is_active = false;
-    // std::thread   HANDLE  std::thread::id Ç´ std::thread Ã¼  
-    std::thread client_thread; // Å¬Ì¾Æ®   Ã¼
+    // std::thread »ç¿ë ½Ã HANDLE ´ë½Å std::thread::id ¶Ç´Â std::thread °´Ã¼ »ç¿ë °¡´É
+    std::thread client_thread; // Å¬¶óÀÌ¾ğÆ® ·çÇÁ ½º·¹µå °´Ã¼
+
+    std::vector<char> recv_buffer;
 };
 
 class ThreadManager {
 private:
-    // **È­ Ú¿**
+    // **µ¿±âÈ­ ÀÚ¿ø**
     ClientInfo m_clients[MAX_PLAYERS];
     std::mutex m_mtx;
 
-    // Üº Å¬ 
+    // ¸ŞÀÎ ½º·¹µå°¡ Ã³¸®ÇÒ ÆĞÅ¶ ´ë±â¿­ (°øÀ¯ ÀÚ¿ø)
+    std::queue<QueuedPacket> m_input_queue;
+
+    // ÆĞÅ¶ ÆÄ½Ì ¹× Á÷·ÄÈ­ ±â´ÉÀ» À§ÇÑ ÀÎ½ºÅÏ½º
+    PacketManager m_packet_manager;
+
+    // ¿ÜºÎ Å¬·¡½º ÂüÁ¶
     NetworkManager* m_network_manager;
 
+    GameWorld* m_gameWorld;
+
 public:
-    // 
-    ThreadManager(NetworkManager* nm) : m_network_manager(nm) {}
+    // »ı¼ºÀÚ
+    ThreadManager(NetworkManager* netMgr, GameWorld* world);
 
-    // **Ã» 5 Public  Ô¼**
+    // **¿äÃ»µÈ 5°¡Áö Public ¸â¹ö ÇÔ¼ö**
 
-    // 1.     (Main Thread)
+    // 1. ¼­¹öÀÇ ¸ŞÀÎ °ÔÀÓ ·çÇÁ (Main Thread)
     void GameLoop();
 
-    // 2. Î¿ Å¬Ì¾Æ®  Ã» Ã³ (Accept Thread  )
+    // 2. »õ·Î¿î Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ¿äÃ» Ã³¸® (Accept ThreadÀÇ ½ÇÁ¦ ·ÎÁ÷)
     void AcceptLoop();
 
-    // 3. Å¬Ì¾Æ®   playerID Ò´  ClientLoop   (std::thread )
+    // 3. Å¬¶óÀÌ¾ğÆ® ¼ÒÄÏ ¹× playerID ÇÒ´ç ÈÄ ClientLoop ½º·¹µå »ı¼º (std::thread »ç¿ë)
     int AddNewClient(SOCKET clientSock);
 
-    // 4. Ò´  Å¬Ì¾Æ® Æ®Å© I/O  (Client Thread  )
+    // 4. ÇÒ´çµÈ ´ÜÀÏ Å¬¶óÀÌ¾ğÆ®¿ÍÀÇ ³×Æ®¿öÅ© I/O Àü´ã (Client ThreadÀÇ ½ÇÁ¦ ·ÎÁ÷)
     void ClientLoop(int playerID, SOCKET clientSock);
 
-    // 5.  È­ Ô¼
+    // 5. »óÅÂ µ¿±âÈ­ ÇÔ¼ö
     void BroadcastState();
+
+    // 6. ¸ŞÀÎ ½º·¹µåÀÇ ÀÔ·Â Ã³¸® ÇÔ¼ö
+    void ProcessInputQueue();
 };

@@ -59,8 +59,8 @@ public:
     void updateAnimations();
     void render(HDC hdc);
 
-    void handleKeyDown(WPARAM wParam);
-    void handleKeyUp(WPARAM wParam);
+    void handleKeyDown(int playerID, WPARAM wParam);
+    void handleKeyUp(int playerID, WPARAM wParam);
 
     void loadStage(int stage);
     void resetForDeath(int playerID);
@@ -97,7 +97,6 @@ public:
     bool getGameoverTitleDead() const { return gameover_TitleDead; }
     int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
 
-    const bool* getKeyState() const;
     GameState getGameState() const;
     void setGameState(GameState state);
     void setStage_time(int time);
@@ -184,7 +183,6 @@ private:
     BGM_Type m_currentBGM;
     std::vector<GameEvent> m_eventQueue;
 
-    bool keyState[256];
-    int m_global_animation_frame_counter;
+    bool m_global_animation_frame_counter;
 };
 

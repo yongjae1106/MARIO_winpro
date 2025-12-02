@@ -1,7 +1,5 @@
 #include "Player.h"
-#include "GameWorld.h" // Still needed for GameWorld::getInstance() if used in handleKeyDown/Up
-// #include "monsters/Bowser.h" // Removed, game logic
-// #include "monsters/Monster.h" // Removed, game logic
+#include "GameWorld.h"
 #include <Gdiplus.h>
 #include <tchar.h>
 #include <format>
@@ -31,9 +29,11 @@ Player::Player() {
     tino_cooldown_space = 0;
     _isStarGodModeActive = false;
     _isSuperGodModeActive = false;
+    m_state_trans = GameState_Trans::GAME_NONE; // New
+    m_transformStartTime = 0;                 // New
 }
 
-void Player::updateStateFromServer(const PlayerDataPacket& packet) {
+void Player::updateStateFromServer(const Packet_PLAYER_STATE_S2C& packet) {
     // Update all local member variables based on the received packet
     x = packet.x;
     y = packet.y;
@@ -54,6 +54,8 @@ void Player::updateStateFromServer(const PlayerDataPacket& packet) {
     tino_fire_motion = packet.tino_fire_motion;
     tino_attack_motion = packet.tino_attack_motion;
     currentState = packet.currentState;
+    m_state_trans = packet.state_trans; // New
+    m_transformStartTime = packet.transformStartTime; // New
     _isStarGodModeActive = packet._isStarGodModeActive;
     _isSuperGodModeActive = packet._isSuperGodModeActive;
     tino_cooldown_space = packet.tino_cooldown_space;
@@ -127,6 +129,10 @@ bool Player::isTinoAttackMotion() const { return tino_attack_motion; }
 bool Player::isBig() const { return currentState == PlayerState::Big || currentState == PlayerState::Flower || currentState == PlayerState::Tino; }
 bool Player::isFlower() const { return currentState == PlayerState::Flower; }
 bool Player::isTino() const { return currentState == PlayerState::Tino; }
+
+GameState_Trans Player::getGameState_trans() const {
+    return m_state_trans;
+}
 
 // Removed game logic methods:
 // reset(), update(), updateCooldown(), grow(), shrink(), gainStar(), gainFlower(), gainTino(), addLife(),

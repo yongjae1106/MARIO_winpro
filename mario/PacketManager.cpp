@@ -66,26 +66,14 @@ bool PacketManager::TryGetPacket(PacketData& outPacket) {
 // =============================
 // Serialize 함수들 (클라이언트 -> 서버)
 // =============================
-unsigned int PacketManager::Serialize_MOVE(char* buffer, const Packet_MOVE_C2S& move)
+unsigned int PacketManager::Serialize_KEY_EVENT(char* buffer, const Packet_KEY_EVENT_C2S& keyEvent, PacketType type)
 {
     PacketHeader header;
-    header.type = PKT_MOVE;
-    header.totalLength = sizeof(PacketHeader) + sizeof(move);
+    header.type = type; // PKT_KEY_DOWN or PKT_KEY_UP
+    header.totalLength = sizeof(PacketHeader) + sizeof(keyEvent);
 
     memcpy(buffer, &header, sizeof(header));
-    memcpy(buffer + sizeof(header), &move, sizeof(move));
-
-    return header.totalLength;
-}
-
-unsigned int PacketManager::Serialize_ATTACK(char* buffer, const Packet_ATTACK_C2S& atk)
-{
-    PacketHeader header;
-    header.type = PKT_ATTACK;
-    header.totalLength = sizeof(PacketHeader) + sizeof(atk);
-
-    memcpy(buffer, &header, sizeof(header));
-    memcpy(buffer + sizeof(header), &atk, sizeof(atk));
+    memcpy(buffer + sizeof(header), &keyEvent, sizeof(keyEvent));
 
     return header.totalLength;
 }

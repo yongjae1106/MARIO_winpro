@@ -1,80 +1,72 @@
 #pragma once
+#include <Windows.h> // For DWORD
 #include <vector>
 
-// BGM 상태를 정의하는 열거형
-enum class BGM_Type {
-    NONE,
-    GROUND_THEME,
-    CASTLE_THEME,
-    STAR_POWER,
-    VICTORY,
-    WORLD_CLEAR
-};
+// Forward declare enums to avoid including full headers
+enum class PlayerState;
+enum class GameState_Trans;
 
-// 사운드 효과 등 일회성 이벤트를 정의하는 열거형
-enum class GameEvent {
-    NO_EVENT,
-    PLAYER_SMALL_JUMP,
-    PLAYER_BIG_JUMP,
-    PLAYER_FIRE,
-    PLAYER_TINOFIRE,
-    PLAYER_DIE,
-    STOMP_ENEMY,
-    GET_COIN,
-    POWERUP_APPEARS,
-    POWERUP,
-    PIPE, // 플레이어가 작아질 때
-    KICK,
-    ONE_UP
-};
-
-// 서버가 클라이언트로 보내는 패킷 구조체
-struct ServerPacket {
-    // TODO: 여기에 게임 상태 데이터 추가 (플레이어 좌표, 몬스터 정보 등)
-    BGM_Type currentBGM;
-    std::vector<GameEvent> events;
-};
-
-enum PacketType : char
+enum PacketType : unsigned int
 {
-    PKT_MOVE = 1,
-    PKT_ATTACK = 2,
-    PKT_HIT = 3,
-    PKT_BLOCK_ATTACK = 4
+    // C2S (Client to Server)
+    PKT_KEY_DOWN = 1, // Key down event
+    PKT_KEY_UP = 2,   // Key up event
+
+    // S2C (Server to Client)
+    PKT_PLAYER_STATE = 100, // 개별 플레이어의 전체 상태 정보
+    PKT_MONSTER_STATE = 101, // 몬스터의 상태 정보
+    PKT_HIT = 102,
+    PKT_BLOCK_ATTACK = 103,
+    PKT_PLAYER_JOIN = 104, // 새로운 플레이어 접속
+    PKT_PLAYER_LEAVE = 105, // 플레이어 접속 종료
 };
 
-// Ŭ�� �� ����
-struct PacketInfo_ClientToServer
+struct PacketHeader
 {
-    int playerID;
-    char type;
+    unsigned int totalLength;
+    unsigned int type;         // PacketType
+};
 
-    // MOVE
+struct Packet_KEY_EVENT_C2S
+{
+    unsigned int  keyCode; // virtual-key code (WPARAM)
+};
+
+struct Packet_PLAYER_STATE_S2C {
+    int playerID; // The unique ID of the player
     int x, y;
     int vx, vy;
-    char state;
-
-    // ATTACK
-    int targetID;
-    int damage;
+    int life;
+    int coin;
+    int width, height;
+    int direction;
+    int walk_motion;
+    bool m_isJumping;
+    bool m_isFlying;
+    bool m_isWalking;
+    bool m_dead;
+    bool m_gameOver;
+    bool fire_motion;
+    bool tino_fire_motion;
+    bool tino_attack_motion;
+    PlayerState currentState;
+    GameState_Trans state_trans;
+    DWORD transformStartTime;
+    bool _isStarGodModeActive;
+    bool _isSuperGodModeActive;
+    int tino_cooldown_space;
+    int fire_motion_timer;
+    int tino_attack_motion_timer;
 };
 
-// ���� �� Ŭ��
-struct PacketInfo_ServerToClient
+struct Packet_HIT_S2C
 {
-    int playerID;
-    char type;
+    unsigned int damage;
+};
 
-    // MOVE (�ٸ� �÷��̾� ���� ��)
-    int x, y;
-    int vx, vy;
-    char state;
-
-    // HIT
-    int damage;
-
-    // BLOCK_ATTACK
-    int blockID;
-    int block_x;
-    int block_y;
+struct Packet_BLOCK_S2C
+{
+    unsigned int blockID;
+    unsigned int block_x;
+    unsigned int block_y;
 };

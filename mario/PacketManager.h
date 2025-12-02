@@ -26,8 +26,7 @@ public:
     bool TryGetPacket(PacketData& outPacket);
 
     // Serialize 함수들은 그대로 유지
-    unsigned int Serialize_MOVE(char* buffer, const Packet_MOVE_C2S& move);
-    unsigned int Serialize_ATTACK(char* buffer, const Packet_ATTACK_C2S& atk);
+    unsigned int Serialize_KEY_EVENT(char* buffer, const Packet_KEY_EVENT_C2S& keyEvent, PacketType type);
 
 private:
     // 싱글턴을 위해 생성자를 private으로

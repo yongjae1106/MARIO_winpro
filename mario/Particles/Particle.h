@@ -1,8 +1,6 @@
 #pragma once
 
-#include <windows.h>
 #include <memory>
-#include <tchar.h>
 
 class GameWorld; // Forward declaration
 
@@ -18,9 +16,7 @@ public:
 
     Particle(ParticleType type, int x, int y);
     virtual ~Particle() {
-        TCHAR debugMessage[256];
-        _stprintf_s(debugMessage, _T("Particle: Destructor called for type %d.\n"), (int)type);
-        OutputDebugString(debugMessage);
+
     }
 
     virtual void update(GameWorld& world) = 0;

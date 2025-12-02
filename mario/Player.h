@@ -1,8 +1,5 @@
 #pragma once
-#include <windows.h>
 #include "PacketManager.h"
-#include "PacketInfo.h"
-
 
 enum class PlayerState {
     Small,
@@ -22,39 +19,12 @@ enum class DamageResult {
 // For now, keep it as a forward declaration.
 class GameWorld; 
 
-// Placeholder for data received from server
-struct PlayerDataPacket {
-    int playerID; // The unique ID of the player
-    int x, y;
-    int vx, vy;
-    int life;
-    int coin;
-    int width, height;
-    int direction;
-    int walk_motion;
-    bool m_isJumping;
-    bool m_isFlying;
-    bool m_isWalking;
-    bool m_dead;
-    bool m_gameOver;
-    bool fire_motion;
-    bool tino_fire_motion;
-    bool tino_attack_motion;
-    PlayerState currentState;
-    bool _isStarGodModeActive;
-    bool _isSuperGodModeActive;
-    int tino_cooldown_space; // If displayed on UI
-    int fire_motion_timer; // For client-side animation
-    int tino_attack_motion_timer; // For client-side animation
-    // Add other relevant state variables from server
-};
-
 class Player {
 public:
     Player();
 
     // New method to update player state from server data
-    void updateStateFromServer(const PlayerDataPacket& packet);
+    void updateStateFromServer(const Packet_PLAYER_STATE_S2C& packet);
 
     void update();
     void updateAnimation();
@@ -114,6 +84,7 @@ public:
     // Client-side flags for visual effects, set by server data
     bool isStarGodMode() const { return _isStarGodModeActive; }
     bool isSuperGodMode() const { return _isSuperGodModeActive; }
+    GameState_Trans getGameState_trans() const;
 
 private:
     int x, y;
@@ -142,4 +113,6 @@ private:
     bool _isSuperGodModeActive; // Set by server data
 
     PlayerState currentState;
+    GameState_Trans m_state_trans; // New
+    DWORD m_transformStartTime;    // New
 };

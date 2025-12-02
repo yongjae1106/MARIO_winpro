@@ -19,21 +19,23 @@
 #include "monsters/Turtle.h"
 #include <memory>
 #include <tchar.h> // Added for _stprintf_s and OutputDebugString
-#include <cstring> // For memcpy
+
+GameWorld& GameWorld::getInstance() {
+    static GameWorld instance; // CRT 초기화 후 안전하게 생성
+    return instance;
+}
 
 // Private constructor for Singleton pattern
 GameWorld::GameWorld()
 {
     m_localPlayerId = -1; // Initialize local player ID
     gameState = GameState::GAME_TITLE;
-    gameState_trans = GameState_Trans::GAME_NONE;
     cameraX = 0;
     stage = 1;
     stage_time = 0;
     memset(keyState, 0, sizeof(keyState));
     m_global_animation_frame_counter = 0;
     currentMap = map1;
-    transformStartTime = 0;
     deadStartTime = 0;
     victoryStart = 0;
     clearStart = 0;
@@ -158,7 +160,7 @@ void GameWorld::cameraUpdate()
     // maxCameraX is only used in this function, declare it here
     double maxCameraX;
 
-    if (gameState_trans == GameState_Trans::GAME_NONE)
+    if (getLocalPlayer() && getLocalPlayer()->getGameState_trans() == GameState_Trans::GAME_NONE)
     {
         const Player* localPlayer = getLocalPlayer();
         if (!localPlayer) return; // Do nothing if there is no local player
@@ -198,7 +200,13 @@ void GameWorld::render(HDC hdc) {
 void GameWorld::handleKeyDown(WPARAM wParam) {
     if (wParam < 256) {
         keyState[wParam] = true;
-        // TODO: Send key down event to server
+        
+        // Send key down event to server
+        Packet_KEY_EVENT_C2S keyEvent;
+        keyEvent.keyCode = wParam;
+        char buffer[sizeof(PacketHeader) + sizeof(Packet_KEY_EVENT_C2S)];
+        unsigned int packetSize = PacketManager::GetInstance()->Serialize_KEY_EVENT(buffer, keyEvent, PKT_KEY_DOWN);
+        m_networkManager.Send(std::string(buffer, packetSize));
     }
     // Title screen navigation can remain client-side
     if (gameState == GameState::GAME_TITLE) {
@@ -216,7 +224,13 @@ void GameWorld::handleKeyDown(WPARAM wParam) {
 void GameWorld::handleKeyUp(WPARAM wParam) {
     if (wParam < 256) {
         keyState[wParam] = false;
-        // TODO: Send key up event to server
+        
+        // Send key up event to server
+        Packet_KEY_EVENT_C2S keyEvent;
+        keyEvent.keyCode = wParam;
+        char buffer[sizeof(PacketHeader) + sizeof(Packet_KEY_EVENT_C2S)];
+        unsigned int packetSize = PacketManager::GetInstance()->Serialize_KEY_EVENT(buffer, keyEvent, PKT_KEY_UP);
+        m_networkManager.Send(std::string(buffer, packetSize));
     }
 }
 
@@ -296,12 +310,16 @@ int GameWorld::getTinoCooldownSpace() const
     return p ? p->getTinoCooldownSpace() : 0;
 }
 
+GameState_Trans GameWorld::getGameState_trans() const
+{
+    const Player* p = getLocalPlayer();
+    return p ? p->getGameState_trans() : GameState_Trans::GAME_NONE;
+}
+
 // The following setters are declared in GameWorld.h and defined here.
 void GameWorld::setGameState(GameState state) { gameState = state; }
-void GameWorld::setGameState_trans(GameState_Trans state_trans) { gameState_trans = state_trans; }
 void GameWorld::setStage_time(int time) { stage_time = time; }
 void GameWorld::setGameOverTitleDead(bool gameover) { gameover_TitleDead = gameover; }
-void GameWorld::setdeadStartTime(int time) { deadStartTime = time; }
 
 void GameWorld::newParticles_insertTo_Particles() {
     if (!newParticles.empty()) {

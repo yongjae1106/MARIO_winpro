@@ -64,6 +64,12 @@ public:
     bool isStarGodMode() const;
     bool isSuperGodMode() const;
     bool isFiring() const;
+    bool isTinoFireMotion() const { return tino_fire_motion; }
+    bool isTinoAttackMotion() const { return tino_attack_motion; }
+
+    // Key state management
+    void setKeyState(WPARAM key, bool isPressed);
+    bool getKeyState(WPARAM key) const;
 
     // Setters
     void setX(int newX);
@@ -116,4 +122,6 @@ private:
     DWORD _starGodModeEndTime;
     bool _isSuperGodModeActive;
     DWORD _superGodModeEndTime;
+
+    bool m_keyState[256]; // Per-player key state
 };
