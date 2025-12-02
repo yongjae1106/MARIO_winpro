@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="items">
+      <UniqueIdentifier>{fa35d319-3745-4c46-b7c8-211badf6aaf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="monsters">
+      <UniqueIdentifier>{8ba13587-27b8-4fba-b7d8-5e447cbc484e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Particles">
+      <UniqueIdentifier>{11e8b099-e06f-4d45-9d40-129f8d6dfbcf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp">
@@ -27,8 +36,77 @@
     <ClCompile Include="ThreadManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="GameWorld.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="PacketManager.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Fireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\Particle.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\PlayerFireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireball.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles\TinoFireballEffect.cpp">
+      <Filter>Particles</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\AngelTurtle.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BlueGoomba.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Bowser.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\BrownTurtle.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Goomba.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\GreenTurtle.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Monster.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\NormalGoomba.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\RedGoomba.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="monsters\Turtle.cpp">
+      <Filter>monsters</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Flower.cpp">
+      <Filter>items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Item.cpp">
+      <Filter>items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Mushroom.cpp">
+      <Filter>items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Star.cpp">
+      <Filter>items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\Tino.cpp">
+      <Filter>items</Filter>
+    </ClCompile>
+    <ClCompile Include="items\UpMushroom.cpp">
+      <Filter>items</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -41,11 +119,80 @@
     <ClInclude Include="ThreadManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="GameWorld.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="PacketInfo.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="PacketManager.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Fireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\Particle.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\PlayerFireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireball.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles\TinoFireballEffect.h">
+      <Filter>Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\AngelTurtle.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BlueGoomba.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Bowser.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\BrownTurtle.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Goomba.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\GreenTurtle.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Monster.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\NormalGoomba.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\RedGoomba.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="monsters\Turtle.h">
+      <Filter>monsters</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Flower.h">
+      <Filter>items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Item.h">
+      <Filter>items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Mushroom.h">
+      <Filter>items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Star.h">
+      <Filter>items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\Tino.h">
+      <Filter>items</Filter>
+    </ClInclude>
+    <ClInclude Include="items\UpMushroom.h">
+      <Filter>items</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

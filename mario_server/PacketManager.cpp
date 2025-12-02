@@ -1,59 +1,41 @@
 #include "PacketManager.h"
 #include <cstring>
 #include <iostream>
-#include "GameWorld.h" // 角力 霸烙 包府 肺流
 
-int PacketManager::TryParse(std::vector<char>& buffer, unsigned int socketID, GameWorld* world)
+int PacketManager::ProcessPacket(const std::vector<char>& buffer)
 {
-    while (true)
-    {
-        if (buffer.size() < sizeof(PacketHeader))
-            return 0;
+    if (buffer.size() < sizeof(PacketHeader))
+        return 0;
 
-        PacketHeader header;
-        memcpy(&header, buffer.data(), sizeof(PacketHeader));
+    PacketHeader header;
+    memcpy(&header, buffer.data(), sizeof(PacketHeader));
 
-        if (buffer.size() < header.totalLength)
-            return 0;
+    if (buffer.size() < header.totalLength)
+        return 0;
 
-        HandlePacket(header.type, buffer.data() + sizeof(PacketHeader), header.totalLength, socketID, world);
+    HandlePacket(header.type, buffer.data() + sizeof(PacketHeader), header.totalLength);
 
-        buffer.erase(buffer.begin(), buffer.begin() + header.totalLength);
-    }
-
-    return 0;
+    return header.totalLength;
 }
 
-void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned int length, unsigned int socketID, GameWorld* world)
+void PacketManager::HandlePacket(unsigned int type, const char* data, unsigned int length)
 {
     switch (type)
     {
-    case PKT_INPUT:
+    case PKT_MOVE:
     {
-        Packet_INPUT_C2S pkt{};
+        Packet_MOVE_C2S pkt;
         memcpy(&pkt, data, sizeof(pkt));
-
-        switch (pkt.inputType)
-        {
-        case InputType::MOVE:
-            std::cout << "[Server] Player(" << socketID << ") MOVE => (" << pkt.x << "," << pkt.y << ")\n";
-            //world->OnPlayerMove(socketID, pkt.x, pkt.y, pkt.vx, pkt.vy, pkt.state);
-            break;
-
-        case InputType::ATTACK:
-            std::cout << "[Server] Player(" << socketID << ") ATTACK Target(" << pkt.targetID << ") Damage(" << pkt.damage << ")\n";
-            //world->OnPlayerAttack(socketID, pkt.targetID, pkt.damage);
-            break;
-
-        default:
-            std::cout << "[Server] Unknown InputType\n";
-            break;
-        }
+        std::cout << "[Server] Player " << pkt.playerID << " moved to (" << pkt.x << ", " << pkt.y << ")\n";
         break;
     }
-
-    default:
-        std::cout << "[Server] Unknown Packet Type: " << type << "\n";
+    case PKT_ATTACK:
+    {
+        Packet_ATTACK_C2S pkt;
+        memcpy(&pkt, data, sizeof(pkt));
+        std::cout << "[Server] Player " << pkt.playerID << " attacked target " << pkt.targetID
+            << " with damage " << pkt.damage << "\n";
         break;
+    }
     }
 }

@@ -3,16 +3,15 @@
 
 enum PacketType : unsigned int
 {
-    // C2S (Client to Server)
-    PKT_INPUT = 1,
+    PKT_MOVE = 1,
+    PKT_ATTACK = 2,
 
-    // S2C (Server to Client)
     PKT_PLAYER_STATE = 100,
-    PKT_MONSTER_STATE = 101,
-    PKT_HIT = 102,
-    PKT_BLOCK_ATTACK = 103,
-    PKT_PLAYER_JOIN = 104,
-    PKT_PLAYER_LEAVE = 105,
+    PKT_MONSTER_STATE,
+    PKT_HIT,
+    PKT_BLOCK_ATTACK,
+    PKT_PLAYER_JOIN,
+    PKT_PLAYER_LEAVE
 };
 
 struct PacketHeader
@@ -21,49 +20,13 @@ struct PacketHeader
     unsigned int type;
 };
 
-// -------------------------------
-// 클라이언트 입력 통합 패킷
-// -------------------------------
-enum class InputType : unsigned int
-{
-    NONE = 0,
-    MOVE = 1,
-    ATTACK = 2,
-};
+// -------- 데이터 구조 --------
 
-struct Packet_INPUT_C2S
-{
-    InputType inputType;
+// C2S
+struct Packet_MOVE_C2S { unsigned int playerID, x, y, vx, vy, state; };
+struct Packet_ATTACK_C2S { unsigned int playerID, targetID, damage; };
 
-    // move
-    unsigned int x, y;
-    unsigned int vx, vy;
-    unsigned int state;
-
-    // attack
-    unsigned int targetID;
-    unsigned int damage;
-};
-
-// -------------------------------
-// 서버 → 클라 공용 패킷 형식
-// -------------------------------
-struct Packet_MOVE_S2C
-{
-    unsigned int playerID;
-    unsigned int x, y;
-    unsigned int vx, vy;
-    unsigned int state;
-};
-
-struct Packet_HIT_S2C
-{
-    unsigned int damage;
-};
-
-struct Packet_BLOCK_S2C
-{
-    unsigned int blockID;
-    unsigned int block_x;
-    unsigned int block_y;
-};
+// S2C
+struct Packet_MOVE_S2C { unsigned int playerID, x, y, vx, vy, state; };
+struct Packet_HIT_S2C { unsigned int damage; };
+struct Packet_BLOCK_S2C { unsigned int blockID, block_x, block_y; };
