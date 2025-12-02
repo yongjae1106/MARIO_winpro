@@ -4,40 +4,50 @@
 enum PacketType : unsigned int
 {
     // C2S (Client to Server)
-    PKT_MOVE = 1,
-    PKT_ATTACK = 2,
+    PKT_INPUT = 1,
 
     // S2C (Server to Client)
-    PKT_PLAYER_STATE = 100, // 개별 플레이어의 전체 상태 정보
-    PKT_MONSTER_STATE = 101, // 몬스터의 상태 정보
+    PKT_PLAYER_STATE = 100,
+    PKT_MONSTER_STATE = 101,
     PKT_HIT = 102,
     PKT_BLOCK_ATTACK = 103,
-    PKT_PLAYER_JOIN = 104, // 새로운 플레이어 접속
-    PKT_PLAYER_LEAVE = 105, // 플레이어 접속 종료
+    PKT_PLAYER_JOIN = 104,
+    PKT_PLAYER_LEAVE = 105,
 };
 
 struct PacketHeader
 {
     unsigned int totalLength;
-    unsigned int type;         // PacketType
+    unsigned int type;
 };
 
-
-struct Packet_MOVE_C2S
+// -------------------------------
+// 클라이언트 입력 통합 패킷
+// -------------------------------
+enum class InputType : unsigned int
 {
+    NONE = 0,
+    MOVE = 1,
+    ATTACK = 2,
+};
+
+struct Packet_INPUT_C2S
+{
+    InputType inputType;
+
+    // move
     unsigned int x, y;
     unsigned int vx, vy;
     unsigned int state;
-};
 
-
-struct Packet_ATTACK_C2S
-{
+    // attack
     unsigned int targetID;
     unsigned int damage;
 };
 
-
+// -------------------------------
+// 서버 → 클라 공용 패킷 형식
+// -------------------------------
 struct Packet_MOVE_S2C
 {
     unsigned int playerID;
@@ -46,17 +56,11 @@ struct Packet_MOVE_S2C
     unsigned int state;
 };
 
-// -------------------------------
-// HIT ��Ŷ (���� �� Ŭ��)
-// -------------------------------
 struct Packet_HIT_S2C
 {
     unsigned int damage;
 };
 
-// -------------------------------
-// BLOCK_ATTACK ��Ŷ (���� �� Ŭ��)
-// -------------------------------
 struct Packet_BLOCK_S2C
 {
     unsigned int blockID;
