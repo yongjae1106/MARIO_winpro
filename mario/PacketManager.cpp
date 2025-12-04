@@ -2,33 +2,33 @@
 #include <cstring>
 #include <iostream>
 
-PacketManager* PacketManager::GetInstance() {
+PacketManager* PacketManager::GetInstance()
+{
     static PacketManager instance;
     return &instance;
 }
 
-PacketManager::PacketManager() {
-    std::cout << "PacketManager Initialized (Client)\n";
+PacketManager::PacketManager()
+{
+    std::cout << "[Client] PacketManager initialized\n";
 }
 
 void PacketManager::ProcessReceivedData(std::vector<char>& buffer)
 {
-    while (true)
+    while (buffer.size() >= sizeof(PacketHeader))
     {
-        if (buffer.size() < sizeof(PacketHeader))
-            break;
-
         PacketHeader header;
         memcpy(&header, buffer.data(), sizeof(PacketHeader));
 
-        if (header.totalLength < sizeof(PacketHeader) || buffer.size() < header.totalLength)
+        if (buffer.size() < header.totalLength)
             break;
 
         PacketData newPacket;
         newPacket.type = header.type;
-        newPacket.data.resize(header.totalLength - sizeof(PacketHeader));
 
+        newPacket.data.resize(header.totalLength - sizeof(PacketHeader));
         memcpy(newPacket.data.data(), buffer.data() + sizeof(PacketHeader), newPacket.data.size());
+
         m_receivedPackets.push(newPacket);
 
         buffer.erase(buffer.begin(), buffer.begin() + header.totalLength);
@@ -40,17 +40,15 @@ bool PacketManager::TryGetPacket(PacketData& outPacket)
     return m_receivedPackets.try_pop(outPacket);
 }
 
-// ---------- Serialize (Client ¡æ Server) ----------
-
-unsigned int PacketManager::Serialize_KeyDown(char* buffer, unsigned int keyCode)
+// ---- Serialize for key event ----
+unsigned int PacketManager::Serialize_KEY_EVENT(char* buffer, unsigned int keyCode, PacketType type)
 {
-    PacketHeader header;
-    header.type = PKT_KEY_DOWN;
-
     Packet_KEY_EVENT_C2S pkt;
     pkt.keyCode = keyCode;
 
-    header.totalLength = sizeof(PacketHeader) + sizeof(pkt);
+    PacketHeader header;
+    header.type = (unsigned int)type;
+    header.totalLength = sizeof(PacketHeader) + sizeof(Packet_KEY_EVENT_C2S);
 
     memcpy(buffer, &header, sizeof(header));
     memcpy(buffer + sizeof(header), &pkt, sizeof(pkt));
@@ -58,18 +56,7 @@ unsigned int PacketManager::Serialize_KeyDown(char* buffer, unsigned int keyCode
     return header.totalLength;
 }
 
-unsigned int PacketManager::Serialize_KeyUp(char* buffer, unsigned int keyCode)
+int PacketManager::TryParse(const std::vector<char>& buffer)
 {
-    PacketHeader header;
-    header.type = PKT_KEY_UP;
-
-    Packet_KEY_EVENT_C2S pkt;
-    pkt.keyCode = keyCode;
-
-    header.totalLength = sizeof(PacketHeader) + sizeof(pkt);
-
-    memcpy(buffer, &header, sizeof(header));
-    memcpy(buffer + sizeof(header), &pkt, sizeof(pkt));
-
-    return header.totalLength;
+    return 0; // no direct use
 }
