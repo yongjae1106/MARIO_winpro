@@ -1,3 +1,4 @@
+@ - 1, 562 + 0, 0 @@
 #include "Player.h"
 #include "GameWorld.h"
 #include "monsters/Bowser.h"
@@ -54,7 +55,7 @@ void Player::reset() {
     _superGodModeEndTime = 0;
 }
 
-void Player::update(GameWorld& world) 
+void Player::update(GameWorld& world)
 {
     if (world.getGameState_trans() == GameState_Trans::GAME_BIG_TRANS ||
         world.getGameState_trans() == GameState_Trans::GAME_FLOWER_TRANS ||
@@ -63,7 +64,7 @@ void Player::update(GameWorld& world)
         setVx(0);
         setVy(0);
         setWalking(false);
-        setSuperGodMode(true); // ë³€ì‹  ì¤‘ ë¬´ì  í™œì„±í™”
+        setSuperGodMode(true); // º¯½Å Áß ¹«Àû È°¼ºÈ­
         return; // Skip all other updates during transformation
     }
 
@@ -146,11 +147,11 @@ void Player::updateCooldown()
 
 }
 
-void Player::move(GameWorld& world) 
+void Player::move(GameWorld& world)
 {
     if (world.getPlayer().isDead()) return;
     const bool* keyState = world.getKeyState();
-    // ë””ë²„ê·¸: move í•¨ìˆ˜ ì‹œì‘ ì‹œ í‚¤ ìƒíƒœ ë° í˜„ì¬ vx ì¶œë ¥
+    // µğ¹ö±×: move ÇÔ¼ö ½ÃÀÛ ½Ã Å° »óÅÂ ¹× ÇöÀç vx Ãâ·Â
     TCHAR debugMessage[256];
     _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), keyState[VK_LEFT], keyState[VK_RIGHT], getVx());
     OutputDebugString(debugMessage);
@@ -160,7 +161,7 @@ void Player::move(GameWorld& world)
         direction = 0;
         setWalking(true);
     }
-    else if (keyState[VK_RIGHT] && !keyState[VK_LEFT]) 
+    else if (keyState[VK_RIGHT] && !keyState[VK_LEFT])
     {
         setVx(5);
         direction = 1;
@@ -168,16 +169,16 @@ void Player::move(GameWorld& world)
     }
     else if (keyState[VK_LEFT] && keyState[VK_RIGHT])
     {
-        // ë‘˜ ë‹¤ ëˆŒë¦° ê²½ìš° ë§ˆì§€ë§‰ ë°©í–¥ ìœ ì§€
+        // µÑ ´Ù ´­¸° °æ¿ì ¸¶Áö¸· ¹æÇâ À¯Áö
         setVx((getDirection() == 0 ? -5 : 5));
         setWalking(true);
     }
-    else 
+    else
     {
         setWalking(false);
         setVx(0); // This is the deceleration
         walk_motion = 0;
-        // ë””ë²„ê·¸: ELSE ë¸”ë¡ ì‹¤í–‰ë¨, Vxë¥¼ 0ìœ¼ë¡œ ì„¤ì •
+        // µğ¹ö±×: ELSE ºí·Ï ½ÇÇàµÊ, Vx¸¦ 0À¸·Î ¼³Á¤
         OutputDebugString(L"Player::move - ELSE block executed. Setting Vx to 0.\n");
     }
 
@@ -185,14 +186,14 @@ void Player::move(GameWorld& world)
     {
         switch (currentState)
         {
-            case (PlayerState::Small):
-            {
-                //world.playSound("jump-small");
-                break;
-            }
-            default: {
-                //world.playSound("jump-super");
-            }
+        case (PlayerState::Small):
+        {
+            //world.playSound("jump-small");
+            break;
+        }
+        default: {
+            //world.playSound("jump-super");
+        }
         }
         setVy(-20);
         setJumping(true);
@@ -222,7 +223,7 @@ void Player::move(GameWorld& world)
         _superGodModeEndTime = GetTickCount() + (m_tino_attack_motion_timer * (3000 / 60)); // Invincibility duration based on motion timer
     }
 
-    // ë””ë²„ê·¸: ì…ë ¥ ì²˜ë¦¬ í›„ Vx ê°’ ì¶œë ¥
+    // µğ¹ö±×: ÀÔ·Â Ã³¸® ÈÄ Vx °ª Ãâ·Â
     _stprintf_s(debugMessage, _T("Player::move - After logic: Vx: %d\n"), getVx());
     OutputDebugString(debugMessage);
 }
@@ -453,7 +454,7 @@ void Player::addLife(int count) {
 DamageResult Player::calculateDamageResult(int damage) const {
     if (isStarGodMode() || isSuperGodMode()) return DamageResult::NoDamage; // Invincible
 
-    if (isBig()) 
+    if (isBig())
     {
         return DamageResult::Shrunk;
     }
@@ -461,18 +462,18 @@ DamageResult Player::calculateDamageResult(int damage) const {
     {
         return DamageResult::Shrunk;
     }
-    else 
+    else
     {
         return DamageResult::Died;
     }
 }
 
-bool Player::isBig() const 
+bool Player::isBig() const
 {
     return currentState == PlayerState::Big || currentState == PlayerState::Flower || currentState == PlayerState::Tino;
 }
 
-bool Player::isFlower() const 
+bool Player::isFlower() const
 {
     return currentState == PlayerState::Flower;
 }
@@ -481,33 +482,33 @@ bool Player::isTino() const {
     return currentState == PlayerState::Tino;
 }
 
-void Player::setStarGodMode(bool godMode) 
+void Player::setStarGodMode(bool godMode)
 {
-    if (godMode) 
+    if (godMode)
     {
         _isStarGodModeActive = true;
         _starGodModeEndTime = GetTickCount() + 10000; // 10 seconds of god mode
-    } 
-    else 
+    }
+    else
     {
         _isStarGodModeActive = false;
         _starGodModeEndTime = 0;
     }
 }
 
-bool Player::isStarGodMode() const 
+bool Player::isStarGodMode() const
 {
     return _isStarGodModeActive && (GetTickCount() < _starGodModeEndTime);
 }
 
-void Player::setSuperGodMode(bool godMode) 
+void Player::setSuperGodMode(bool godMode)
 {
-    if (godMode) 
+    if (godMode)
     {
         _isSuperGodModeActive = true;
         _superGodModeEndTime = GetTickCount() + 3000; // 3 seconds of god mode by default
-    } 
-    else 
+    }
+    else
     {
         _isSuperGodModeActive = false;
         _superGodModeEndTime = 0;
@@ -536,7 +537,7 @@ void Player::tinoAttack(GameWorld& world) {
         int monsterScreenX = monster->getX() - world.getCameraX();
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
-                        monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
+            monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
             //world.playSound("kick");
 
             // Handle Bowser specific logic
@@ -544,19 +545,18 @@ void Player::tinoAttack(GameWorld& world) {
             if (bowserMonster)
             {
                 monster->takeDamage(world, 10); // Deal more damage to Bowser
-            } 
-            else 
+            }
+            else
             {
                 // Knockback for non-Bowser monsters
                 monster->setVy(-15); // Make monster fly upwards
                 monster->setFalling(true);
             }
-            
+
             // Add visual feedback
             world.spawnTinoFireballEffect(monster->getX(), monster->getY(), 0, direction);
         }
     }
 }
-
 
 
