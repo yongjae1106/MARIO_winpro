@@ -7,7 +7,7 @@ public:
     PlayerFireball(int x, int y, int vx);
 
     void update(GameWorld& world) override;
-    void render(HDC hdc, int cameraX) override;
+    //void render(HDC hdc, int cameraX) override;
 
     bool isFading() const { return fade; }
     void setFade(bool isFading) { fade = isFading; }

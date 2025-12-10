@@ -1,4 +1,5 @@
 #pragma once
+
 #include "PacketInfo.h"
 #include "NetworkManager/ThreadSafeQueue.h" // ThreadSafeQueue를 사용하기 위해 추가
 #include <vector>
@@ -42,7 +43,9 @@ private:
     ThreadSafeQueue<PacketData> m_receivedPackets;
 
     // 패킷 처리 함수들 (이들은 ProcessReceivedData 내부에서 호출될 수 있습니다)
-    void OnMove(const Packet_MOVE_S2C& pkt);
+    // [수정] Packet_MOVE_S2C -> Packet_PLAYER_STATE_S2C 로 변경
+    // (사실 GameWorld에서 직접 처리하므로 이 함수들은 현재 사용되지 않지만, 컴파일 오류 방지를 위해 수정)
+    void OnPlayerState(const Packet_PLAYER_STATE_S2C& pkt);
     void OnHit(const Packet_HIT_S2C& pkt);
     void OnBlock(const Packet_BLOCK_S2C& pkt);
 

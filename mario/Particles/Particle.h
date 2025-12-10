@@ -1,5 +1,5 @@
 #pragma once
-
+#include <winsock2.h>
 #include <memory>
 
 class GameWorld; // Forward declaration

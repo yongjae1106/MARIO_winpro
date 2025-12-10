@@ -1,6 +1,7 @@
 #pragma once
 
 #define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
+#include <winsock2.h>
 #include <windows.h>
 #include <gdiplus.h>
 #include <mmsystem.h>

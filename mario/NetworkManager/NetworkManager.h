@@ -1,7 +1,10 @@
 #pragma once
+// [중요] 이 매크로를 최상단에 정의하여 windows.h가 구형 winsock.h를 포함하지 않게 막습니다.
+#define WIN32_LEAN_AND_MEAN
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h> // 반드시 winsock2.h 뒤에 와야 함
 
 #include <iostream>
 #include <string>

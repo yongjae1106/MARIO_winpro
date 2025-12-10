@@ -1,3 +1,4 @@
+
 #include "GameWorld.h"
 #include "monsters/NormalGoomba.h"
 #include "monsters/RedGoomba.h"
@@ -18,17 +19,17 @@
 #include "Particles/Particle.h"
 #include "monsters/Turtle.h"
 #include <memory>
-#include <tchar.h> // Added for _stprintf_s and OutputDebugString
+#include <tchar.h>
+
 
 GameWorld& GameWorld::getInstance() {
-    static GameWorld instance; // CRT 초기화 후 안전하게 생성
+    static GameWorld instance;
     return instance;
 }
 
-// Private constructor for Singleton pattern
 GameWorld::GameWorld()
 {
-    m_localPlayerId = -1; // Initialize local player ID
+    m_localPlayerId = -1;
     gameState = GameState::GAME_TITLE;
     cameraX = 0;
     stage = 1;
@@ -44,14 +45,10 @@ GameWorld::GameWorld()
     gameClearText = false;
 }
 
-// Private destructor for Singleton pattern
 GameWorld::~GameWorld() {
-    // Clean up resources if necessary
 }
 
 bool GameWorld::isSolidTile(int tileValue) const {
-    // Based on mario_old/data.h comments and fireball collision logic
-    // 0: hole, 2: coin, 7: flag, 8: flag top are NOT solid for fireballs
     return !(tileValue == 0 || tileValue == 2 || tileValue == 7 || tileValue == 8);
 }
 
@@ -61,9 +58,15 @@ void GameWorld::sound_init(HWND hwnd) {
 
 void GameWorld::init() {
     m_gameRender.init();
-    m_networkManager.Init(); // NetworkManager 초기화 (WSAStartup 등)
-    m_networkManager.Connect("127.0.0.1", 12345); // 임시 IP 및 포트
-    m_networkManager.Start(); // 네트워크 수신/송신 스레드 시작
+
+    // Winsock 및 네트워크 초기화
+    if (m_networkManager.Init()) {
+        // [수정] 서버 포트 9000으로 연결
+        if (m_networkManager.Connect("127.0.0.1", 9000)) {
+            // 연결 성공 시 로그 출력 등을 할 수 있음
+        }
+    }
+    m_networkManager.Start(); // 수신 스레드 시작
     m_sound.loadAllSounds();
 }
 
@@ -76,117 +79,127 @@ void GameWorld::stopAllSounds() {
 }
 
 void GameWorld::updateAnimations() {
-    // Loop through all players and update their animations
     for (auto& pair : m_players) {
         pair.second.updateAnimation();
     }
-    m_global_animation_frame_counter++; // Increment global animation frame counter
+    m_global_animation_frame_counter++;
 }
 
 void GameWorld::update() {
-    // This is the main update function for GameWorld
-    // It should orchestrate all game logic updates
     cameraUpdate();
 
-    // 1. Process incoming network packets from PacketManager
+    // 1. 서버로부터 수신된 패킷 처리
     PacketData packet;
     while (PacketManager::GetInstance()->TryGetPacket(packet)) {
         switch (packet.type) {
-            case PKT_PLAYER_STATE: { 
-                PlayerDataPacket player_data;
-                if (packet.data.size() == sizeof(PlayerDataPacket)) {
-                    memcpy(&player_data, packet.data.data(), sizeof(PlayerDataPacket));
-                    auto& playerToUpdate = m_players[player_data.playerID]; 
-                    playerToUpdate.updateStateFromServer(player_data);
+        case PKT_PLAYER_STATE: {
+            PlayerDataPacket player_data;
+            if (packet.data.size() == sizeof(PlayerDataPacket)) {
+                memcpy(&player_data, packet.data.data(), sizeof(PlayerDataPacket));
+
+                // 내 플레이어 ID가 설정되지 않았다면 최초 패킷의 ID를 내 ID로 설정 (임시)
+                // 실제로는 로그인 성공 패킷(PKT_LOGIN_OK) 등을 통해 ID를 받아야 정확함
+                if (m_localPlayerId == -1) {
+                    m_localPlayerId = player_data.playerID;
                 }
-                break;
+
+                // 맵에 없으면 추가, 있으면 업데이트
+                m_players[player_data.playerID].updateStateFromServer(player_data);
             }
-            case PKT_MONSTER_STATE: {
-                MonsterDataPacket monster_data;
-                if (packet.data.size() == sizeof(MonsterDataPacket)) {
-                    memcpy(&monster_data, packet.data.data(), sizeof(MonsterDataPacket));
-                    
-                    auto it = m_monsters.find(monster_data.monsterID);
+            break;
+        }
+        case PKT_MONSTER_STATE: {
+            // [수정] 몬스터 동기화 로직 구현
+            // 서버에서 보낸 구조체와 일치해야 함 (PacketInfo.h 참고)
+            // 현재 PacketInfo.h에 struct MonsterDataPacket 정의 필요 (위 1단계에서 추가함)
+
+            // 패킷 데이터 크기 확인 (헤더 제외한 데이터)
+            // 주의: 서버가 vector<MonsterDataPacket>을 보내는지, 단일 struct를 보내는지 확인 필요.
+            // 여기서는 단일 MonsterDataPacket을 가정합니다.
+            if (packet.data.size() >= sizeof(MonsterDataPacket)) {
+                MonsterDataPacket* mData = (MonsterDataPacket*)packet.data.data();
+                int count = packet.data.size() / sizeof(MonsterDataPacket);
+
+                for (int i = 0; i < count; ++i) {
+                    MonsterDataPacket& data = mData[i];
+
+                    auto it = m_monsters.find(data.monsterID);
                     if (it != m_monsters.end()) {
-                        // Existing monster, update its state
-                        it->second->updateStateFromServer(monster_data);
-                    } else {
-                        // New monster. We need a way to create the correct monster type.
-                        // This requires a "factory" pattern.
-                        // TODO: Implement a MonsterFactory to create different monster types based on 'monster_data.type'.
-                        // For now, we will just log that a new monster needs to be created.
-                        // m_monsters[monster_data.monsterID] = createMonsterFromPacket(monster_data);
+                        // 기존 몬스터 업데이트
+                        it->second->setX(data.x);
+                        it->second->setY(data.y);
+                        it->second->setVx(data.vx);
+                        it->second->setVy(data.vy);
+                        it->second->setAlive(data.isAlive);
+                    }
+                    else {
+                        // 새 몬스터 생성
+                        std::unique_ptr<Monster> newMonster = nullptr;
+                        switch ((Monster::MonsterType)data.type) {
+                        case Monster::MonsterType::NormalGoomba: newMonster = std::make_unique<NormalGoomba>(data.x, data.y); break;
+                        case Monster::MonsterType::RedGoomba:    newMonster = std::make_unique<RedGoomba>(data.x, data.y); break;
+                        case Monster::MonsterType::BlueGoomba:   newMonster = std::make_unique<BlueGoomba>(data.x, data.y); break;
+                        case Monster::MonsterType::GreenTurtle:  newMonster = std::make_unique<GreenTurtle>(data.x, data.y); break;
+                        case Monster::MonsterType::BrownTurtle:  newMonster = std::make_unique<BrownTurtle>(data.x, data.y); break;
+                        case Monster::MonsterType::AngelTurtle:  newMonster = std::make_unique<AngelTurtle>(data.x, data.y); break;
+                        case Monster::MonsterType::Bowser:       newMonster = std::make_unique<Bowser>(data.x, data.y); break;
+                        }
+                        if (newMonster) {
+                            // newMonster->setID(data.monsterID); // Monster 클래스에 ID 멤버가 있다면 설정
+                            m_monsters[data.monsterID] = std::move(newMonster);
+                        }
                     }
                 }
-                break;
             }
-            // TODO: Add cases for other packet types (item state, etc.)
-            default:
-                // printf("[Client] Unknown packet type received: %u\n", packet.type);
-                break;
+            break;
+        }
+        default:
+            break;
         }
     }
 
-    // 2. Handle local player input and send to server
-    Player* localPlayer = getLocalPlayer();
-    if (localPlayer) {
-        // TODO: Check keyState, decide on action (move, jump, attack).
-        // If an action occurs, create a C2S packet and send it.
-        // e.g., if (keyState[VK_LEFT]) { ... create and send CS_MOVE_PACKET ... }
-    }
-
-    // 3. Other update logic (e.g., local animations for all objects)
+    // 2. 로컬 애니메이션 업데이트
     for (auto& pair : m_players) {
-        pair.second.update(); // This calls updateAnimation() for each player
+        pair.second.update();
     }
 
-    // Update animations for Monsters, Items, and Particles
+    // 몬스터, 아이템, 파티클의 로컬 업데이트 (애니메이션 등)
+    // 위치는 서버에서 받지만, 애니메이션 프레임 등은 클라에서 돌려야 함
     for (auto& pair : m_monsters) {
-        pair.second->update();
+        // pair.second->update(); // 클라 update는 물리 연산을 포함하므로, 
+                                  // 서버 동기화 시에는 animationUpdate만 하거나 
+                                  // 물리 연산을 끄고 렌더링 상태만 갱신해야 함.
+                                  // 여기서는 일단 주석 처리 혹은 별도 함수(updateAnimation) 필요
     }
-    for (auto& item : items) {
-        item->update();
-    }
-    // TODO: Add an update() method to the Particle base class and uncomment the following lines.
-    // for (auto& particle : particles) {
-    //     particle->update();
-    // }
+
     newParticles_insertTo_Particles();
 }
 
 void GameWorld::cameraUpdate()
 {
-    // cameraX is a GameWorld member, no need to re-declare
-    // maxCameraX is only used in this function, declare it here
     double maxCameraX;
+    const Player* localPlayer = getLocalPlayer();
 
-    if (getLocalPlayer() && getLocalPlayer()->getGameState_trans() == GameState_Trans::GAME_NONE)
+    if (localPlayer && localPlayer->getGameState_trans() == GameState_Trans::GAME_NONE)
     {
-        const Player* localPlayer = getLocalPlayer();
-        if (!localPlayer) return; // Do nothing if there is no local player
-
         double playerWorldX = localPlayer->getX();
 
-        // Camera does not scroll until player passes half screen
         if (playerWorldX < SCREEN_WIDTH / 2.0) {
             cameraX = 0;
-        } else {
-            // Once player passes center, camera tries to center on player.
+        }
+        else {
             cameraX = playerWorldX - (SCREEN_WIDTH / 2.0);
         }
 
-        // Clamp camera to the rightmost boundary of the map.
         maxCameraX = (double)MAP_WIDTH * TILE_SIZE - SCREEN_WIDTH;
-        if (maxCameraX < 0) { // Handle cases where map is smaller than screen
+        if (maxCameraX < 0) {
             maxCameraX = 0;
-            cameraX = 0; // If map is smaller, camera should probably just stay at 0
+            cameraX = 0;
         }
 
         if (cameraX > maxCameraX) {
             cameraX = maxCameraX;
         }
-
-        // Clamp camera to prevent negative values (defensive)
         if (cameraX < 0) {
             cameraX = 0;
         }
@@ -200,23 +213,23 @@ void GameWorld::render(HDC hdc) {
 void GameWorld::handleKeyDown(WPARAM wParam) {
     if (wParam < 256) {
         keyState[wParam] = true;
-        
-        // Send key down event to server
+
         Packet_KEY_EVENT_C2S keyEvent;
         keyEvent.keyCode = wParam;
         char buffer[sizeof(PacketHeader) + sizeof(Packet_KEY_EVENT_C2S)];
         unsigned int packetSize = PacketManager::GetInstance()->Serialize_KEY_EVENT(buffer, keyEvent, PKT_KEY_DOWN);
         m_networkManager.Send(std::string(buffer, packetSize));
     }
-    // Title screen navigation can remain client-side
+
+    // 타이틀 화면 입력 처리
     if (gameState == GameState::GAME_TITLE) {
         switch (wParam) {
-            case VK_UP: if (title_select == 1) title_select = 0; break;
-            case VK_DOWN: if (title_select == 0) title_select = 1; break;
-            case VK_RETURN:
-                if (title_select == 0) gameState = GameState::GAME_START;
-                else exit(1);
-                break;
+        case VK_UP: if (title_select == 1) title_select = 0; break;
+        case VK_DOWN: if (title_select == 0) title_select = 1; break;
+        case VK_RETURN:
+            if (title_select == 0) gameState = GameState::GAME_START;
+            else exit(1);
+            break;
         }
     }
 }
@@ -224,8 +237,7 @@ void GameWorld::handleKeyDown(WPARAM wParam) {
 void GameWorld::handleKeyUp(WPARAM wParam) {
     if (wParam < 256) {
         keyState[wParam] = false;
-        
-        // Send key up event to server
+
         Packet_KEY_EVENT_C2S keyEvent;
         keyEvent.keyCode = wParam;
         char buffer[sizeof(PacketHeader) + sizeof(Packet_KEY_EVENT_C2S)];
@@ -239,12 +251,10 @@ void GameWorld::loadStage(int newStage) {
     m_monsters.clear();
     items.clear();
     particles.clear();
-    // setStage_time(400); // Server will manage time
-    setStageBGM(); // Client still plays BGM
+    setStageBGM();
     if (stage == 1) currentMap = map1;
     else if (stage == 2) currentMap = map2;
     else if (stage == 3) currentMap = map3;
-    // spawnMonsters(); // Removed, server-side
 }
 
 // --- Player Management ---
@@ -282,8 +292,6 @@ void GameWorld::setLocalPlayerId(int id)
 }
 // --- End Player Management ---
 
-
-// These getters are declared in GameWorld.h and defined here.
 const int(*GameWorld::getCurrentMap() const)[MAP_WIDTH] { return currentMap; }
 int GameWorld::getStage() const { return stage; }
 double GameWorld::getCameraX() const { return cameraX; }
@@ -316,7 +324,6 @@ GameState_Trans GameWorld::getGameState_trans() const
     return p ? p->getGameState_trans() : GameState_Trans::GAME_NONE;
 }
 
-// The following setters are declared in GameWorld.h and defined here.
 void GameWorld::setGameState(GameState state) { gameState = state; }
 void GameWorld::setStage_time(int time) { stage_time = time; }
 void GameWorld::setGameOverTitleDead(bool gameover) { gameover_TitleDead = gameover; }
@@ -328,9 +335,12 @@ void GameWorld::newParticles_insertTo_Particles() {
     }
 }
 
-
-
 void GameWorld::setStageBGM() {
     if (stage == 1 || stage == 2) playSound("GroundTheme", true);
     else if (stage == 3) playSound("CastleTheme", true);
+}
+
+// 클라_GameWorld.cpp 맨 아래에 추가
+GameState GameWorld::getGameState() const {
+    return gameState;
 }

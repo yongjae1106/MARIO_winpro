@@ -6,6 +6,6 @@ Mushroom::Mushroom(int x, int y)
     setVx(1);
 }
 
-void Mushroom::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}
+//void Mushroom::render(HDC hdc, int cameraX) {
+//    // Rendering will be handled by GameRender
+//}

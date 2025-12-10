@@ -1,5 +1,5 @@
 #pragma once
-
+#include <winsock2.h>
 #include "NetworkManager/NetworkManager.h"
 #include "Player.h"
 #include "monsters/Monster.h"
@@ -69,6 +69,17 @@ public:
     const std::map<int, Player>& getPlayers() const;
     void setLocalPlayerId(int id);
     // --- End Player Management ---
+
+    // [추가] GameRender 호환성을 위한 헬퍼 함수 (로컬 플레이어 반환)
+    const Player& getPlayer() const {
+        const Player* p = getLocalPlayer();
+        // 플레이어가 아직 없으면 더미 반환 처리가 필요할 수 있으나, 보통 로딩 후엔 존재함
+        if (!p) {
+            static Player dummy;
+            return dummy;
+        }
+        return *p;
+    }
 
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;

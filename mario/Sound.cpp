@@ -1,3 +1,8 @@
+// [중요] windows.h가 winsock.h를 포함하지 않도록 막습니다.
+#define WIN32_LEAN_AND_MEAN
+// [중요] winsock2.h를 가장 먼저 포함합니다.
+#include <winsock2.h>
+
 #include "Sound.h"
 #include <iostream>
 

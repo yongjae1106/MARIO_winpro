@@ -7,6 +7,6 @@ Star::Star(int x, int y)
     setVy(-10);
 }
 
-void Star::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}
+//void Star::render(HDC hdc, int cameraX) {
+//    // Rendering will be handled by GameRender
+//}

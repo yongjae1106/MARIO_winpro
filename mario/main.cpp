@@ -1,3 +1,9 @@
+#define _CRT_SECURE_NO_WARNINGS
+// [해결책] 디버그 관련 함수들을 위한 헤더와 라이브러리 강제 포함
+#include <crtdbg.h> 
+#pragma comment(lib, "ucrtd.lib")
+#pragma comment(lib, "vcruntimed.lib")
+
 #define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
 
 #include "GameWorld.h"
@@ -5,7 +11,7 @@
 #include "Resource_WINAPI/resource1.h"
 
 // Global variables
-GameWorld gameWorld;
+//GameWorld gameWorld;
 GameRender gameRender;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {

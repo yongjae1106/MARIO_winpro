@@ -84,9 +84,11 @@ unsigned int PacketManager::Serialize_KEY_EVENT(char* buffer, const Packet_KEY_E
 // GameWorld가 TryGetPacket으로 PacketData를 받아 자체적으로 처리할 때 사용될 수 있습니다.
 // 여기서는 예시로 남겨두지만, 실제 구현에서는 GameWorld의 Update 함수 내에서 처리 로직을 구현하게 됩니다.
 // =============================
-void PacketManager::OnMove(const Packet_MOVE_S2C& pkt)
+// [수정] OnMove -> OnPlayerState 변경 (디버그 로그용)
+void PacketManager::OnPlayerState(const Packet_PLAYER_STATE_S2C& pkt)
 {
-    printf("[Client] Player %u moved to (%u,%u)\n", pkt.playerID, pkt.x, pkt.y);
+    // 실제 로직은 GameWorld::update()에서 수행하므로 여기는 로그만 남김
+    // printf("[Client] Player State Update: ID %d at (%d, %d)\n", pkt.playerID, pkt.x, pkt.y);
 }
 
 void PacketManager::OnHit(const Packet_HIT_S2C& pkt)

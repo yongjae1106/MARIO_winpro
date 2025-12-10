@@ -321,9 +321,24 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
 }
 Gdiplus::Image* GameRender::loadImage(const WCHAR* path) {
     Gdiplus::Image* image = new Gdiplus::Image(path);
+
+    // 로딩 실패 여부 확인
     if (image->GetLastStatus() != Gdiplus::Ok) {
-        MessageBox(NULL, L"Image loading failed!", L"Error", MB_OK);
-        exit(1);
+        // [수정] exit(1)을 제거하고, 문제의 파일명을 메시지 박스로 출력합니다.
+        std::wstring msg = L"이미지 로드 실패! 경로를 확인하세요:\n";
+        msg += path;
+
+        // 상세 경로까지 포함해서 출력 (디버깅용)
+        wchar_t fullPath[MAX_PATH];
+        GetFullPathName(path, MAX_PATH, fullPath, NULL);
+        msg += L"\n\n[절대 경로]\n";
+        msg += fullPath;
+
+        MessageBox(NULL, msg.c_str(), L"리소스 오류 (Resource Error)", MB_OK | MB_ICONERROR);
+
+        // 메모리 해제 후 nullptr 반환 (프로그램이 터지는 것 방지)
+        delete image;
+        return nullptr;
     }
     return image;
 }

@@ -7,6 +7,6 @@ Flower::Flower(int x, int y)
     setVy(0);
 }
 
-void Flower::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}
+//void Flower::render(HDC hdc, int cameraX) {
+//    // Rendering will be handled by GameRender
+//}

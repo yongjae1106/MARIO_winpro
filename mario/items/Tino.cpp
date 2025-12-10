@@ -7,6 +7,6 @@ Tino::Tino(int x, int y)
     setVy(0);
 }
 
-void Tino::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}
+//void Tino::render(HDC hdc, int cameraX) {
+//    // Rendering will be handled by GameRender
+//}

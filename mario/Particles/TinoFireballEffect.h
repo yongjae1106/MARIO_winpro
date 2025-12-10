@@ -8,7 +8,7 @@ public:
     TinoFireballEffect(int x, int y, int vx, int direction);
 
     void update(GameWorld& world) override;
-    void render(HDC hdc, int cameraX) override;
+    //void render(HDC hdc, int cameraX) override;
 
     int getTimer() const { return timer; }
 

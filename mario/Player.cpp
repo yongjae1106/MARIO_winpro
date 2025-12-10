@@ -138,3 +138,10 @@ GameState_Trans Player::getGameState_trans() const {
 // reset(), update(), updateCooldown(), grow(), shrink(), gainStar(), gainFlower(), gainTino(), addLife(),
 // tinoAttack(), calculateDamageResult(), setStarGodMode(), setSuperGodMode(), move()
 // Also removed GameState_Trans related getters/setters and member variable.
+
+
+// 클라_Player.cpp 에 추가
+void Player::update() {
+    // 클라이언트는 서버 패킷으로만 움직이므로, 이 함수는 비워둡니다.
+    // 필요하다면 애니메이션 타이머 갱신 정도만 수행합니다.
+}

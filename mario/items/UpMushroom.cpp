@@ -6,6 +6,6 @@ UpMushroom::UpMushroom(int x, int y)
     setVx(1);
 }
 
-void UpMushroom::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}
+//void UpMushroom::render(HDC hdc, int cameraX) {
+//    // Rendering will be handled by GameRender
+//}
