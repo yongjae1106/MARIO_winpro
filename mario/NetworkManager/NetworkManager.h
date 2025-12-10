@@ -2,11 +2,12 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
 #include <iostream>
 #include <string>
-#include <thread> // For std::thread
-#include <atomic> // For std::atomic<bool>
-#include "ThreadSafeQueue.h" // For ThreadSafeQueue
+#include <thread>
+#include <atomic>
+#include "ThreadSafeQueue.h"
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -33,8 +34,7 @@ public:
     void Send(const std::string& data);
 
     // 데이터 수신 (큐에서 트라이 팝)
-    bool TryGetReceivedData(std::string& outData);
-
+    // bool TryGetReceivedData(std::string& outData); // receiveQueue 제거로 불필요
     bool IsConnected() const;
 
 private:
@@ -45,11 +45,16 @@ private:
     std::atomic<bool> isRunning;
 
     ThreadSafeQueue<std::string> sendQueue;
-    ThreadSafeQueue<std::string> receiveQueue;
+    // ThreadSafeQueue<std::string> receiveQueue; // PacketManager가 관리하도록 변경
+
 
     // 네트워크 스레드가 실행할 메인 루프
     void NetworkLoop();
 
     // 소켓을 논블로킹 모드로 설정
     bool SetSocketNonBlocking(SOCKET sock);
+
+    // 패킷 재조합을 위한 내부 버퍼
+    std::vector<char> m_internalRecvBuffer;
+    size_t m_internalRecvBufferSize;
 };

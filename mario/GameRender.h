@@ -1,11 +1,20 @@
 #pragma once
 
+#define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
 #include <windows.h>
 #include <gdiplus.h>
 #include <mmsystem.h>
 #include <map>
 #include <string>
 #include <memory>
+
+// Forward declarWWation
+namespace Gdiplus {
+    class Image;
+    class Graphics;
+    class Font;
+    class PrivateFontCollection;
+}
 
 class GameWorld;
 class Player;

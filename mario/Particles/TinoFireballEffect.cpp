@@ -22,7 +22,3 @@ void TinoFireballEffect::update(GameWorld& world) {
         OutputDebugString(_T("TinoFireballEffect: setActive(false) called.\n"));
     }
 }
-
-void TinoFireballEffect::render(HDC hdc, int cameraX) {
-    // Rendering is handled by GameRender
-}

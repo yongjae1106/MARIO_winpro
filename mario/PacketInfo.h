@@ -12,12 +12,12 @@ enum PacketType : unsigned int
     PKT_KEY_UP = 2,   // Key up event
 
     // S2C (Server to Client)
-    PKT_PLAYER_STATE = 100, // °³º° ÇÃ·¹ÀÌ¾îÀÇ ÀüÃ¼ »óÅÂ Á¤º¸
-    PKT_MONSTER_STATE = 101, // ¸ó½ºÅÍÀÇ »óÅÂ Á¤º¸
+    PKT_PLAYER_STATE = 100, // ê°œë³„ í”Œë ˆì´ì–´ì˜ ì „ì²´ ìƒíƒœ ì •ë³´
+    PKT_MONSTER_STATE = 101, // ëª¬ìŠ¤í„°ì˜ ìƒíƒœ ì •ë³´
     PKT_HIT = 102,
     PKT_BLOCK_ATTACK = 103,
-    PKT_PLAYER_JOIN = 104, // »õ·Î¿î ÇÃ·¹ÀÌ¾î Á¢¼Ó
-    PKT_PLAYER_LEAVE = 105, // ÇÃ·¹ÀÌ¾î Á¢¼Ó Á¾·á
+    PKT_PLAYER_JOIN = 104, // ìƒˆë¡œìš´ í”Œë ˆì´ì–´ ì ‘ì†
+    PKT_PLAYER_LEAVE = 105, // í”Œë ˆì´ì–´ ì ‘ì† ì¢…ë£Œ
 };
 
 struct PacketHeader

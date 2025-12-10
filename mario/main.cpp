@@ -1,9 +1,5 @@
-// <windows.h> 위에 "NetworkManager/NetworkManager.h" 를 include 하도록 순서를 바꾸었습니다.(오류 발생)
-#define WIN32_LEAN_AND_MEAN // Winsock 1 헤더 자동 포함 방지 (소켓 재정의 에러 해결)
+#define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
 
-#include "NetworkManager/NetworkManager.h"
-#include <windows.h>
-#include <ole2.h> // GDI+ 사용을 위해 OLE 헤더 수동 포함 (IStream 에러 해결)
 #include "GameWorld.h"
 #include "GameRender.h"
 #include "Resource_WINAPI/resource1.h"
@@ -11,8 +7,6 @@
 // Global variables
 GameWorld gameWorld;
 GameRender gameRender;
-
-NetworkManager networkManager;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
@@ -24,37 +18,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
         case WM_TIMER: {
             switch(wParam) {
-                case(1):
-                    gameWorld.update();
+                case 1:
+                    GameWorld::getInstance().update();
                     InvalidateRect(hWnd, NULL, FALSE);
                     break;
-                case(2):
-                    gameWorld.updateAnimations();
+                case 2:
+                    GameWorld::getInstance().updateAnimations();
                     break;
-                case(3):
-                    gameWorld.getPlayer().updateCooldown();
+                case 3:
                     break;
             }
             break;
         }
         case WM_KEYDOWN: {
-            gameWorld.handleKeyDown(wParam);
+            GameWorld::getInstance().handleKeyDown(wParam);
             break;
         }
         case WM_KEYUP: {
-            gameWorld.handleKeyUp(wParam);
+            GameWorld::getInstance().handleKeyUp(wParam);
             break;
         }
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
-            gameRender.render(hdc, gameWorld);
+            GameWorld::getInstance().getGameRender().render(hdc, GameWorld::getInstance());
             EndPaint(hWnd, &ps);
             break;
         }
         case WM_DESTROY: {
-            // 종료 시 연결 해제
-            networkManager.Disconnect();
             PostQuitMessage(0);
             break;
         }
@@ -78,17 +69,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 640,
         NULL, NULL, hInstance, NULL);
 
-    gameWorld.sound_init(hWnd);
+    GameWorld::getInstance().sound_init(hWnd);
 
-    gameWorld.init();
-    gameRender.init();
-
-    if (networkManager.Connect("127.0.0.1", 9000)) {
-        OutputDebugString(L"[Client] 서버 연결 성공!\n");
-    }
-    else {
-        OutputDebugString(L"[Client] 서버 연결 실패...\n");
-    }
+    GameWorld::getInstance().init();
+    GameWorld::getInstance().getGameRender().init();
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);

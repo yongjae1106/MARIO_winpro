@@ -11,6 +11,3 @@ void Fireball::update(GameWorld& world) {
     y += vy;
 }
 
-void Fireball::render(HDC hdc, int cameraX) {
-    // Rendering will be handled by GameRender
-}

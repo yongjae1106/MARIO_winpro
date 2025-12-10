@@ -1,15 +1,14 @@
 #pragma once
 
+#include "NetworkManager/NetworkManager.h"
 #include "Player.h"
 #include "monsters/Monster.h"
 #include "items/Item.h"
 #include "Particles/Particle.h"
-#include "GameRender.h"
 #include "Sound.h"
 #include <vector>
 #include <memory>
-#include <map> // 필수 추가
-#include <windows.h>
+#include "GameRender.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 640
@@ -17,8 +16,13 @@
 #define MAP_HEIGHT 15
 #define TILE_SIZE 40
 
-// Declaration for the global collision function to make it accessible across files
-bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
+enum class GameState_Trans
+{
+    GAME_NONE,
+    GAME_BIG_TRANS,
+    GAME_FLOWER_TRANS,
+    GAME_TINO_TRANS
+};
 
 enum class GameState
 {
@@ -29,151 +33,109 @@ enum class GameState
     GAME_CLEAR,
     GAME_OVER
 };
-enum class GameState_Trans
-{
-    GAME_NONE,
-    GAME_BIG_TRANS,
-    GAME_FLOWER_TRANS,
-    GAME_TINO_TRANS,
-};
 
-struct MonsterSpawnInfo {
-    Monster::MonsterType type;
-    int x;
-    int y;
-};
 
 class GameWorld {
 public:
-    GameWorld();
+    static GameWorld& getInstance();
+
+    // Delete copy constructor and assignment operator to prevent copying
+    GameWorld(const GameWorld&) = delete;
+    void operator=(const GameWorld&) = delete;
 
     bool isSolidTile(int tileValue) const;
 
     void init();
     void sound_init(HWND hwnd);
 
-    void update();
     void updateAnimations();
+    void update();
     void render(HDC hdc);
 
     void handleKeyDown(WPARAM wParam);
     void handleKeyUp(WPARAM wParam);
 
     void loadStage(int stage);
-    void resetForDeath();
 
     // Getter for the renderer to allow safe access from other classes
     GameRender& getGameRender() { return m_gameRender; }
 
-    void transUpdate();
     void cameraUpdate();
 
-    const Player& getPlayer() const;
-    Player& getPlayer();
+    // --- Player Management ---
+    Player* getLocalPlayer();
+    const Player* getLocalPlayer() const;
+    Player* getPlayerById(int id);
+    const std::map<int, Player>& getPlayers() const;
+    void setLocalPlayerId(int id);
+    // --- End Player Management ---
+
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;
     double getCameraX() const;
 
-    const std::vector<std::unique_ptr<Monster>>& getMonsters() const;
+    const std::map<int, std::unique_ptr<Monster>>& getMonsters() const;
     const std::vector<std::unique_ptr<Item>>& getItems() const;
     const std::vector<std::unique_ptr<Particle>>& getParticles() const;
     const std::vector<std::unique_ptr<Particle>>& getNewParticles() const;
 
     void newParticles_insertTo_Particles();
 
-    int getLife() const { return player.getLife(); }
-    int getCoin() const { return player.getCoin(); }
+    // Getters that now refer to the local player
+    int getLife() const;
+    int getCoin() const;
+    int getTinoCooldownSpace() const;
+
     int getStageTime() const { return stage_time; }
-    int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
     bool getGameClearText() const { return gameClearText; }
     bool getGameoverTitleDead () const { return gameover_TitleDead; }
+    GameState_Trans getGameState_trans() const;
+
     int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
 
     const bool* getKeyState() const;
     GameState getGameState() const;
-    GameState_Trans getGameState_trans() const;
+
     void setGameState(GameState state);
     void setGameState_trans(GameState_Trans state_trans);
     void setStage_time(int time);
-    void setStageBGM();
     void setGameOverTitleDead(bool gameover);
     void setdeadStartTime(int time);
 
-    void spawnItem(Item::ItemType type, int x, int y);
-    void spawnMonster(std::unique_ptr<Monster> monster);
-    void spawnParticle(std::unique_ptr<Particle> particle);
-    void spawnPlayerFireball(int x, int y, int vx);
-    void spawnTinoFireball(int x, int y, int vx, int direction);
-    void spawnTinoFireballEffect(int x, int y, int vx, int direction);
+    void setStageBGM();
 
     void playSound(const std::string& name, bool loop = false);
     void stopAllSounds();
 
     int title_select;
 
-    // 추가: 다른 플레이어 목록을 반환하는 함수 (GameRender에서 사용)
-    const std::map<int, Player>& GetRemotePlayers() const {
-        return m_remotePlayers;
-    }
-
 private:
+    GameWorld(); // Private constructor for Singleton pattern
+    ~GameWorld(); // Private destructor for Singleton pattern
+
     GameRender m_gameRender;
+    NetworkManager m_networkManager;
     Sound m_sound;
 
-private:
-    void ProcessPackets(); // 추가: 패킷 처리를 위한 내부 함수
+    // --- New Player Structure ---
+    std::map<int, Player> m_players;
+    int m_localPlayerId;
+    // --- End New Player Structure ---
 
-    void updatePlayer();
-    void updateMonsters();
-    void updateItems();
-    void updateParticles();
-    void checkCollisions();
-    void checkMonsterMapCollision();
-    void checkPlayerCoinCollision();
-    void checkPlayerMapCollision();
-    void checkPlayerMonsterCollision();
-    void checkPlayerItemCollision();
-    void checkParticleMonsterCollision();
-    void checkMonsterMonsterCollision();
-    void checkItemMapCollision();
-    void checkFlagCollision();
-    void checkClearCollision();
-    void spawnMonsters();
-    
-    void applyplayertakedamage();
-
-    void initMaps();
-    void initMonsterSpawns();
-    void initMap1();
-    void initMap2();
-    void initMap3();
-
-    void dead();
-    void resurrection();
-    void monster_reset();
-    void item_reset();
-
-
-    Player player;
-    std::vector<std::unique_ptr<Monster>> monsters;
+    std::map<int, std::unique_ptr<Monster>> m_monsters;
     std::vector<std::unique_ptr<Item>> items;
     std::vector<std::unique_ptr<Particle>> particles;
     std::vector<std::unique_ptr<Particle>> newParticles;
 
-    std::vector<MonsterSpawnInfo> stage1Monsters;
-    std::vector<MonsterSpawnInfo> stage2Monsters;
-    std::vector<MonsterSpawnInfo> stage3Monsters;
-
     GameState gameState;
-    GameState_Trans gameState_trans;
-    DWORD transformStartTime;
     DWORD deadStartTime;
     DWORD victoryStart;
     DWORD clearStart;
-    DWORD godstart; // Missing member variable added
+    DWORD godstart;
 
     bool gameover_TitleDead;
     bool gameClearText;
+    int stage_time;
 
     double cameraX;
     int map1[MAP_HEIGHT][MAP_WIDTH];
@@ -182,14 +144,7 @@ private:
 
     int (*currentMap)[MAP_WIDTH];
     int stage;
-    int stage_time;
 
     bool keyState[256];
     int m_global_animation_frame_counter;
-
-    // 추가: 다른 플레이어들을 관리하는 맵 (Key: PlayerID, Value: Player 객체)
-    std::map<int, Player> m_remotePlayers;
-    // 추가: TCP 데이터 스트림을 임시 보관할 버퍼
-    std::vector<char> m_recvBuffer;
 };
-

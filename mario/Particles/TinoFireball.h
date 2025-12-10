@@ -1,5 +1,7 @@
 #pragma once
 
+#define _WINSOCKAPI_ // Prevent windows.h from including winsock.h
+#include <windows.h>
 #include "Particle.h"
 
 class TinoFireball : public Particle {

@@ -34,7 +34,3 @@ void TinoFireball::update(GameWorld& world) {
         setActive(false);
     }
 }
-
-void TinoFireball::render(HDC hdc, int cameraX) {
-    // Rendering is handled by GameRender
-}

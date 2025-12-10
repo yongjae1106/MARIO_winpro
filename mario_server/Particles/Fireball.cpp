@@ -1,8 +1,8 @@
 #include "Fireball.h"
-#include "../GameWorld.h"
+#include "../GamePhysics.h"
 
 Fireball::Fireball(int x, int y, int vx)
-    : Item(ItemType::Fireball, x, y) {
+    : Particle(ParticleType::EnemyFireball, x, y) {
     setVx(vx);
 }
 
