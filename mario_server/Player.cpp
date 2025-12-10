@@ -1,5 +1,5 @@
 #include "Player.h"
-#include "GameWorld.h"
+#include "GamePhysics.h"
 #include "monsters/Bowser.h"
 #include "monsters/Monster.h"
 #include <Gdiplus.h>
@@ -9,7 +9,8 @@
 
 using namespace Gdiplus;
 
-Player::Player() {
+Player::Player(int id) : playerID(id)
+{
     setState(PlayerState::Small);
     _isStarGodModeActive = false;
     _starGodModeEndTime = 0;
@@ -17,37 +18,37 @@ Player::Player() {
     _superGodModeEndTime = 0;
     m_tinofire_cooldown = 0;
     tino_attack_motion = false; // Initialize new member variable
-    m_tino_attack_motion_timer = 0; // Initialize new member variable
+    m_state_trans = GameState_Trans::GAME_TRANS_NONE; // New
+    m_transformStartTime = 0; // New
+    memset(m_keyState, 0, sizeof(m_keyState)); // Initialize m_keyState
+    reset();
 }
 
-void Player::reset() {
+int Player::getPlayerID() const {
+    return playerID;
+}
+
+void Player::reset() 
+{
     setX(100);
     setY(300);
     setVx(0);
     setVy(0);
-    setLife(5);
-    setCoin(0);
     width = 40;
     height = 40;
     direction = 1;
-    walk_motion = 0;
-    motion_timer = 0;
-    m_walk_motion_timer = 0;
     tino_cooldown_space = 0;
     m_fire_cooldown = 0;
     m_tinofire_cooldown = 0;
-    m_fire_motion_timer = 0;
     m_god_timer = 0;
     setJumping(false);
     setFlying(false);
     setWalking(false);
     setDead(false);
     setGameOver(false);
-    fire_motion = false;
-    tino_motion = false;
-    tino_fire_motion = false;
-    tino_attack_motion = false; // Initialize new member variable
     setState(PlayerState::Small);
+    setGameState_trans(GameState_Trans::GAME_TRANS_NONE); // New
+    setTransformStartTime(0); // New
     _isStarGodModeActive = false;
     _starGodModeEndTime = 0;
     _isSuperGodModeActive = false;
@@ -56,18 +57,17 @@ void Player::reset() {
 
 void Player::update(GameWorld& world)
 {
-    if (world.getGameState_trans() == GameState_Trans::GAME_BIG_TRANS ||
-        world.getGameState_trans() == GameState_Trans::GAME_FLOWER_TRANS ||
-        world.getGameState_trans() == GameState_Trans::GAME_TINO_TRANS)
+    if (getGameState_trans() != GameState_Trans::GAME_TRANS_NONE) // Modified
     {
         setVx(0);
         setVy(0);
         setWalking(false);
-        setSuperGodMode(true); // 변신 중 무적 활성화
+        setSuperGodMode(true); //    활화
         return; // Skip all other updates during transformation
     }
 
-    if (world.getGameState() != GameState::GAME_VICTORY && world.getGameState() != GameState::GAME_CLEAR) {
+    if (world.getGameState() != GameState::GAME_VICTORY && world.getGameState() != GameState::GAME_CLEAR) 
+    {
         move(world);
     }
     // Horizontal movement
@@ -84,41 +84,6 @@ void Player::update(GameWorld& world)
 
     if (getY() > 800) {
         setDead(true);
-    }
-
-    if (m_fire_motion_timer > 0)
-    {
-        m_fire_motion_timer--;
-    }
-    else
-    {
-        fire_motion = false;
-    }
-
-    if (m_tino_attack_motion_timer > 0)
-    {
-        m_tino_attack_motion_timer--;
-    }
-    else
-    {
-        tino_attack_motion = false;
-    }
-
-    if (m_tino_fire_motion_timer > 0)
-    {
-        m_tino_fire_motion_timer--;
-    }
-    else
-    {
-        tino_fire_motion = false;
-    }
-
-    if (_isStarGodModeActive) {
-        if (GetTickCount() >= _starGodModeEndTime) {
-            _isStarGodModeActive = false; // God mode ends
-            world.stopAllSounds();
-            world.setStageBGM();
-        }
     }
 
     if (_isSuperGodModeActive) {
@@ -148,27 +113,27 @@ void Player::updateCooldown()
 
 void Player::move(GameWorld& world)
 {
-    if (world.getPlayer().isDead()) return;
-    const bool* keyState = world.getKeyState();
-    // 디버그: move 함수 시작 시 키 상태 및 현재 vx 출력
+    if (this->isDead()) return;
+    // const bool* keyState = world.getKeyState(); // REMOVED
+    // : move 獨   키    vx 
     TCHAR debugMessage[256];
-    _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), keyState[VK_LEFT], keyState[VK_RIGHT], getVx());
+    _stprintf_s(debugMessage, _T("Player::move - Before logic: keyState[VK_LEFT]: %d, keyState[VK_RIGHT]: %d, CurrentVx: %d\n"), getKeyState(VK_LEFT), getKeyState(VK_RIGHT), getVx()); // Modified
     OutputDebugString(debugMessage);
-    if (keyState[VK_LEFT] && !keyState[VK_RIGHT])
+    if (getKeyState(VK_LEFT) && !getKeyState(VK_RIGHT)) // Modified
     {
         setVx(-5);
         direction = 0;
         setWalking(true);
     }
-    else if (keyState[VK_RIGHT] && !keyState[VK_LEFT])
+    else if (getKeyState(VK_RIGHT) && !getKeyState(VK_LEFT)) // Modified
     {
         setVx(5);
         direction = 1;
         setWalking(true);
     }
-    else if (keyState[VK_LEFT] && keyState[VK_RIGHT])
+    else if (getKeyState(VK_LEFT) && getKeyState(VK_RIGHT)) // Modified
     {
-        // 둘 다 눌린 경우 마지막 방향 유지
+        //       
         setVx((getDirection() == 0 ? -5 : 5));
         setWalking(true);
     }
@@ -176,71 +141,45 @@ void Player::move(GameWorld& world)
     {
         setWalking(false);
         setVx(0); // This is the deceleration
-        walk_motion = 0;
-        // 디버그: ELSE 블록 실행됨, Vx를 0으로 설정
-        OutputDebugString(L"Player::move - ELSE block executed. Setting Vx to 0.\n");
     }
 
-    if (keyState[VK_UP] && !isJumping())
+    if (getKeyState(VK_UP) && !isJumping()) // Modified
     {
         switch (currentState)
         {
         case (PlayerState::Small):
         {
-            //world.playSound("jump-small");
+            world.pushEvent(GameEvent::PLAYER_SMALL_JUMP);
             break;
         }
-        default: {
-            //world.playSound("jump-super");
-        }
+        default:
+            world.pushEvent(GameEvent::PLAYER_BIG_JUMP);
         }
         setVy(-20);
         setJumping(true);
     }
 
-    if (keyState['Z'] && isFlower() && m_fire_cooldown == 0) {
-        world.spawnPlayerFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -10 : 10));
+    if (getKeyState('Z') && isFlower() && m_fire_cooldown == 0) { // Modified
+        world.spawnPlayerFireball(getX(), getY(), (direction == 0 ? -10 : 10));
         m_fire_cooldown = 2; // Cooldown for 20 frames
         fire_motion = true;
         m_fire_motion_timer = 10; // Play fire motion for 10 frames
+        world.pushEvent(GameEvent::PLAYER_FIRE);
     }
 
-    if (keyState['Z'] && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball
-        world.spawnTinoFireball(getX() + world.getCameraX(), getY(), (direction == 0 ? -7 : 7), direction);
+    if (getKeyState('Z') && isTino() && m_tinofire_cooldown == 0) { // 'Z' for Tino Fireball // Modified
+        world.spawnTinoFireball(getX(), getY(), (direction == 0 ? -7 : 7), direction);
         m_tinofire_cooldown = 5; // Cooldown for 30 frames
-        //world.playSound("tino_fire_shoot");
         tino_fire_motion = true; // Set Tino Fireball motion flag
-        m_tino_fire_motion_timer = 10; // Set motion timer
+        world.pushEvent(GameEvent::PLAYER_TINOFIRE);
     }
 
-    if (keyState[VK_SPACE] && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack
+    if (getKeyState(VK_SPACE) && isTino() && tino_cooldown_space == 0) { // 'SPACE' for Tino Attack // Modified
         tinoAttack(world);
         tino_cooldown_space = 15; // Cooldown for 30 frames
         tino_attack_motion = true; // Set Tino Attack motion flag
-        m_tino_attack_motion_timer = 30; // Set motion timer
         setSuperGodMode(true); // Activate invincibility
-        _superGodModeEndTime = GetTickCount() + (m_tino_attack_motion_timer * (3000 / 60)); // Invincibility duration based on motion timer
-    }
-
-    // 디버그: 입력 처리 후 Vx 값 출력
-    _stprintf_s(debugMessage, _T("Player::move - After logic: Vx: %d\n"), getVx());
-    OutputDebugString(debugMessage);
-}
-
-void Player::updateAnimation() {
-    if (tino_fire_motion || tino_attack_motion) {
-        // Specific animation logic for Tino fire or attack motion
-        // For now, we just ensure walking animation is paused/overridden
-        walk_motion = 0; // Stop walking animation
-        return;
-    }
-
-    if (isWalking()) {
-        m_walk_motion_timer++;
-        if (m_walk_motion_timer > 5) {
-            walk_motion = (walk_motion + 1) % 3;
-            m_walk_motion_timer = 0;
-        }
+        _superGodModeEndTime = GetTickCount() + 3000; // Invincibility duration based on motion timer
     }
 }
 
@@ -283,28 +222,27 @@ void Player::setVy(int newVy) {
     vy = newVy;
 }
 
-int Player::getLife() const {
-    return life;
-}
-
-void Player::setLife(int newLife) {
-    life = newLife;
-}
-
-int Player::getCoin() const {
-    return coin;
-}
-
-void Player::setCoin(int newCoin) {
-    coin = newCoin;
-}
-
 PlayerState Player::getState() const {
     return currentState;
 }
 
 void Player::setState(PlayerState newState) {
     currentState = newState;
+}
+
+void Player::dead(GameWorld& world) 
+{
+    world.pushEvent(GameEvent::PLAYER_DIE);
+    setVx(0);
+    setVy(0);
+    setDead(true);
+    setdeadStartTime(GetTickCount());
+    world.addLife(-1);
+}
+
+void Player::setdeadStartTime(int time)
+{
+    deadStartTime = time;
 }
 
 bool Player::isDead() const {
@@ -382,73 +320,6 @@ int Player::getTinoCooldownSpace() const {
 int Player::getFireMotionTimer() const {
     return m_fire_motion_timer;
 }
-
-int Player::getTinoAttackMotionTimer() const {
-    return m_tino_attack_motion_timer;
-}
-
-bool Player::isTinoFireMotion() const {
-    return tino_fire_motion;
-}
-
-bool Player::isTinoAttackMotion() const {
-    return tino_attack_motion;
-}
-
-void Player::addCoin(int count) {
-    coin += count;
-}
-
-void Player::grow() {
-    if (currentState == PlayerState::Small) {
-        setY(getY() - TILE_SIZE);
-        currentState = PlayerState::Big;
-        // height = 80; // Assuming big Mario is taller
-        setHeight(80);
-    }
-}
-
-void Player::shrink() {
-    if (isBig()) {
-        setY(getY() + TILE_SIZE);
-        currentState = PlayerState::Small;
-        setHeight(40);
-    }
-}
-
-void Player::gainStar(GameWorld& world) {
-    setStarGodMode(true);
-    world.stopAllSounds();
-    //world.playSound("InvincibilityTheme", true);
-    // Implement star power-up effects (e.g., temporary invincibility)
-}
-
-void Player::gainFlower() {
-    if (currentState == PlayerState::Small) {
-        setY(getY() - TILE_SIZE);
-        currentState = PlayerState::Big;
-        // height = 80;
-        setHeight(80);
-    }
-    currentState = PlayerState::Flower;
-    // Implement flower power-up effects (e.g., fireball ability)
-}
-
-void Player::gainTino() {
-    if (currentState == PlayerState::Small) {
-        currentState = PlayerState::Big;
-        // height = 80;
-        setHeight(80);
-    }
-    currentState = PlayerState::Tino;
-    // Implement Tino power-up effects
-}
-
-void Player::addLife(int count) {
-    life += count;
-}
-
-
 
 DamageResult Player::calculateDamageResult(int damage) const {
     if (isStarGodMode() || isSuperGodMode()) return DamageResult::NoDamage; // Invincible
@@ -533,11 +404,11 @@ void Player::tinoAttack(GameWorld& world) {
     for (auto& monster : world.getMonsters()) {
         if (!monster->isAlive()) continue;
 
-        int monsterScreenX = monster->getX() - world.getCameraX();
+        int monsterScreenX = monster->getX();
 
         if (isColliding(attackRangeX, attackRangeY, attackWidth, attackHeight,
             monsterScreenX, monster->getY(), monster->getWidth(), monster->getHeight())) {
-            //world.playSound("kick");
+            world.pushEvent(GameEvent::KICK);
 
             // Handle Bowser specific logic
             Bowser* bowserMonster = dynamic_cast<Bowser*>(monster.get());
@@ -558,4 +429,32 @@ void Player::tinoAttack(GameWorld& world) {
     }
 }
 
+void Player::setKeyState(WPARAM key, bool isPressed) {
+    if (key < 256) {
+        m_keyState[key] = isPressed;
+    }
+}
 
+bool Player::getKeyState(WPARAM key) const {
+    if (key < 256) {
+        return m_keyState[key];
+    }
+    return false;
+}
+
+
+GameState_Trans Player::getGameState_trans() const {
+    return m_state_trans;
+}
+
+void Player::setGameState_trans(GameState_Trans trans_state) {
+    m_state_trans = trans_state;
+}
+
+DWORD Player::getTransformStartTime() const {
+    return m_transformStartTime;
+}
+
+void Player::setTransformStartTime(DWORD time) {
+    m_transformStartTime = time;
+}

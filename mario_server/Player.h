@@ -1,5 +1,9 @@
 #pragma once
-#include <windows.h>
+
+#include <Windows.h>
+
+// Forward declaration to avoid circular dependency
+class GameWorld;
 
 enum class PlayerState {
     Small,
@@ -14,99 +18,90 @@ enum class DamageResult {
     Died
 };
 
-class GameWorld; // Forward declaration
+enum class GameState_Trans
+{
+    GAME_TRANS_NONE,
+    GAME_BIG_TRANS,
+    GAME_FLOWER_TRANS,
+    GAME_TINO_TRANS
+};
 
 class Player {
 public:
-    Player();
-
-    void update(GameWorld& world);
+    Player(int id = -1); // Constructor with optional player ID
     void reset();
+    void update(GameWorld& world);
     void updateCooldown();
-
+    void move(GameWorld& world);
     void setStop();
-
-    int getX() const;
-    void setX(int x);
-    int getVx() const;
-    void setVx(int vx);
-    int getY() const;
-    void setY(int y);
-    int getVy() const;
-    void setVy(int vy);
-
-    int getLife() const;
-    void setLife(int life);
-
-    int getCoin() const;
-    void setCoin(int coin);
-    void addCoin(int count);
-
-    void grow();
-    void shrink();
-    void gainStar(GameWorld& world);
-    void gainFlower();
-    void gainTino();
-    void addLife(int count);
+    void dead(GameWorld& world);
     void tinoAttack(GameWorld& world);
-    DamageResult calculateDamageResult(int damage) const;
 
+    // Getters
+    int getPlayerID() const;
+    int getX() const;
+    int getY() const;
+    int getVx() const;
+    int getVy() const;
+    int getWidth() const;
+    int getHeight() const;
+    int getDirection() const;
+    int getWalkMotion() const;
+    int getTinoCooldownTinoFireball() const;
+    int getTinoCooldownSpace() const;
+    int getFireMotionTimer() const;
+    PlayerState getState() const;
+    GameState_Trans getGameState_trans() const;
+    DWORD getTransformStartTime() const;
+    bool isDead() const;
+    bool isFlying() const;
+    bool isGameOver() const;
+    bool isJumping() const;
+    bool isWalking() const;
     bool isBig() const;
     bool isFlower() const;
     bool isTino() const;
-    void setStarGodMode(bool godMode);
-    void updateAnimation();
     bool isStarGodMode() const;
-
-    void setSuperGodMode(bool godMode);
     bool isSuperGodMode() const;
-
-    PlayerState getState() const;
-    void setState(PlayerState state);
-
-    bool isDead() const;
-    void setDead(bool isDead);
-    bool isFlying() const;
-    void setFlying(bool flying);
-
-    bool isGameOver() const;
-    void setGameOver(bool isGameOver);
-
-    bool isJumping() const;
-    void setJumping(bool jumping);
-
-    bool isWalking() const;
-    void setWalking(bool walking);
-
     bool isFiring() const;
+    bool isTinoFireMotion() const { return tino_fire_motion; }
+    bool isTinoAttackMotion() const { return tino_attack_motion; }
 
-    int getWalkMotion() const;
-    int getDirection() const;
-    int getWidth() const;
-    void setWidth(int width);
-    int getHeight() const;
-    void setHeight(int height);
-    int getTinoCooldownTinoFireball() const;
-    int getTinoCooldownSpace() const;
-    int getFireMotionTimer() const; // New getter
-    int getTinoAttackMotionTimer() const; // New getter
-    bool isTinoFireMotion() const; // New getter
-    bool isTinoAttackMotion() const; // New getter
+    // Key state management
+    void setKeyState(WPARAM key, bool isPressed);
+    bool getKeyState(WPARAM key) const;
+
+    // Setters
+    void setX(int newX);
+    void setY(int newY);
+    void setVx(int newVx);
+    void setVy(int newVy);
+    void setWidth(int newWidth);
+    void setHeight(int newHeight);
+    void setState(PlayerState newState);
+    void setGameState_trans(GameState_Trans trans_state);
+    void setTransformStartTime(DWORD time);
+    void setDead(bool isDead);
+    void setFlying(bool flying);
+    void setGameOver(bool isGameOver);
+    void setJumping(bool jumping);
+    void setWalking(bool walking);
+    void setStarGodMode(bool godMode);
+    void setSuperGodMode(bool godMode);
+
+    DamageResult calculateDamageResult(int damage) const;
 
 private:
-    void move(GameWorld& world);
-    int x, y;
-    int vx, vy;
-    int life;
-    int coin;
+    int playerID;
+    int x, y, vx, vy;
     int width, height;
-    int direction;      // 0: left, 1: right
+    int direction;
     int walk_motion;
-    int motion_timer;
-    int m_walk_motion_timer;
+    int m_fire_cooldown;
+    int m_tinofire_cooldown;
     int tino_cooldown_space;
+    int m_god_timer;
     int m_fire_motion_timer;
-    int m_tino_fire_motion_timer;
 
     bool m_isJumping;
     bool m_isFlying;
@@ -114,20 +109,19 @@ private:
     bool m_dead;
     bool m_gameOver;
     bool fire_motion;
-    bool tino_motion;
     bool tino_fire_motion;
-    bool tino_attack_motion; // New member variable for Tino attack motion
-    int m_fire_cooldown;
-    int m_tinofire_cooldown;
-    DWORD m_god_timer;
-    int m_tino_attack_motion_timer; // New member variable for Tino attack motion timer
+    bool tino_attack_motion;
+
+    PlayerState currentState;
+    GameState_Trans m_state_trans;
+    DWORD m_transformStartTime;
+    void setdeadStartTime(int time);
+    DWORD deadStartTime;
 
     bool _isStarGodModeActive;
     DWORD _starGodModeEndTime;
-
     bool _isSuperGodModeActive;
     DWORD _superGodModeEndTime;
 
-    PlayerState currentState;
-
+    bool m_keyState[256]; // Per-player key state
 };
