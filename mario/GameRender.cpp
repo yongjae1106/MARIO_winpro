@@ -317,6 +317,23 @@ void GameRender::drawMonsters(Gdiplus::Graphics& graphics, const GameWorld& worl
                 imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
             }
         }
+
+
+        // [중요] 이미지가 있을 때만 그리기
+        if (imageToDraw != nullptr)
+        {
+            bool flip = (monster.second->getDirection() == 0);
+            if (flip) {
+                imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
+            }
+
+            graphics.DrawImage(imageToDraw, (REAL)screenX, (REAL)screenY, (REAL)monster.second->getWidth(), (REAL)monster.second->getHeight());
+
+            if (flip) {
+                imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
+            }
+        }
+
     }
 }
 Gdiplus::Image* GameRender::loadImage(const WCHAR* path) {
@@ -721,6 +738,28 @@ void GameRender::drawPlayer(Gdiplus::Graphics& graphics, const GameWorld& world,
             imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
         }
     }
+
+    // [중요] 이미지가 있을 때만 그리기 시도 (이 부분이 없어서 런타임 오류 발생)
+    if (imageToDraw != nullptr)
+    {
+        if (player.getDirection() == 0) {
+            imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
+        }
+
+        if (player.isTinoAttackMotion() || player.isTinoFireMotion())
+        {
+            graphics.DrawImage(imageToDraw, (REAL)drawX - 25, (REAL)drawY - 15, (REAL)100, (REAL)100);
+        }
+        else
+        {
+            graphics.DrawImage(imageToDraw, (REAL)drawX, (REAL)drawY, (REAL)player.getWidth(), (REAL)player.getHeight());
+        }
+
+        if (player.getDirection() == 0) {
+            imageToDraw->RotateFlip(Gdiplus::RotateNoneFlipX);
+        }
+    }
+
 }
 
 void GameRender::drawUI(Gdiplus::Graphics& graphics, const GameWorld& world) {
