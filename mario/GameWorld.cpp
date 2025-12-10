@@ -286,7 +286,7 @@ int GameWorld::getStage() const { return stage; }
 double GameWorld::getCameraX() const { return cameraX; }
 const std::map<int, std::unique_ptr<Monster>>& GameWorld::getMonsters() const { return m_monsters; }
 const std::vector<std::unique_ptr<Item>>& GameWorld::getItems() const { return items; }
-const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const { return particles; }
+const std::vector<std::unique_ptr<Particle>>& GameWorld::getParticles() const { return particles; } // 수정: const 추가
 const std::vector<std::unique_ptr<Particle>>& GameWorld::getNewParticles() const { return newParticles; }
 
 int GameWorld::getLife() const
@@ -696,3 +696,19 @@ void GameWorld::initMap3()
 GameState GameWorld::getGameState() const {
     return gameState;
 }
+
+// [추가] dummy 함수들 (컴파일 오류 방지용, 실제로는 서버에서 처리됨)
+// 클라에서는 이 함수들을 호출하지 않아야 하지만, 만약 호출된다면 빈 함수로 둡니다.
+void GameWorld::pushEvent(GameEvent event) {}
+void GameWorld::clearEventQueue() {}
+const std::vector<GameEvent>& GameWorld::getEventQueue() const {
+    static std::vector<GameEvent> empty;
+    return empty;
+}
+void GameWorld::spawnItem(Item::ItemType type, int x, int y) {}
+void GameWorld::spawnMonster(std::unique_ptr<Monster> monster) {}
+void GameWorld::spawnParticle(std::unique_ptr<Particle> particle) {}
+void GameWorld::spawnPlayerFireball(int x, int y, int vx) {}
+void GameWorld::spawnTinoFireball(int x, int y, int vx, int direction) {}
+void GameWorld::spawnTinoFireballEffect(int x, int y, int vx, int direction) {}
+// -------------------------------------------------------------

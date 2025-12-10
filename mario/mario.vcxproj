@@ -159,6 +159,7 @@
     <ClCompile Include="Particles\TinoFireball.cpp" />
     <ClCompile Include="Particles\TinoFireballEffect.cpp" />
     <ClCompile Include="Sound.cpp" />
+    <ClCompile Include="소스.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameRender.h" />
