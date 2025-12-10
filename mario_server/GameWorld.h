@@ -4,12 +4,13 @@
 #include "monsters/Monster.h"
 #include "items/Item.h"
 #include "Particles/Particle.h"
-//#include "GameRender.h"
-//#include "Sound.h"
+#include "PacketInfo.h" // GameEvent, BGM_Type 등
+
 #include <vector>
 #include <memory>
-#include <map> // map 헤더 필요
+#include <map>
 #include <windows.h>
+#include <algorithm> // for std::remove_if
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 640
@@ -17,7 +18,7 @@
 #define MAP_HEIGHT 15
 #define TILE_SIZE 40
 
-// Declaration for the global collision function to make it accessible across files
+// 전역 충돌 함수 선언
 bool isColliding(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2);
 
 enum class GameState
@@ -29,13 +30,6 @@ enum class GameState
     GAME_CLEAR,
     GAME_OVER
 };
-enum class GameState_Trans
-{
-    GAME_NONE,
-    GAME_BIG_TRANS,
-    GAME_FLOWER_TRANS,
-    GAME_TINO_TRANS,
-};
 
 struct MonsterSpawnInfo {
     Monster::MonsterType type;
@@ -45,60 +39,60 @@ struct MonsterSpawnInfo {
 
 class GameWorld {
 public:
-    GameWorld();
+    // 싱글톤 인스턴스 반환
+    static GameWorld& getInstance() {
+        static GameWorld instance;
+        return instance;
+    }
+
+    // 복사 방지
+    GameWorld(const GameWorld&) = delete;
+    void operator=(const GameWorld&) = delete;
 
     bool isSolidTile(int tileValue) const;
 
     void init();
-    void sound_init(HWND hwnd);
 
+    // 메인 업데이트 루프
     void update();
-    void updateAnimations();
-    void render(HDC hdc);
 
-    void handleKeyDown(WPARAM wParam);
-    void handleKeyUp(WPARAM wParam);
+    // 입력 처리 (PlayerID 포함)
+    void handleKeyDown(int playerID, WPARAM wParam);
+    void handleKeyUp(int playerID, WPARAM wParam);
 
     void loadStage(int stage);
-    void resetForDeath();
+    void resetForDeath(int playerID);
 
-    // Getter for the renderer to allow safe access from other classes
-    //GameRender& getGameRender() { return m_gameRender; }
+    // 플레이어 관리 (네트워크 연동용)
+    void addPlayer(int playerID);
+    void removePlayer(int playerID);
+    Player* getPlayer(int playerID);
+    std::map<int, Player>& getPlayers(); // 전체 플레이어 목록 반환 (Broadcast용)
+    // Peer 상태 업데이트 (클라이언트로부터 받은 정보 동기화가 필요할 때 사용)
+    void UpdatePeerState(int peerID, int x, int y, int vx, int vy, int state);
 
-    void transUpdate();
-    void cameraUpdate();
-
-    const Player& getPlayer() const;
-    Player& getPlayer();
+    // Getters
     const int (*getCurrentMap() const)[MAP_WIDTH];
     int getStage() const;
-    double getCameraX() const;
+    double getCameraX() const; // 서버에서는 0번 플레이어 기준 혹은 별도 로직
 
     const std::vector<std::unique_ptr<Monster>>& getMonsters() const;
     const std::vector<std::unique_ptr<Item>>& getItems() const;
     const std::vector<std::unique_ptr<Particle>>& getParticles() const;
-    const std::vector<std::unique_ptr<Particle>>& getNewParticles() const;
 
-    void newParticles_insertTo_Particles();
-
-    int getLife() const { return player.getLife(); }
-    int getCoin() const { return player.getCoin(); }
-    int getStageTime() const { return stage_time; }
-    int getTinoCooldownSpace() const { return player.getTinoCooldownSpace(); }
-    bool getGameClearText() const { return gameClearText; }
-    bool getGameoverTitleDead() const { return gameover_TitleDead; }
-    int getGlobalAnimationFrameCounter() const { return m_global_animation_frame_counter; }
-
-    const bool* getKeyState() const;
+    // 게임 상태 및 기타 정보
     GameState getGameState() const;
-    GameState_Trans getGameState_trans() const;
     void setGameState(GameState state);
-    void setGameState_trans(GameState_Trans state_trans);
-    void setStage_time(int time);
-    void setStageBGM();
-    void setGameOverTitleDead(bool gameover);
-    void setdeadStartTime(int time);
 
+    int getStageTime() const { return stage_time; }
+    void setStage_time(int time);
+
+    // 이벤트 및 BGM (서버는 로직만 처리하지만, 이벤트 큐는 필요할 수 있음)
+    void pushEvent(GameEvent event);
+    void clearEventQueue();
+    const std::vector<GameEvent>& getEventQueue() const;
+
+    // 스폰 함수들
     void spawnItem(Item::ItemType type, int x, int y);
     void spawnMonster(std::unique_ptr<Monster> monster);
     void spawnParticle(std::unique_ptr<Particle> particle);
@@ -106,72 +100,46 @@ public:
     void spawnTinoFireball(int x, int y, int vx, int direction);
     void spawnTinoFireballEffect(int x, int y, int vx, int direction);
 
-    //void playSound(const std::string& name, bool loop = false);
-    void stopAllSounds();
-
-    int title_select;
-
-    // 추가: 접속한 클라이언트(Peer)의 상태를 업데이트하는 함수
-    void UpdatePeerState(int peerID, int x, int y, int vx, int vy, int state)
-    {
-        // 맵에 없으면 새로 생성, 있으면 업데이트
-        // Player 클래스의 세터 함수들을 이용해 동기화
-        m_peerPlayers[peerID].setX(x);
-        m_peerPlayers[peerID].setY(y);
-        m_peerPlayers[peerID].setVx(vx);
-        m_peerPlayers[peerID].setVy(vy);
-        // m_peerPlayers[peerID].setState((PlayerState)state); // 필요 시 state 변환 로직 추가
-    }
-
-    // 추가: 특정 플레이어 제거 (연결 끊김 시)
-    void RemovePeer(int peerID)
-    {
-        m_peerPlayers.erase(peerID);
-    }
-
-    // 추가: 모든 접속자 정보 반환 (Broadcast용)
-    const std::map<int, Player>& GetPeerPlayers() const
-    {
-        return m_peerPlayers;
-    }
-
 private:
-    //GameRender m_gameRender;
-    //Sound m_sound;
+    GameWorld();
+    ~GameWorld();
 
-private:
-    void updatePlayer();
+    // 내부 로직 함수들
+    void updatePlayers();
     void updateMonsters();
     void updateItems();
     void updateParticles();
+
     void checkCollisions();
-    void checkMonsterMapCollision();
-    void checkPlayerCoinCollision();
-    void checkPlayerMapCollision();
-    void checkPlayerMonsterCollision();
-    void checkPlayerItemCollision();
+
+    // 개별 충돌 체크 로직
+    void checkPlayerMapCollision(Player& player);
+    void checkPlayerMonsterCollision(Player& player);
+    void checkPlayerItemCollision(Player& player);
+    void checkPlayerCoinCollision(Player& player);
+    void checkFlagCollision(Player& player);
+    void checkClearCollision(Player& player);
+
     void checkParticleMonsterCollision();
     void checkMonsterMonsterCollision();
     void checkItemMapCollision();
-    void checkFlagCollision();
-    void checkClearCollision();
-    void spawnMonsters();
 
-    void applyplayertakedamage();
+    void applyplayertakedamage(Player& player);
 
+    // 맵 및 스폰 초기화
     void initMaps();
     void initMonsterSpawns();
     void initMap1();
     void initMap2();
     void initMap3();
+    void spawnMonsters();
 
-    void dead();
-    void resurrection();
     void monster_reset();
     void item_reset();
 
+    // 멤버 변수
+    std::map<int, Player> m_players; // 접속한 모든 플레이어 관리
 
-    Player player;
     std::vector<std::unique_ptr<Monster>> monsters;
     std::vector<std::unique_ptr<Item>> items;
     std::vector<std::unique_ptr<Particle>> particles;
@@ -182,12 +150,12 @@ private:
     std::vector<MonsterSpawnInfo> stage3Monsters;
 
     GameState gameState;
-    GameState_Trans gameState_trans;
-    DWORD transformStartTime;
-    DWORD deadStartTime;
+
+    // 타이머 관련
     DWORD victoryStart;
     DWORD clearStart;
-    DWORD godstart; // Missing member variable added
+    DWORD godstart;
+    DWORD deadStartTime;
 
     bool gameover_TitleDead;
     bool gameClearText;
@@ -201,10 +169,8 @@ private:
     int stage;
     int stage_time;
 
-    bool keyState[256];
+    BGM_Type m_currentBGM;
+    std::vector<GameEvent> m_eventQueue;
+
     int m_global_animation_frame_counter;
-
-    // 추가: 접속된 플레이어들을 관리하는 컨테이너 (Key: SocketID, Value: Player 객체)
-    std::map<int, Player> m_peerPlayers;
 };
-

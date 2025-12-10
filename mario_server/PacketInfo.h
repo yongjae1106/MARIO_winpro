@@ -70,3 +70,24 @@ struct Packet_BLOCK_S2C
     unsigned int block_x;
     unsigned int block_y;
 };
+enum class BGM_Type {
+    NONE,
+    GROUND_THEME,
+    CASTLE_THEME,
+    VICTORY,
+    WORLD_CLEAR
+};
+
+enum class GameEvent {
+    PLAYER_DIE,
+    PLAYER_FIRE,
+    PLAYER_TINOFIRE,
+    PLAYER_SMALL_JUMP,
+    PLAYER_BIG_JUMP,
+    KICK,
+    STOMP_ENEMY,
+    POWERUP_APPEARS,
+    POWERUP,
+    ONE_UP,
+    GET_COIN
+};

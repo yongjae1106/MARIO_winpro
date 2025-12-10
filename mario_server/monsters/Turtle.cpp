@@ -59,9 +59,29 @@ void Turtle::takeDamage(GameWorld& world, int damage) {
     {
         m_state = TurtleState::SPINNING;
         // Determine direction based on player's collision
-        int playerX = world.getPlayer().getX();
+        //int playerX = world.getPlayer().getX();
+
+        // [수정] 누가 찼는지 판별 (가장 가까운 플레이어 기준)
+        int playerX = 0;
+        int minDistance = 999999;
+
+        auto& players = world.getPlayers();
+        if (players.empty()) {
+            playerX = getX() - 10; // 플레이어가 없으면 왼쪽에서 찬 것으로 가정
+        }
+        else {
+            for (auto& pair : players) {
+                int dist = std::abs(pair.second.getX() - getX());
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    playerX = pair.second.getX();
+                }
+            }
+        }
+
         int monsterScreenX = getX() - world.getCameraX();
         int spinSpeed = 5; // Define a spin speed
+
 
         if (playerX < monsterScreenX) 
         { // Player collided from left, spin right

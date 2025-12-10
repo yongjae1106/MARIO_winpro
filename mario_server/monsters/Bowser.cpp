@@ -41,7 +41,29 @@ void Bowser::monster_logic(GameWorld& world) {
     fireTimer++;
     if (fireTimer > fireInterval) 
     {
-        int dir = (world.getPlayer().getX() < getX()) ? -1 : 1;
+        //int dir = (world.getPlayer().getX() < getX()) ? -1 : 1;
+
+        // [수정] 가장 가까운 플레이어를 찾아서 방향 결정
+        int targetX = getX(); // 기본값: 내 위치
+        int minDistance = 999999;
+
+        // 접속한 모든 플레이어 중 가장 가까운 사람 찾기
+        auto& players = world.getPlayers();
+        for (auto& pair : players) {
+            Player& p = pair.second;
+            if (p.isDead()) continue; // 죽은 플레이어는 무시
+
+            int dist = std::abs(p.getX() - getX());
+            if (dist < minDistance) {
+                minDistance = dist;
+                targetX = p.getX();
+            }
+        }
+
+        int dir = (targetX < getX()) ? -1 : 1;
+
+        // 서버에서는 직접 spawnFireball을 호출하거나 이벤트를 생성
+
         //world.spawnFireball(getX() + getWidth() / 2, getY() + getHeight() / 2, 6 * dir);
 
         fireTimer = 0;

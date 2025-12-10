@@ -228,37 +228,56 @@ void ThreadManager::BroadcastState()
 {
     std::lock_guard<std::mutex> lock(m_mtx);
 
-    // 1. 현재 접속한 모든 플레이어들의 정보를 가져옵니다.
-    const auto& players = m_gameWorld->GetPeerPlayers();
+    // 1. [수정] 함수 이름 변경: GetPeerPlayers() -> getPlayers()
+    const auto& players = m_gameWorld->getPlayers();
 
-    // 2. 각 플레이어의 정보를 패킷으로 만들어 모든 클라이언트에게 전송합니다.
+    // 2. 각 플레이어의 정보를 패킷으로 만들어 모든 클라이언트에게 전송
     for (const auto& pair : players) {
         int pID = pair.first;          // 플레이어 ID (Socket ID)
         const Player& p = pair.second; // 플레이어 객체
 
-        // 패킷 생성 (Server -> Client)
-        Packet_MOVE_S2C pkt;
+        // [수정] 패킷 구조체 변경: Packet_MOVE_S2C -> Packet_PLAYER_STATE_S2C
+        Packet_PLAYER_STATE_S2C pkt;
+        memset(&pkt, 0, sizeof(pkt)); // 안전하게 0으로 초기화
+
         pkt.playerID = pID;
         pkt.x = p.getX();
         pkt.y = p.getY();
         pkt.vx = p.getVx();
         pkt.vy = p.getVy();
-        pkt.state = (unsigned int)p.getState();
+        pkt.life = p.getLife();
+        pkt.coin = p.getCoin();
+        pkt.width = p.getWidth();
+        pkt.height = p.getHeight();
+        pkt.direction = p.getDirection();
+        pkt.walk_motion = p.getWalkMotion();
+        pkt.m_isJumping = p.isJumping();
+        pkt.m_isFlying = p.isFlying();
+        pkt.m_isWalking = p.isWalking();
+        pkt.m_dead = p.isDead();
+        pkt.m_gameOver = p.isGameOver();
+        pkt.fire_motion = p.isFiring();
+        pkt.tino_fire_motion = p.isTinoFireMotion();
+        pkt.tino_attack_motion = p.isTinoAttackMotion();
+        pkt.currentState = p.getState();
+        pkt.state_trans = p.getGameState_trans();
+        pkt.transformStartTime = p.getTransformStartTime();
+        pkt._isStarGodModeActive = p.isStarGodMode();
+        pkt._isSuperGodModeActive = p.isSuperGodMode();
+        pkt.tino_cooldown_space = p.getTinoCooldownSpace();
+        pkt.fire_motion_timer = p.getFireMotionTimer();
+        // pkt.tino_attack_motion_timer = ...; // Player에 getter가 있다면 추가
 
         // 직렬화
         char sendBuffer[1024];
-        unsigned int len = m_packet_manager.Serialize_MOVE(sendBuffer, pkt);
+        // [수정] 함수 이름 변경: Serialize_MOVE -> Serialize_PLAYER_STATE
+        unsigned int len = m_packet_manager.Serialize_PLAYER_STATE(sendBuffer, pkt);
 
-        // 3. 모든 활성 클라이언트에게 전송 (Broadcasting)
+        // 3. 모든 활성 클라이언트에게 전송
         for (int i = 0; i < MAX_PLAYERS; ++i) {
             if (m_clients[i].is_active) {
-                // send() 함수는 에러 체크를 하는 것이 좋지만, 
-                // Broadcast 특성상 실패해도 다음 틱에 다시 보내므로 일단 단순 호출
-                //send(m_clients[i].clientSock, sendBuffer, len, 0);
-				//-> pid와 i가 같아도 보내니까 잔상(작은 마리오가 위에 그려지는 현상)이 생김
-                if (i != pID) { // 수정: 패킷의 주인(pID)과 받는 사람(i)이 같으면 보내지 않음
-                    send(m_clients[i].clientSock, sendBuffer, len, 0);
-                }
+                // 패킷의 주인(pID)에게도 보내야 내 캐릭터가 움직임 (클라 구조상)
+                send(m_clients[i].clientSock, sendBuffer, len, 0);
             }
         }
     }

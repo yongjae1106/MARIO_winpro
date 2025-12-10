@@ -67,6 +67,14 @@ public:
     bool isTinoFireMotion() const { return tino_fire_motion; }
     bool isTinoAttackMotion() const { return tino_attack_motion; }
 
+    int getLife() const { return life; }
+    void setLife(int newLife) { life = newLife; }
+    void addLife(int amount) { life += amount; }
+
+    int getCoin() const { return coin; }
+    void setCoin(int newCoin) { coin = newCoin; }
+    void addCoin(int amount) { coin += amount; }
+
     // Key state management
     void setKeyState(WPARAM key, bool isPressed);
     bool getKeyState(WPARAM key) const;
@@ -95,6 +103,9 @@ private:
     int playerID;
     int x, y, vx, vy;
     int width, height;
+    // [추가] life와 coin 변수 선언
+    int life;
+    int coin;
     int direction;
     int walk_motion;
     int m_fire_cooldown;
